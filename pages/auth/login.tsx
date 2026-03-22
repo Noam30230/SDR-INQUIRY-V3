@@ -65,9 +65,9 @@ export default function LoginPage() {
 
         {/* Logo */}
         <div className="flex items-center gap-3 mb-10 relative z-10">
-          <div className="w-10 h-10 rounded-xl flex items-center justify-center"
-            style={{ background: 'rgba(124,58,237,0.25)', border: '1px solid rgba(124,58,237,0.4)' }}>
-            <span className="text-xl">⚡</span>
+          <div className="w-10 h-10 rounded-xl flex items-center justify-center overflow-hidden"
+            style={{ background: 'rgba(124,58,237,0.15)', border: '1px solid rgba(124,58,237,0.4)' }}>
+            <img src="/logo.png" alt="Datadog" className="w-7 h-7 object-contain" />
           </div>
           <div>
             <div className="text-sm font-bold text-white tracking-wide">Account Scorer</div>
