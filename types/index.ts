@@ -121,6 +121,7 @@ export interface SiteQualityData {
 export interface BraveSearchData {
   techJobs: string[]
   cloudSignals: string[]
+  monitoringSignals: string[]
   newsHeadlines: string[]
   fundingSignals: string[]
 }
