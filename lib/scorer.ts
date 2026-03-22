@@ -4,27 +4,27 @@ import { aggregate } from './aggregator'
 
 const openai = new OpenAI({ apiKey: process.env.OPENAI_API_KEY })
 
-const SYSTEM_PROMPT = `Tu es un expert en qualification de comptes B2B pour Datadog.
+const SYSTEM_PROMPT = `You are a B2B account qualification expert for Datadog.
 
-Datadog est une plateforme de monitoring cloud (APM, logs, infrastructure, sécurité, synthetics).
-Ta mission : analyser les données collectées sur une entreprise et lui attribuer un tier de priorité SDR.
+Datadog is a cloud monitoring platform (APM, logs, infrastructure, security, synthetics).
+Your mission: analyze collected data about a company and assign an SDR priority tier.
 
-CRITÈRES DE TIERING :
-- T1 (haute priorité) : entreprise SaaS ou tech-forward, quel que soit le secteur (fintech, edtech, e-commerce, healthtech, legaltech...). Stack cloud visible (AWS/GCP/Azure), équipe tech structurée, recrutements DevOps/SRE/Platform/Backend actifs, bon site web moderne.
-- T2 (priorité moyenne) : présence tech partielle, site correct, quelques signaux positifs (mention AI/cloud/API), mais moins de preuves concrètes.
-- T3 (basse priorité) : secteur traditionnel, peu de signaux tech, site basique ou page builder.
-- DQ (disqualifié) : ESN, SSII, cabinet de conseil IT pur services (pas de SaaS propre), institutions publiques, agences sans produit SaaS. ATTENTION : ne pas DQ uniquement à cause du secteur — une legaltech SaaS, une comptabilité SaaS, une RH SaaS sont T1 ou T2.
+TIERING CRITERIA:
+- T1 (high priority): SaaS or tech-forward company in any vertical (fintech, edtech, e-commerce, healthtech, legaltech...). Visible cloud stack (AWS/GCP/Azure), structured tech team, active DevOps/SRE/Platform/Backend hiring, modern website.
+- T2 (medium priority): partial tech presence, decent site, some positive signals (AI/cloud/API mentions), but less concrete evidence.
+- T3 (low priority): traditional sector, few tech signals, basic site or page builder.
+- DQ (disqualified): IT consulting firms, pure services companies (no SaaS product), public institutions, agencies without their own SaaS. DO NOT DQ based on sector alone — a legaltech SaaS, accounting SaaS, or HR SaaS are T1 or T2.
 
-La question clé pour DQ : "Cette entreprise vend-elle un logiciel, ou vend-elle uniquement du temps humain/conseil ?"
+Key DQ question: "Does this company sell software, or only human time/consulting?"
 
-SCORE (0-100) :
-- 80-100 : Stack cloud visible + recrutements tech actifs + SaaS prouvé + site tech-forward
-- 60-79 : Quelques signaux cloud/tech solides mais incomplets
-- 40-59 : Signaux mixtes, incertitude sur le business model
-- 20-39 : Peu de signaux tech, secteur traditionnel
-- 0-19 : Clairement DQ ou aucun signal tech
+SCORE (0-100):
+- 80-100: Visible cloud stack + active tech hiring + proven SaaS + tech-forward site
+- 60-79: Some solid cloud/tech signals but incomplete
+- 40-59: Mixed signals, uncertainty about business model
+- 20-39: Few tech signals, traditional sector
+- 0-19: Clearly DQ or no tech signal
 
-Réponds UNIQUEMENT en JSON valide, sans markdown, sans texte autour.`
+Respond ONLY with valid JSON, no markdown, no surrounding text. All signals and reasoning must be in English.`
 
 function buildUserPrompt(data: AggregatedData): string {
   const lines: string[] = [`Entreprise : ${data.companyName}`, `Domaine : ${data.domain || 'inconnu'}`]
@@ -107,10 +107,10 @@ export async function scoreAccount(data: AggregatedData): Promise<ScorerOutput> 
       {
         role: 'user', content: `${userPrompt}
 
-Retourne ce JSON exactement :
+Return exactly this JSON:
 {
   "tier": "T1" | "T2" | "T3" | "DQ",
-  "score": <nombre entre 0 et 100>,
+  "score": <number between 0 and 100>,
   "tech_stack": {
     "Cloud": [],
     "Monitoring": [],
@@ -125,7 +125,7 @@ Retourne ce JSON exactement :
     "positive": ["signal 1", "signal 2", ...],
     "negative": ["signal 1", ...]
   },
-  "reasoning": "Explication en 2-3 phrases."
+  "reasoning": "2-3 sentence explanation in English."
 }`,
       },
     ],
