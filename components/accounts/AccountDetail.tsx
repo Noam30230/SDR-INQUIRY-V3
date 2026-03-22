@@ -133,17 +133,17 @@ export default function AccountDetail({ account }: AccountDetailProps) {
           <div className="rounded-lg p-3 space-y-1.5 text-xs" style={{ background: 'var(--bg-hover)', border: '1px solid var(--border)' }}>
             <div className="flex gap-4 flex-wrap">
               {pappers.effectif && (
-                <span style={{ color: '#e2e8f0' }}>👥 <span style={{ color: 'var(--text-muted)' }}>Effectif :</span> {pappers.effectif}</span>
+                <span style={{ color: '#e2e8f0' }}>👥 <span style={{ color: 'var(--text-muted)' }}>Headcount:</span> {pappers.effectif}</span>
               )}
               {pappers.chiffre_affaires && (
-                <span style={{ color: '#e2e8f0' }}>💰 <span style={{ color: 'var(--text-muted)' }}>CA :</span> {(pappers.chiffre_affaires / 1000).toFixed(0)}k€</span>
+                <span style={{ color: '#e2e8f0' }}>💰 <span style={{ color: 'var(--text-muted)' }}>Revenue:</span> {(pappers.chiffre_affaires / 1000).toFixed(0)}k€</span>
               )}
               {pappers.dateCreation && (
-                <span style={{ color: '#e2e8f0' }}>📅 <span style={{ color: 'var(--text-muted)' }}>Créée en :</span> {pappers.dateCreation.slice(0, 4)}</span>
+                <span style={{ color: '#e2e8f0' }}>📅 <span style={{ color: 'var(--text-muted)' }}>Founded:</span> {pappers.dateCreation.slice(0, 4)}</span>
               )}
             </div>
             <div style={{ color: '#e2e8f0' }}>
-              🏭 <span style={{ color: 'var(--text-muted)' }}>Activité :</span> {pappers.nafLabel} <span style={{ color: 'var(--text-muted)' }}>({pappers.naf})</span>
+              🏭 <span style={{ color: 'var(--text-muted)' }}>Activity:</span> {pappers.nafLabel} <span style={{ color: 'var(--text-muted)' }}>({pappers.naf})</span>
             </div>
             {pappers.formeJuridique && (
               <div style={{ color: 'var(--text-muted)' }}>
@@ -152,7 +152,7 @@ export default function AccountDetail({ account }: AccountDetailProps) {
             )}
             {pappers.isDQCandidate && (
               <div className="mt-1 px-2 py-1 rounded text-xs font-medium" style={{ background: 'rgba(239,68,68,0.1)', color: '#f87171', border: '1px solid rgba(239,68,68,0.2)' }}>
-                ⚠ Code NAF suggère ESN/conseil IT — vérifier si SaaS
+                ⚠ NAF code suggests IT consulting / ESN — verify if SaaS
               </div>
             )}
           </div>
