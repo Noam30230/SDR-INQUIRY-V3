@@ -65,9 +65,6 @@ export default function AccountCard({ account, onDelete }: AccountCardProps) {
                   </span>
                 )}
               </div>
-              {account.domain && (
-                <p className="text-xs mt-0.5 truncate" style={{ color: 'var(--text-muted)' }}>{account.domain}</p>
-              )}
             </div>
 
             {/* Right: tier + score OR spinner */}
