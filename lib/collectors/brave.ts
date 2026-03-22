@@ -31,7 +31,6 @@ export async function collectBrave(companyName: string, domain?: string): Promis
   if (!apiKey) return null
 
   const name = `"${companyName}"`
-  const domainHint = domain ? ` site:${domain} OR` : ''
 
   const [jobResults, cloudResults, monitoringResults, fundingResults] = await Promise.all([
     serperSearch(`${name} devops OR sre OR kubernetes OR "software engineer" OR infrastructure jobs hiring`, apiKey),
@@ -42,12 +41,12 @@ export async function collectBrave(companyName: string, domain?: string): Promis
 
   const allJobText = jobResults.join(' ').toLowerCase()
   const allCloudText = cloudResults.join(' ').toLowerCase()
+  const allMonitoringText = monitoringResults.join(' ').toLowerCase()
   const allFundingText = fundingResults.join(' ').toLowerCase()
-  const allTechText = `${allJobText} ${allCloudText}`
 
   const techJobs = TECH_JOB_KEYWORDS.filter(kw => allJobText.includes(kw))
-  const cloudSignals = CLOUD_KEYWORDS.filter(kw => allTechText.includes(kw))
-  const monitoringSignals = MONITORING_KEYWORDS.filter(kw => allTechText.includes(kw))
+  const cloudSignals = CLOUD_KEYWORDS.filter(kw => (allCloudText + ' ' + allJobText).includes(kw))
+  const monitoringSignals = MONITORING_KEYWORDS.filter(kw => (allMonitoringText + ' ' + allJobText).includes(kw))
   const fundingSignals = FUNDING_KEYWORDS.filter(kw => allFundingText.includes(kw))
 
   return {
