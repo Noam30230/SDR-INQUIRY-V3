@@ -26,6 +26,7 @@ export interface WebQuality {
   hasBlog: boolean
   framework: string
   isPageBuilder: boolean
+  pageBuilderName: string
   techJobsCount: number
   // SaaS qualification signals
   hasPricing: boolean
