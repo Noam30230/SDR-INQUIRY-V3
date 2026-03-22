@@ -4,15 +4,19 @@ import type { WappalyzerData } from '@/types'
 // Mapping tech name → catégorie
 const TECH_CATEGORIES: Record<string, keyof TechStack> = {
   // Cloud
-  AWS: 'Cloud', 'Amazon Web Services': 'Cloud', GCP: 'Cloud', 'Google Cloud': 'Cloud',
-  Azure: 'Cloud', 'Microsoft Azure': 'Cloud', Vercel: 'Cloud', Netlify: 'Cloud',
-  Heroku: 'Cloud', DigitalOcean: 'Cloud', Cloudflare: 'Cloud', OVH: 'Cloud',
-  Scaleway: 'Cloud', Hetzner: 'Cloud', Fastly: 'Cloud', Fly: 'Cloud',
+  AWS: 'Cloud', 'Amazon Web Services': 'Cloud', 'AWS CloudFront': 'Cloud',
+  GCP: 'Cloud', 'Google Cloud': 'Cloud',
+  Azure: 'Cloud', 'Microsoft Azure': 'Cloud',
+  Vercel: 'Cloud', Netlify: 'Cloud', Heroku: 'Cloud', DigitalOcean: 'Cloud',
+  Cloudflare: 'Cloud', OVH: 'Cloud', Scaleway: 'Cloud', Hetzner: 'Cloud',
+  Fastly: 'Cloud', Fly: 'Cloud',
   // Monitoring
   Datadog: 'Monitoring', 'New Relic': 'Monitoring', Dynatrace: 'Monitoring',
   Prometheus: 'Monitoring', Grafana: 'Monitoring', Sentry: 'Monitoring',
-  'Elastic APM': 'Monitoring', PagerDuty: 'Monitoring',
-  OpenTelemetry: 'Monitoring',
+  'Elastic APM': 'Monitoring', PagerDuty: 'Monitoring', OpsGenie: 'Monitoring',
+  OpenTelemetry: 'Monitoring', ELK: 'Monitoring', Elasticsearch: 'Monitoring',
+  Splunk: 'Monitoring', Logstash: 'Monitoring', Kibana: 'Monitoring',
+  CloudWatch: 'Monitoring', Jaeger: 'Monitoring',
   // DevOps
   Kubernetes: 'DevOps', Docker: 'DevOps', Terraform: 'DevOps', Ansible: 'DevOps',
   Jenkins: 'DevOps', 'GitHub Actions': 'DevOps', CircleCI: 'DevOps', GitLab: 'DevOps',
