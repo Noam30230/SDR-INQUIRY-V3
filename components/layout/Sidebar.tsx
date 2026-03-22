@@ -150,29 +150,22 @@ export default function Sidebar({ accounts, isScoring, userEmail, onScoreBatch, 
         ))}
       </div>
 
-      {/* Status bar */}
-      {(isScoring || doneAccounts.length > 0) && (
+      {/* Status bar — only shown while scoring */}
+      {isScoring && (
         <div
           className="rounded-lg px-3 py-2 mb-4 text-xs flex items-center gap-2"
           style={{
-            background: isScoring ? 'rgba(124,58,237,0.08)' : 'rgba(16,185,129,0.08)',
-            border: `1px solid ${isScoring ? 'rgba(124,58,237,0.2)' : 'rgba(16,185,129,0.2)'}`,
-            color: isScoring ? '#a78bfa' : '#34d399',
+            background: 'rgba(124,58,237,0.08)',
+            border: '1px solid rgba(124,58,237,0.2)',
+            color: '#a78bfa',
           }}
         >
-          {isScoring ? (
-            <>
-              <div className="w-3 h-3 border-2 border-t-transparent rounded-full animate-spin shrink-0"
-                style={{ borderColor: '#a78bfa', borderTopColor: 'transparent' }} />
-              {/* Fix #9: show elapsed time so user knows it's running */}
-              <span>
-                Scoring {scoringCount > 1 ? `${scoringCount} accounts` : 'account'}
-                <span className="ml-1 opacity-60">· {elapsed}s</span>
-              </span>
-            </>
-          ) : (
-            <>✅ Done · {doneAccounts.length} account{doneAccounts.length !== 1 ? 's' : ''} analyzed</>
-          )}
+          <div className="w-3 h-3 border-2 border-t-transparent rounded-full animate-spin shrink-0"
+            style={{ borderColor: '#a78bfa', borderTopColor: 'transparent' }} />
+          <span>
+            Scoring {scoringCount > 1 ? `${scoringCount} accounts` : 'account'}
+            <span className="ml-1 opacity-60">· {elapsed}s</span>
+          </span>
         </div>
       )}
 
