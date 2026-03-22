@@ -134,16 +134,14 @@ export default function AccountCard({ account, onDelete }: AccountCardProps) {
           </button>
         )}
 
-        {/* Cancel button */}
-        {(isScoring || isError) && (
-          <button
-            onClick={() => onDelete(account.id)}
-            className="shrink-0 w-6 h-6 flex items-center justify-center rounded text-xs transition-colors hover:text-red-400"
-            style={{ color: 'var(--text-muted)' }}
-          >
-            ✕
-          </button>
-        )}
+        {/* Delete button — always visible */}
+        <button
+          onClick={() => onDelete(account.id)}
+          className="shrink-0 w-6 h-6 flex items-center justify-center rounded text-xs transition-colors hover:text-red-400"
+          style={{ color: 'var(--text-muted)' }}
+        >
+          ✕
+        </button>
       </div>
 
       {/* Expanded detail */}
