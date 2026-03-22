@@ -14,15 +14,6 @@ function getTopTechs(stack: TechStack): string[] {
   return techs.slice(0, 5)
 }
 
-function getAvatarColor(name: string): string {
-  const colors = [
-    '#7c3aed', '#6366f1', '#0ea5e9', '#10b981', '#f59e0b',
-    '#ec4899', '#14b8a6', '#8b5cf6', '#06b6d4', '#84cc16',
-  ]
-  let hash = 0
-  for (let i = 0; i < name.length; i++) hash = name.charCodeAt(i) + ((hash << 5) - hash)
-  return colors[Math.abs(hash) % colors.length]
-}
 
 function scoreColor(score: number): string {
   if (score >= 75) return '#10b981'
@@ -43,8 +34,6 @@ export default function AccountCard({ account, onDelete }: AccountCardProps) {
   const isError = account.status === 'error'
   const isDone = account.status === 'done'
   const topTechs = account.tech_stack ? getTopTechs(account.tech_stack) : []
-  const avatarColor = getAvatarColor(account.company_name)
-  const initial = account.company_name.charAt(0).toUpperCase()
 
   return (
     <div
@@ -62,14 +51,6 @@ export default function AccountCard({ account, onDelete }: AccountCardProps) {
         disabled={isScoring || isError}
       >
         <div className="flex items-center gap-3">
-          {/* Avatar */}
-          <div
-            className="shrink-0 w-9 h-9 rounded-lg flex items-center justify-center font-bold text-sm text-white"
-            style={{ background: `${avatarColor}22`, border: `1px solid ${avatarColor}44`, color: avatarColor }}
-          >
-            {initial}
-          </div>
-
           {/* Company info */}
           <div className="flex-1 min-w-0">
             <div className="flex items-center gap-2 flex-wrap">
@@ -131,7 +112,7 @@ export default function AccountCard({ account, onDelete }: AccountCardProps) {
 
         {/* Tech chips */}
         {topTechs.length > 0 && (
-          <div className="flex flex-wrap gap-1 mt-2.5 ml-12">
+          <div className="flex flex-wrap gap-1 mt-2.5">
             {topTechs.map(t => <SignalChip key={t} label={t} variant="tech" />)}
           </div>
         )}
