@@ -18,7 +18,7 @@ const TECH_CATEGORIES: Record<string, keyof TechStack> = {
   Splunk: 'Monitoring', Logstash: 'Monitoring', Kibana: 'Monitoring',
   CloudWatch: 'Monitoring', Jaeger: 'Monitoring',
   // DevOps
-  Kubernetes: 'DevOps', Docker: 'DevOps', Terraform: 'DevOps', Ansible: 'DevOps',
+  Kubernetes: 'DevOps', Docker: 'DevOps', Terraform: 'DevOps', Serverless: 'DevOps', Ansible: 'DevOps',
   Jenkins: 'DevOps', 'GitHub Actions': 'DevOps', CircleCI: 'DevOps', GitLab: 'DevOps',
   ArgoCD: 'DevOps', Helm: 'DevOps', Pulumi: 'DevOps',
   // Data
@@ -103,10 +103,13 @@ export function aggregate(data: AggregatedData): {
   // Signaux cloud depuis Brave
   if (data.brave?.cloudSignals) {
     const cloudMap: Record<string, string> = {
-      aws: 'AWS', gcp: 'GCP', azure: 'Azure', kubernetes: 'Kubernetes',
-      docker: 'Docker', terraform: 'Terraform', snowflake: 'Snowflake',
-      databricks: 'Databricks', kafka: 'Kafka', spark: 'Spark',
-      airflow: 'Airflow', dbt: 'dbt', redshift: 'Redshift', bigquery: 'BigQuery',
+      aws: 'AWS', 'amazon web services': 'AWS',
+      gcp: 'GCP', 'google cloud': 'GCP',
+      azure: 'Azure', 'microsoft azure': 'Azure',
+      kubernetes: 'Kubernetes', docker: 'Docker', terraform: 'Terraform',
+      serverless: 'Serverless', snowflake: 'Snowflake', databricks: 'Databricks',
+      kafka: 'Kafka', spark: 'Spark', airflow: 'Airflow',
+      dbt: 'dbt', redshift: 'Redshift', bigquery: 'BigQuery',
     }
     for (const signal of data.brave.cloudSignals) {
       const tech = cloudMap[signal.toLowerCase()]
