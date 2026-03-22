@@ -22,7 +22,7 @@ async function serperSearch(query: string, apiKey: string, num = 5): Promise<str
 }
 
 const TECH_JOB_KEYWORDS = ['devops', 'sre', 'platform', 'cloud', 'kubernetes', 'infrastructure', 'backend', 'software engineer', 'data engineer', 'security', 'mlops', 'data scientist']
-const CLOUD_KEYWORDS = ['aws', 'gcp', 'azure', 'kubernetes', 'docker', 'terraform', 'microservices', 'cloud native', 'serverless', 'databricks', 'snowflake', 'kafka', 'spark', 'airflow', 'dbt', 'redshift', 'bigquery']
+const CLOUD_KEYWORDS = ['aws', 'amazon web services', 'gcp', 'google cloud', 'azure', 'microsoft azure', 'kubernetes', 'docker', 'terraform', 'serverless', 'databricks', 'snowflake', 'kafka', 'spark', 'airflow', 'dbt', 'redshift', 'bigquery']
 const MONITORING_KEYWORDS = ['datadog', 'grafana', 'prometheus', 'elk', 'elasticsearch', 'splunk', 'new relic', 'pagerduty', 'opsgenie', 'dynatrace', 'cloudwatch', 'opentelemetry', 'jaeger', 'sentry', 'logstash', 'kibana']
 const FUNDING_KEYWORDS = ['series a', 'series b', 'series c', 'seed', 'levée de fonds', 'raised', 'funding', 'million', 'investment']
 
@@ -31,10 +31,12 @@ export async function collectBrave(companyName: string, domain?: string): Promis
   if (!apiKey) return null
 
   const name = `"${companyName}"`
+  const domainHint = domain ? ` site:${domain} OR` : ''
 
-  const [jobResults, cloudResults, fundingResults] = await Promise.all([
-    serperSearch(`${name} devops OR sre OR kubernetes OR "software engineer" OR datadog OR prometheus OR grafana jobs hiring`, apiKey),
-    serperSearch(`${name} aws OR gcp OR azure OR "cloud native" OR microservices OR kubernetes OR datadog OR elk OR grafana technology stack`, apiKey),
+  const [jobResults, cloudResults, monitoringResults, fundingResults] = await Promise.all([
+    serperSearch(`${name} devops OR sre OR kubernetes OR "software engineer" OR infrastructure jobs hiring`, apiKey),
+    serperSearch(`${name} azure OR "amazon web services" OR aws OR "google cloud" OR gcp OR kubernetes OR docker OR terraform cloud infrastructure`, apiKey, 8),
+    serperSearch(`${name} datadog OR grafana OR prometheus OR elk OR splunk OR "new relic" OR dynatrace monitoring observability`, apiKey, 8),
     serperSearch(`${name} funding OR "series" OR "raised" OR "levée de fonds" OR investment 2023 OR 2024 OR 2025`, apiKey),
   ])
 
