@@ -71,15 +71,20 @@ function buildUserPrompt(data: AggregatedData): string {
   }
 
   if (data.brave) {
-    lines.push(`\n[SIGNAUX WEB (Brave Search)]`)
-    if (data.brave.techJobs.length) lines.push(`Tech hiring signals: ${data.brave.techJobs.join(', ')}`)
-    if (data.brave.cloudSignals.length) lines.push(`Cloud/infra signals: ${data.brave.cloudSignals.join(', ')}`)
-    if (data.brave.monitoringSignals.length) lines.push(`Monitoring/observability tools detected: ${data.brave.monitoringSignals.join(', ')}`)
+    lines.push(`\n[HIRING & FUNDING SIGNALS]`)
+    lines.push(`Actively hiring tech roles: ${data.brave.isTechHiring ? 'yes' : 'no'}`)
+    if (data.brave.techJobRoles.length) lines.push(`Tech roles found: ${data.brave.techJobRoles.join(', ')}`)
     if (data.brave.fundingSignals.length) lines.push(`Funding signals: ${data.brave.fundingSignals.join(', ')}`)
     if (data.brave.newsHeadlines.length) {
-      lines.push(`Actualités récentes :`)
+      lines.push(`Recent news:`)
       data.brave.newsHeadlines.forEach(h => lines.push(`  - ${h}`))
     }
+  }
+
+  if (data.github?.techSignals?.length) {
+    lines.push(`\n[TECH TOOLS CONFIRMED VIA GITHUB REPOS]`)
+    lines.push(`(These are confirmed: found in repo names, topics or descriptions)`)
+    lines.push(data.github.techSignals.join(', '))
   }
 
   if (data.news?.articles?.length) {
@@ -108,25 +113,18 @@ export async function scoreAccount(data: AggregatedData): Promise<ScorerOutput> 
       {
         role: 'user', content: `${userPrompt}
 
+IMPORTANT: Do NOT use your prior knowledge about this company. Only use the data provided above.
+The tech stack has already been collected — do not add tools not mentioned in the data.
+
 Return exactly this JSON:
 {
   "tier": "T1" | "T2" | "T3" | "DQ",
   "score": <number between 0 and 100>,
-  "tech_stack": {
-    "Cloud": [],
-    "Monitoring": [],
-    "DevOps": [],
-    "Languages": [],
-    "Data": [],
-    "AI": [],
-    "Security": [],
-    "Other": []
-  },
   "signals": {
     "positive": ["signal 1", "signal 2", ...],
     "negative": ["signal 1", ...]
   },
-  "reasoning": "2-3 sentence explanation in English."
+  "reasoning": "2-3 sentence explanation in English based strictly on the provided data."
 }`,
       },
     ],
@@ -136,19 +134,11 @@ Return exactly this JSON:
     const raw = completion.choices[0].message.content || '{}'
     const parsed = JSON.parse(raw)
 
-    // Merge avec la tech stack détectée localement
-    const mergedStack: TechStack = { ...EMPTY_TECH_STACK }
-    const keys = Object.keys(mergedStack) as Array<keyof TechStack>
-    for (const key of keys) {
-      const local = techStack[key] || []
-      const gpt = parsed.tech_stack?.[key] || []
-      mergedStack[key] = Array.from(new Set([...local, ...gpt]))
-    }
-
+    // Tech stack comes exclusively from collectors — GPT does not modify it
     return {
       tier: parsed.tier || 'T3',
       score: typeof parsed.score === 'number' ? Math.max(0, Math.min(100, parsed.score)) : 50,
-      tech_stack: mergedStack,
+      tech_stack: techStack,
       signals: {
         positive: parsed.signals?.positive || [],
         negative: parsed.signals?.negative || [],

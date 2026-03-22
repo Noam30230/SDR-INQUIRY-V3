@@ -21,11 +21,16 @@ async function serperSearch(query: string, apiKey: string, num = 5): Promise<str
   }
 }
 
-const TECH_JOB_KEYWORDS = ['devops', 'sre', 'platform', 'cloud', 'kubernetes', 'infrastructure', 'backend', 'software engineer', 'data engineer', 'security', 'mlops', 'data scientist']
-// NB: cloud providers (aws/gcp/azure) are detected via DNS+ASN only — not here (too many false positives in search snippets)
-const CLOUD_KEYWORDS = ['kubernetes', 'docker', 'terraform', 'serverless', 'databricks', 'snowflake', 'kafka', 'spark', 'airflow', 'dbt', 'redshift', 'bigquery']
-const MONITORING_KEYWORDS = ['datadog', 'grafana', 'prometheus', 'elk', 'elasticsearch', 'splunk', 'new relic', 'pagerduty', 'opsgenie', 'dynatrace', 'cloudwatch', 'opentelemetry', 'jaeger', 'sentry', 'logstash', 'kibana']
-const FUNDING_KEYWORDS = ['series a', 'series b', 'series c', 'seed', 'levée de fonds', 'raised', 'funding', 'million', 'investment']
+const TECH_JOB_ROLES = [
+  'devops', 'sre', 'platform engineer', 'cloud engineer', 'infrastructure',
+  'backend engineer', 'software engineer', 'data engineer', 'security engineer',
+  'mlops', 'data scientist', 'solutions architect',
+]
+
+const FUNDING_KEYWORDS = [
+  'series a', 'series b', 'series c', 'series d', 'seed round',
+  'raised', 'funding', 'levée de fonds', 'investment', 'million',
+]
 
 export async function collectBrave(companyName: string, domain?: string): Promise<BraveSearchData | null> {
   const apiKey = process.env.SERPER_API_KEY
@@ -33,27 +38,22 @@ export async function collectBrave(companyName: string, domain?: string): Promis
 
   const name = `"${companyName}"`
 
-  const [jobResults, cloudResults, monitoringResults, fundingResults] = await Promise.all([
-    serperSearch(`${name} devops OR sre OR kubernetes OR "software engineer" OR infrastructure jobs hiring`, apiKey),
-    serperSearch(`${name} kubernetes OR docker OR terraform OR snowflake OR databricks OR kafka OR spark infrastructure stack`, apiKey, 8),
-    serperSearch(`${name} datadog OR grafana OR prometheus OR elk OR splunk OR "new relic" OR dynatrace monitoring observability`, apiKey, 8),
+  // Only two queries: hiring signals + funding signals
+  // We do NOT use Serper for tech stack — too many false positives from generic snippets
+  const [jobResults, fundingResults] = await Promise.all([
+    serperSearch(`${name} jobs hiring "software engineer" OR devops OR sre OR "data engineer" OR "platform engineer"`, apiKey),
     serperSearch(`${name} funding OR "series" OR "raised" OR "levée de fonds" OR investment 2023 OR 2024 OR 2025`, apiKey),
   ])
 
   const allJobText = jobResults.join(' ').toLowerCase()
-  const allCloudText = cloudResults.join(' ').toLowerCase()
-  const allMonitoringText = monitoringResults.join(' ').toLowerCase()
   const allFundingText = fundingResults.join(' ').toLowerCase()
 
-  const techJobs = TECH_JOB_KEYWORDS.filter(kw => allJobText.includes(kw))
-  const cloudSignals = CLOUD_KEYWORDS.filter(kw => (allCloudText + ' ' + allJobText).includes(kw))
-  const monitoringSignals = MONITORING_KEYWORDS.filter(kw => (allMonitoringText + ' ' + allJobText).includes(kw))
+  const techJobRoles = TECH_JOB_ROLES.filter(role => allJobText.includes(role))
   const fundingSignals = FUNDING_KEYWORDS.filter(kw => allFundingText.includes(kw))
 
   return {
-    techJobs,
-    cloudSignals,
-    monitoringSignals,
+    isTechHiring: techJobRoles.length > 0,
+    techJobRoles,
     newsHeadlines: fundingResults.slice(0, 3),
     fundingSignals,
   }

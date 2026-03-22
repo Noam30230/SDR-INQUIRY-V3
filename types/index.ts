@@ -89,6 +89,7 @@ export interface GitHubData {
   orgName: string
   repoCount: number
   languages: string[]
+  techSignals: string[]  // tools detected from repo names/topics/descriptions
   recentActivity: boolean
   stars: number
 }
@@ -119,9 +120,8 @@ export interface SiteQualityData {
 
 // Payload Brave Search
 export interface BraveSearchData {
-  techJobs: string[]
-  cloudSignals: string[]
-  monitoringSignals: string[]
+  isTechHiring: boolean   // is the company actively hiring tech roles?
+  techJobRoles: string[]  // which roles (devops, sre, backend...)
   newsHeadlines: string[]
   fundingSignals: string[]
 }

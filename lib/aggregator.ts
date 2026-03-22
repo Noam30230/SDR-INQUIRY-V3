@@ -97,36 +97,14 @@ export function aggregate(data: AggregatedData): {
 } {
   const extraTechs: string[] = []
 
-  // Hébergeur depuis les mentions légales
+  // Cloud provider — from DNS+ASN only (deterministic)
   if (data.siteQuality?.hosting) extraTechs.push(data.siteQuality.hosting)
 
-  // Signaux cloud depuis Brave
-  if (data.brave?.cloudSignals) {
-    // Cloud providers come exclusively from DNS+ASN (siteQuality.hosting) — not mapped here
-    const cloudMap: Record<string, string> = {
-      kubernetes: 'Kubernetes', docker: 'Docker', terraform: 'Terraform',
-      serverless: 'Serverless', snowflake: 'Snowflake', databricks: 'Databricks',
-      kafka: 'Kafka', spark: 'Spark', airflow: 'Airflow',
-      dbt: 'dbt', redshift: 'Redshift', bigquery: 'BigQuery',
-    }
-    for (const signal of data.brave.cloudSignals) {
-      const tech = cloudMap[signal.toLowerCase()]
-      if (tech && !extraTechs.includes(tech)) extraTechs.push(tech)
-    }
-  }
-
-  // Signaux monitoring depuis Brave
-  if (data.brave?.monitoringSignals) {
-    const monitoringMap: Record<string, string> = {
-      datadog: 'Datadog', grafana: 'Grafana', prometheus: 'Prometheus',
-      elk: 'ELK', elasticsearch: 'Elasticsearch', splunk: 'Splunk',
-      'new relic': 'New Relic', pagerduty: 'PagerDuty', opsgenie: 'OpsGenie',
-      dynatrace: 'Dynatrace', cloudwatch: 'CloudWatch', opentelemetry: 'OpenTelemetry',
-      jaeger: 'Jaeger', sentry: 'Sentry', logstash: 'Logstash', kibana: 'Kibana',
-    }
-    for (const signal of data.brave.monitoringSignals) {
-      const tech = monitoringMap[signal.toLowerCase()]
-      if (tech && !extraTechs.includes(tech)) extraTechs.push(tech)
+  // Tech tools — from GitHub repo names/topics/descriptions (reliable: if a repo is named
+  // "datadog-exporter", they actually use Datadog — unlike search snippet guessing)
+  if (data.github?.techSignals) {
+    for (const tech of data.github.techSignals) {
+      if (!extraTechs.includes(tech)) extraTechs.push(tech)
     }
   }
 
