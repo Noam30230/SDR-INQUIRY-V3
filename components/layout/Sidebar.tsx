@@ -46,7 +46,7 @@ export default function Sidebar({ accounts, isScoring, userEmail, onScoreBatch, 
   const [tab, setTab] = useState<'manual' | 'csv'>('manual')
   const [text, setText] = useState('')
   const [csvPreview, setCsvPreview] = useState<ParsedRow[]>([])
-  const [csvMapping, setCsvMapping] = useState<{ nameCol: string; domainCol: string | null; sfdcCol: string | null } | null>(null)
+  const [csvMapping, setCsvMapping] = useState<{ nameCol: string | null; domainCol: string | null; sfdcCol: string | null } | null>(null)
   const fileRef = useRef<HTMLInputElement>(null)
 
   const doneAccounts = accounts.filter(a => a.status === 'done')
