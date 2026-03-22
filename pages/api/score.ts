@@ -87,6 +87,27 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
       pappers: pappers ?? undefined,
     }
 
+    // Hard DQ rule: ESN/IT consulting NAF code → no need for GPT
+    if (pappers?.isDQCandidate) {
+      const EMPTY_STACK = { Cloud: [], Monitoring: [], DevOps: [], Languages: [], Data: [], AI: [], Security: [], Other: [] }
+      await supabaseAdmin.from('accounts').update({
+        tier: 'DQ',
+        score: 5,
+        signals: {
+          positive: [],
+          negative: [`NAF code ${pappers.naf} (${pappers.nafLabel}) — IT consulting / ESN, not a software product company`],
+        },
+        tech_stack: EMPTY_STACK,
+        web_quality: null,
+        press_signals: { articles: [] },
+        reasoning: `Automatically disqualified: NAF code ${pappers.naf} indicates an IT services / consulting firm (ESN). Datadog targets software product companies, not service providers.`,
+        raw_data: { pappers: pappers ?? null },
+        status: 'done',
+        domain: domain || null,
+      }).eq('id', account.id)
+      return res.status(200).json({ id: account.id, status: 'done' })
+    }
+
     const scored = await scoreAccount(aggregated)
 
     const sq = aggregated.siteQuality
