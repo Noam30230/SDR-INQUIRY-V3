@@ -93,7 +93,7 @@ export default function LoginPage() {
       </div>
 
       {/* RIGHT — Login form */}
-      <div className="w-full lg:w-[420px] flex flex-col justify-center px-8 lg:px-10"
+      <div className="w-full lg:w-[540px] flex flex-col justify-center px-8 lg:px-14"
         style={{ background: '#0c1020', borderLeft: '1px solid var(--border)' }}>
 
         <div className="w-full max-w-sm mx-auto">
