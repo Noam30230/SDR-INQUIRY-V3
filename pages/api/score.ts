@@ -1,6 +1,4 @@
 import type { NextApiRequest, NextApiResponse } from 'next'
-
-export const config = { maxDuration: 60 }
 import { createClient } from '@supabase/supabase-js'
 import { supabaseAdmin } from '@/lib/supabase-admin'
 import { collectPappers } from '@/lib/collectors/pappers'
@@ -32,6 +30,7 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
   const { companyName, domain: inputDomain, salesforceId } = req.body as { companyName: string; domain?: string; salesforceId?: string }
   if (!companyName?.trim()) return res.status(400).json({ error: 'Company name required' })
 
+  // Crée le compte avec status 'scoring'
   const { data: account, error: insertError } = await supabaseAdmin
     .from('accounts')
     .insert({ user_id: user.id, company_name: companyName.trim(), domain: inputDomain || null, salesforce_id: salesforceId || null, status: 'scoring' })
@@ -40,9 +39,7 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
 
   if (insertError || !account) return res.status(500).json({ error: 'Erreur création compte' })
 
-  res.status(202).json({ id: account.id, status: 'scoring' })
-
-  // Scoring asynchrone
+  // Scoring synchrone — tout se passe avant de répondre
   try {
     const domain = inputDomain?.trim() || ''
     const isFrench = domain.endsWith('.fr')
@@ -108,10 +105,14 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
       })
       .eq('id', account.id)
 
+    return res.status(200).json({ id: account.id, status: 'done' })
+
   } catch (err) {
     await supabaseAdmin
       .from('accounts')
       .update({ status: 'error', error_message: err instanceof Error ? err.message : 'Erreur inconnue' })
       .eq('id', account.id)
+
+    return res.status(500).json({ error: 'Scoring failed' })
   }
 }
