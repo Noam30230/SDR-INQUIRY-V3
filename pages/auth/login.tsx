@@ -1,4 +1,5 @@
 import { useState } from 'react'
+import { useRouter } from 'next/router'
 import { supabaseBrowser } from '@/lib/supabase'
 
 const FEATURES = [
@@ -8,22 +9,49 @@ const FEATURES = [
   { icon: '📰', title: 'Real-time signals', desc: 'Funding rounds, press coverage, hiring signals' },
 ]
 
-export default function LoginPage() {
-  const [email, setEmail] = useState('')
-  const [loading, setLoading] = useState(false)
-  const [sent, setSent] = useState(false)
-  const [error, setError] = useState('')
+type Mode = 'signin' | 'signup'
 
-  async function handleLogin(e: React.FormEvent) {
+export default function LoginPage() {
+  const router = useRouter()
+  const [mode, setMode] = useState<Mode>('signin')
+  const [email, setEmail] = useState('')
+  const [password, setPassword] = useState('')
+  const [loading, setLoading] = useState(false)
+  const [error, setError] = useState('')
+  const [success, setSuccess] = useState('')
+
+  async function handleSubmit(e: React.FormEvent) {
     e.preventDefault()
     setLoading(true)
     setError('')
-    const { error } = await supabaseBrowser.auth.signInWithOtp({
-      email,
-      options: { emailRedirectTo: `${window.location.origin}/auth/callback` },
-    })
-    if (error) setError(error.message)
-    else setSent(true)
+    setSuccess('')
+
+    if (mode === 'signin') {
+      const { error } = await supabaseBrowser.auth.signInWithPassword({ email, password })
+      if (error) {
+        if (error.message.includes('Invalid login credentials')) {
+          setError("Identifiants incorrects. Pas encore de compte ? Clique sur Sign up.")
+        } else {
+          setError(error.message)
+        }
+      } else {
+        router.replace('/scoring')
+      }
+    } else {
+      const { error } = await supabaseBrowser.auth.signUp({ email, password })
+      if (error) {
+        if (error.message.includes('already registered')) {
+          setError("Cet email a déjà un compte. Clique sur Log in.")
+        } else {
+          setError(error.message)
+        }
+      } else {
+        setSuccess("Compte créé ! Tu peux maintenant te connecter.")
+        setMode('signin')
+        setPassword('')
+      }
+    }
+
     setLoading(false)
   }
 
@@ -32,7 +60,6 @@ export default function LoginPage() {
 
       {/* LEFT — Marketing */}
       <div className="hidden lg:flex flex-col justify-center flex-1 px-14 py-12 relative overflow-hidden">
-        {/* Gradient blob */}
         <div className="absolute top-0 left-0 w-[500px] h-[500px] rounded-full opacity-20 pointer-events-none"
           style={{ background: 'radial-gradient(circle, #7c3aed 0%, transparent 70%)', transform: 'translate(-40%, -40%)' }} />
 
@@ -92,70 +119,87 @@ export default function LoginPage() {
         </div>
       </div>
 
-      {/* RIGHT — Login form */}
+      {/* RIGHT — Auth form */}
       <div className="w-full lg:w-[540px] flex flex-col justify-center px-8 lg:px-14"
         style={{ background: '#0c1020', borderLeft: '1px solid var(--border)' }}>
 
         <div className="w-full max-w-sm mx-auto">
-
-          {/* Personal workspace badge */}
-          <div className="flex items-center gap-2 mb-6 px-3 py-2 rounded-lg w-fit"
-            style={{ background: 'rgba(124,58,237,0.1)', border: '1px solid rgba(124,58,237,0.2)' }}>
-            <span className="text-xs">🔐</span>
-            <span className="text-xs font-medium" style={{ color: '#a78bfa' }}>Personal workspace — your accounts, your data</span>
-          </div>
-
-          <h2 className="text-2xl font-bold text-white mb-1">Welcome back</h2>
+          <h2 className="text-2xl font-bold text-white mb-1">
+            {mode === 'signin' ? 'Welcome back' : 'Create your account'}
+          </h2>
           <p className="text-sm mb-6" style={{ color: 'var(--text-muted)' }}>
-            Enter your email to receive a magic link.<br />
-            <span className="text-xs">New here? Your account is created automatically.</span>
+            {mode === 'signin' ? 'Log in to your workspace' : 'Start scoring your accounts'}
           </p>
 
-          {sent ? (
-            <div className="rounded-xl p-5 text-center" style={{ background: 'var(--bg-card)', border: '1px solid var(--border)' }}>
-              <div className="text-3xl mb-3">📬</div>
-              <p className="font-semibold text-white">Check your inbox</p>
-              <p className="text-sm mt-1.5" style={{ color: 'var(--text-muted)' }}>
-                Magic link sent to <span className="text-white font-medium">{email}</span>
-              </p>
-              <p className="text-xs mt-2" style={{ color: 'var(--text-muted)' }}>
-                You&apos;ll land directly in your workspace with all your accounts.
-              </p>
-            </div>
-          ) : (
-            <form onSubmit={handleLogin} className="space-y-3">
-              <div>
-                <label className="block text-sm font-medium text-white mb-1.5">Work email</label>
-                <input
-                  type="email"
-                  value={email}
-                  onChange={e => setEmail(e.target.value)}
-                  placeholder="you@datadoghq.com"
-                  required
-                  className="w-full px-4 py-2.5 rounded-lg text-sm text-white placeholder-gray-600 outline-none"
-                  style={{ background: 'var(--bg-hover)', border: '1px solid var(--border)' }}
-                />
-              </div>
-
-              {error && <p className="text-sm text-red-400">{error}</p>}
-
+          {/* Toggle Log in / Sign up */}
+          <div className="flex rounded-lg p-1 mb-6" style={{ background: 'var(--bg-card)', border: '1px solid var(--border)' }}>
+            {(['signin', 'signup'] as Mode[]).map(m => (
               <button
-                type="submit"
-                disabled={loading || !email}
-                className="w-full py-2.5 rounded-lg text-sm font-bold text-white transition-all disabled:opacity-50"
-                style={{ background: 'linear-gradient(135deg, #7c3aed, #6d28d9)' }}
+                key={m}
+                onClick={() => { setMode(m); setError(''); setSuccess('') }}
+                className="flex-1 py-2 rounded-md text-sm font-semibold transition-all"
+                style={{
+                  background: mode === m ? 'var(--primary)' : 'transparent',
+                  color: mode === m ? '#fff' : 'var(--text-muted)',
+                }}
               >
-                {loading ? 'Sending...' : 'Log in to Account Scorer →'}
+                {m === 'signin' ? 'Log in' : 'Sign up'}
               </button>
-            </form>
-          )}
-
-          {/* Session persistence note */}
-          <div className="mt-4 p-3 rounded-lg" style={{ background: 'rgba(16,185,129,0.06)', border: '1px solid rgba(16,185,129,0.15)' }}>
-            <p className="text-xs" style={{ color: '#6ee7b7' }}>
-              ✓ Your scored accounts are saved and available every time you log back in.
-            </p>
+            ))}
           </div>
+
+          {/* Form */}
+          <form onSubmit={handleSubmit} className="space-y-3">
+            <div>
+              <label className="block text-sm font-medium text-white mb-1.5">Work email</label>
+              <input
+                type="email"
+                value={email}
+                onChange={e => setEmail(e.target.value)}
+                placeholder="you@datadoghq.com"
+                required
+                className="w-full px-4 py-2.5 rounded-lg text-sm text-white placeholder-gray-600 outline-none"
+                style={{ background: 'var(--bg-hover)', border: '1px solid var(--border)' }}
+              />
+            </div>
+            <div>
+              <label className="block text-sm font-medium text-white mb-1.5">Password</label>
+              <input
+                type="password"
+                value={password}
+                onChange={e => setPassword(e.target.value)}
+                placeholder="••••••••"
+                required
+                minLength={6}
+                className="w-full px-4 py-2.5 rounded-lg text-sm text-white placeholder-gray-600 outline-none"
+                style={{ background: 'var(--bg-hover)', border: '1px solid var(--border)' }}
+              />
+            </div>
+
+            {error && (
+              <div className="p-3 rounded-lg text-sm text-red-300"
+                style={{ background: 'rgba(239,68,68,0.1)', border: '1px solid rgba(239,68,68,0.2)' }}>
+                {error}
+              </div>
+            )}
+            {success && (
+              <div className="p-3 rounded-lg text-sm"
+                style={{ color: '#6ee7b7', background: 'rgba(16,185,129,0.08)', border: '1px solid rgba(16,185,129,0.2)' }}>
+                ✓ {success}
+              </div>
+            )}
+
+            <button
+              type="submit"
+              disabled={loading || !email || !password}
+              className="w-full py-2.5 rounded-lg text-sm font-bold text-white transition-all disabled:opacity-50"
+              style={{ background: 'linear-gradient(135deg, #7c3aed, #6d28d9)' }}
+            >
+              {loading
+                ? (mode === 'signin' ? 'Connexion...' : 'Création...')
+                : (mode === 'signin' ? 'Log in to Account Scorer →' : 'Create my account →')}
+            </button>
+          </form>
 
           <p className="text-center text-xs mt-6" style={{ color: 'var(--text-muted)' }}>
             Built by <span className="font-semibold" style={{ color: '#7c3aed' }}>Noam Ramillon</span> · Datadog SDR 🐶
