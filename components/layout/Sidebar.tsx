@@ -2,12 +2,13 @@ import { useState, useRef } from 'react'
 import Papa from 'papaparse'
 import type { Account, Tier } from '@/types'
 import { supabaseBrowser } from '@/lib/supabase'
+import { detectColumns, parseRows, type ParsedRow } from '@/lib/csv-parser'
 
 interface SidebarProps {
   accounts: Account[]
   isScoring: boolean
-  onScoreOne: (name: string, domain?: string) => Promise<void>
-  onScoreBatch: (items: Array<{ name: string; domain?: string }>) => Promise<void>
+  onScoreOne: (name: string, domain?: string, salesforceId?: string) => Promise<void>
+  onScoreBatch: (items: ParsedRow[]) => Promise<void>
   onStopBatch: () => void
   onExport: () => void
 }
@@ -31,7 +32,8 @@ function TierCounter({ tier, count }: { tier: Tier; count: number }) {
 export default function Sidebar({ accounts, isScoring, onScoreOne, onScoreBatch, onStopBatch, onExport }: SidebarProps) {
   const [companyName, setCompanyName] = useState('')
   const [domain, setDomain] = useState('')
-  const [csvPreview, setCsvPreview] = useState<Array<{ name: string; domain?: string }>>([])
+  const [csvPreview, setCsvPreview] = useState<ParsedRow[]>([])
+  const [csvMapping, setCsvMapping] = useState<{ nameCol: string; domainCol: string | null; sfdcCol: string | null } | null>(null)
   const fileRef = useRef<HTMLInputElement>(null)
 
   const doneAccounts = accounts.filter(a => a.status === 'done')
@@ -57,11 +59,12 @@ export default function Sidebar({ accounts, isScoring, onScoreOne, onScoreBatch,
       header: true,
       skipEmptyLines: true,
       complete: (results) => {
-        const items = (results.data as Record<string, string>[]).map(row => ({
-          name: row['company'] || row['Company'] || row['name'] || row['Name'] || Object.values(row)[0] || '',
-          domain: row['domain'] || row['Domain'] || undefined,
-        })).filter(item => item.name.trim())
-        setCsvPreview(items)
+        const headers = results.meta.fields || []
+        const { nameCol, domainCol, sfdcCol } = detectColumns(headers)
+        if (!nameCol) return
+        const rows = parseRows(results.data as Record<string, string>[], nameCol, domainCol, sfdcCol)
+        setCsvPreview(rows)
+        setCsvMapping({ nameCol, domainCol, sfdcCol })
       },
     })
   }
@@ -70,6 +73,7 @@ export default function Sidebar({ accounts, isScoring, onScoreOne, onScoreBatch,
     if (csvPreview.length === 0) return
     await onScoreBatch(csvPreview)
     setCsvPreview([])
+    setCsvMapping(null)
     if (fileRef.current) fileRef.current.value = ''
   }
 
@@ -148,12 +152,36 @@ export default function Sidebar({ accounts, isScoring, onScoreOne, onScoreBatch,
           Columns: <code className="text-purple-300">company</code>, <code className="text-purple-300">domain</code>
         </p>
 
-        {csvPreview.length > 0 && (
-          <div className="rounded-lg p-2 text-xs" style={{ background: 'var(--bg-hover)', border: '1px solid var(--border)' }}>
+        {csvPreview.length > 0 && csvMapping && (
+          <div className="rounded-lg p-2 text-xs space-y-1.5" style={{ background: 'var(--bg-hover)', border: '1px solid var(--border)' }}>
+            {/* Detected columns */}
+            <div className="flex flex-wrap gap-1 pb-1.5" style={{ borderBottom: '1px solid var(--border)' }}>
+              <span className="px-1.5 py-0.5 rounded text-xs" style={{ background: 'rgba(124,58,237,0.15)', color: '#a78bfa' }}>
+                name: {csvMapping.nameCol}
+              </span>
+              {csvMapping.domainCol && (
+                <span className="px-1.5 py-0.5 rounded text-xs" style={{ background: 'rgba(16,185,129,0.1)', color: '#6ee7b7' }}>
+                  domain: {csvMapping.domainCol}
+                </span>
+              )}
+              {csvMapping.sfdcCol && (
+                <span className="px-1.5 py-0.5 rounded text-xs" style={{ background: 'rgba(245,158,11,0.1)', color: '#fcd34d' }}>
+                  SFDC ID: {csvMapping.sfdcCol}
+                </span>
+              )}
+            </div>
             <p style={{ color: 'var(--text-muted)' }}>{csvPreview.length} companies detected</p>
-            <div className="mt-1 max-h-24 overflow-y-auto space-y-0.5">
+            <div className="max-h-24 overflow-y-auto space-y-0.5">
               {csvPreview.slice(0, 5).map((item, i) => (
-                <p key={i} className="truncate text-white opacity-70">{item.name}</p>
+                <div key={i} className="flex items-center gap-1.5 truncate">
+                  <span className="text-white opacity-70 truncate flex-1">{item.name}</span>
+                  {item.salesforceId && (
+                    <span className="shrink-0 px-1 py-0.5 rounded text-xs font-mono"
+                      style={{ background: 'rgba(245,158,11,0.1)', color: '#fcd34d' }}>
+                      {item.salesforceId}
+                    </span>
+                  )}
+                </div>
               ))}
               {csvPreview.length > 5 && (
                 <p style={{ color: 'var(--text-muted)' }}>+{csvPreview.length - 5} more...</p>
@@ -173,7 +201,7 @@ export default function Sidebar({ accounts, isScoring, onScoreOne, onScoreBatch,
               ▶ Start ({csvPreview.length})
             </button>
             <button
-              onClick={() => { setCsvPreview([]); if (fileRef.current) fileRef.current.value = '' }}
+              onClick={() => { setCsvPreview([]); setCsvMapping(null); if (fileRef.current) fileRef.current.value = '' }}
               className="px-3 py-2 text-xs rounded-lg"
               style={{ background: 'var(--bg-hover)', border: '1px solid var(--border)', color: 'var(--text-muted)' }}
             >

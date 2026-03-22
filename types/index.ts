@@ -46,6 +46,7 @@ export interface Account {
   company_name: string
   domain: string | null
   country: string | null
+  salesforce_id: string | null
   tier: Tier | null
   score: number | null
   signals: Signals

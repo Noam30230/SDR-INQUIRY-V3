@@ -27,12 +27,12 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
   const { data: { user } } = await supabase.auth.getUser()
   if (!user) return res.status(401).json({ error: 'Non authentifié' })
 
-  const { companyName, domain: inputDomain } = req.body as { companyName: string; domain?: string }
-  if (!companyName?.trim()) return res.status(400).json({ error: "Nom d'entreprise requis" })
+  const { companyName, domain: inputDomain, salesforceId } = req.body as { companyName: string; domain?: string; salesforceId?: string }
+  if (!companyName?.trim()) return res.status(400).json({ error: 'Company name required' })
 
   const { data: account, error: insertError } = await supabaseAdmin
     .from('accounts')
-    .insert({ user_id: user.id, company_name: companyName.trim(), domain: inputDomain || null, status: 'scoring' })
+    .insert({ user_id: user.id, company_name: companyName.trim(), domain: inputDomain || null, salesforce_id: salesforceId || null, status: 'scoring' })
     .select()
     .single()
 

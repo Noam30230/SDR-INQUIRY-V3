@@ -32,16 +32,17 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
   if (error) return res.status(500).json({ error: error.message })
 
   const rows = (accounts as Account[]).map(a => ({
-    'Entreprise': a.company_name,
-    'Domaine': a.domain || '',
+    'Company': a.company_name,
+    'Salesforce ID': a.salesforce_id || '',
+    'Domain': a.domain || '',
     'Tier': a.tier || '',
     'Score': a.score ?? '',
-    'Stack tech': flattenTechStack(a.tech_stack),
-    'Signaux positifs': (a.signals?.positive || []).join(' | '),
-    'Signaux négatifs': (a.signals?.negative || []).join(' | '),
-    'Raisonnement': a.reasoning || '',
-    'Hébergeur': (a.web_quality as { hosting?: string })?.hosting || '',
-    'Date scoring': new Date(a.created_at).toLocaleDateString('fr-FR'),
+    'Tech Stack': flattenTechStack(a.tech_stack),
+    'Positive signals': (a.signals?.positive || []).join(' | '),
+    'Negative signals': (a.signals?.negative || []).join(' | '),
+    'Reasoning': a.reasoning || '',
+    'Hosting': (a.web_quality as { hosting?: string })?.hosting || '',
+    'Scored at': new Date(a.created_at).toLocaleDateString('en-GB'),
   }))
 
   const headers = Object.keys(rows[0] || {})

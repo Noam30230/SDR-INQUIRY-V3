@@ -51,26 +51,26 @@ export default function ScoringPage() {
     return () => { supabaseBrowser.removeChannel(channel) }
   }, [loadAccounts])
 
-  async function scoreOne(name: string, domain?: string) {
+  async function scoreOne(name: string, domain?: string, salesforceId?: string) {
     setIsScoring(true)
     try {
       await authFetch('/api/score', {
         method: 'POST',
-        body: JSON.stringify({ companyName: name, domain }),
+        body: JSON.stringify({ companyName: name, domain, salesforceId }),
       })
     } finally {
       setIsScoring(false)
     }
   }
 
-  async function scoreBatch(items: Array<{ name: string; domain?: string }>) {
+  async function scoreBatch(items: Array<{ name: string; domain?: string; salesforceId?: string }>) {
     stopRef.current = false
     setIsScoring(true)
     for (const item of items) {
       if (stopRef.current) break
       await authFetch('/api/score', {
         method: 'POST',
-        body: JSON.stringify({ companyName: item.name, domain: item.domain }),
+        body: JSON.stringify({ companyName: item.name, domain: item.domain, salesforceId: item.salesforceId }),
       })
       await new Promise(r => setTimeout(r, 500))
     }

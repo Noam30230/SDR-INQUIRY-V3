@@ -8,6 +8,7 @@ create table if not exists accounts (
   company_name  text not null,
   domain        text,
   country       text,
+  salesforce_id text,
   tier          text check (tier in ('T1', 'T2', 'T3', 'DQ')),
   score         integer check (score between 0 and 100),
   signals       jsonb default '{"positive": [], "negative": []}'::jsonb,

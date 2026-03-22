@@ -46,9 +46,17 @@ export default function AccountCard({ account, onDelete }: AccountCardProps) {
               <span className="font-semibold text-sm text-white truncate">{account.company_name}</span>
               {account.tier && <TierBadge tier={account.tier} size="sm" />}
             </div>
-            {account.domain && (
-              <span className="text-xs" style={{ color: 'var(--text-muted)' }}>{account.domain}</span>
-            )}
+            <div className="flex items-center gap-2 flex-wrap">
+              {account.domain && (
+                <span className="text-xs" style={{ color: 'var(--text-muted)' }}>{account.domain}</span>
+              )}
+              {account.salesforce_id && (
+                <span className="text-xs font-mono px-1.5 py-0.5 rounded"
+                  style={{ background: 'rgba(245,158,11,0.1)', color: '#fcd34d', border: '1px solid rgba(245,158,11,0.2)' }}>
+                  SF: {account.salesforce_id}
+                </span>
+              )}
+            </div>
           </div>
 
           <div className="shrink-0 w-32">
