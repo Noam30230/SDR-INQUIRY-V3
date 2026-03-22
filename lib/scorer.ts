@@ -140,7 +140,7 @@ Retourne ce JSON exactement :
     for (const key of keys) {
       const local = techStack[key] || []
       const gpt = parsed.tech_stack?.[key] || []
-      mergedStack[key] = [...new Set([...local, ...gpt])]
+      mergedStack[key] = Array.from(new Set([...local, ...gpt]))
     }
 
     return {
