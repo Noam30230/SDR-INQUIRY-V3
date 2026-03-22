@@ -100,6 +100,15 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
       framework: sq.framework,
       isPageBuilder: sq.isPageBuilder,
       techJobsCount: sq.techJobsFound.length,
+      hasPricing: sq.hasPricing,
+      hasSignup: sq.hasSignup,
+      hasDemo: sq.hasDemo,
+      hasDocs: sq.hasDocs,
+      hasLogin: sq.hasLogin,
+      hasApi: sq.hasApi,
+      hasIntegrations: sq.hasIntegrations,
+      saasKeywords: sq.saasKeywords,
+      consultingKeywords: sq.consultingKeywords,
     } : null
 
     await supabaseAdmin
