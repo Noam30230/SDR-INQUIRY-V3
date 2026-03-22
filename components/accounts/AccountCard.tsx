@@ -14,7 +14,6 @@ function getTopTechs(stack: TechStack): string[] {
   return techs.slice(0, 5)
 }
 
-
 function scoreColor(score: number): string {
   if (score >= 75) return '#10b981'
   if (score >= 50) return '#f59e0b'
@@ -44,84 +43,90 @@ export default function AccountCard({ account, onDelete }: AccountCardProps) {
         boxShadow: expanded ? '0 0 0 1px rgba(124,58,237,0.1)' : 'none',
       }}
     >
-      {/* Card header — clickable */}
-      <button
-        onClick={() => isDone && setExpanded(v => !v)}
-        className="w-full text-left px-4 py-3.5"
-        disabled={isScoring || isError}
-      >
-        <div className="flex items-center gap-3">
-          {/* Company info */}
-          <div className="flex-1 min-w-0">
-            <div className="flex items-center gap-2 flex-wrap">
-              <span className="font-semibold text-sm text-white leading-tight">{account.company_name}</span>
-              {account.salesforce_id && (
-                <span
-                  className="text-xs font-mono px-1.5 py-0.5 rounded shrink-0"
-                  style={{ background: 'rgba(245,158,11,0.1)', color: '#fcd34d', border: '1px solid rgba(245,158,11,0.2)' }}
-                >
-                  {account.salesforce_id}
+      {/* Card header */}
+      <div className="flex items-start gap-2 px-4 py-3.5">
+        {/* Main clickable area */}
+        <button
+          onClick={() => isDone && setExpanded(v => !v)}
+          className="flex-1 min-w-0 text-left"
+          disabled={isScoring || isError}
+        >
+          <div className="flex items-center gap-3">
+            {/* Company info */}
+            <div className="flex-1 min-w-0">
+              <div className="flex items-center gap-2 flex-wrap">
+                <span className="font-semibold text-sm text-white leading-tight">{account.company_name}</span>
+                {account.salesforce_id && (
+                  <span
+                    className="text-xs font-mono px-1.5 py-0.5 rounded shrink-0"
+                    style={{ background: 'rgba(245,158,11,0.1)', color: '#fcd34d', border: '1px solid rgba(245,158,11,0.2)' }}
+                  >
+                    {account.salesforce_id}
+                  </span>
+                )}
+              </div>
+              {account.domain && (
+                <p className="text-xs mt-0.5 truncate" style={{ color: 'var(--text-muted)' }}>{account.domain}</p>
+              )}
+            </div>
+
+            {/* Right: tier + score OR spinner */}
+            <div className="shrink-0 flex flex-col items-end gap-1">
+              {isScoring && (
+                <div className="flex items-center gap-2">
+                  <div
+                    className="w-3.5 h-3.5 border-2 border-t-transparent rounded-full animate-spin"
+                    style={{ borderColor: 'var(--primary)', borderTopColor: 'transparent' }}
+                  />
+                  <span className="text-xs" style={{ color: 'var(--text-muted)' }}>Scoring...</span>
+                </div>
+              )}
+              {isError && <span className="text-xs font-medium text-red-400">Error</span>}
+              {isDone && account.tier && <TierBadge tier={account.tier} size="sm" />}
+              {isDone && account.score !== null && (
+                <span className="text-lg font-bold tabular-nums leading-none" style={{ color: scoreColor(account.score ?? 0) }}>
+                  {account.score}
+                  <span className="text-xs font-normal ml-0.5" style={{ color: 'var(--text-muted)' }}>/100</span>
                 </span>
               )}
             </div>
-            {account.domain && (
-              <p className="text-xs mt-0.5 truncate" style={{ color: 'var(--text-muted)' }}>{account.domain}</p>
-            )}
-          </div>
 
-          {/* Right side: tier + score OR loading */}
-          <div className="shrink-0 flex flex-col items-end gap-1">
-            {isScoring && (
-              <div className="flex items-center gap-2">
-                <div
-                  className="w-3.5 h-3.5 border-2 border-t-transparent rounded-full animate-spin"
-                  style={{ borderColor: 'var(--primary)', borderTopColor: 'transparent' }}
-                />
-                <span className="text-xs" style={{ color: 'var(--text-muted)' }}>Scoring...</span>
-              </div>
-            )}
-            {isError && (
-              <span className="text-xs font-medium text-red-400">Error</span>
-            )}
-            {isDone && account.tier && <TierBadge tier={account.tier} size="sm" />}
-            {isDone && account.score !== null && (
+            {/* Chevron */}
+            {isDone && (
               <span
-                className="text-lg font-bold tabular-nums leading-none"
-                style={{ color: scoreColor(account.score ?? 0) }}
+                className="text-xs shrink-0 transition-transform duration-200"
+                style={{ color: 'var(--text-muted)', transform: expanded ? 'rotate(180deg)' : 'rotate(0deg)', display: 'inline-block' }}
               >
-                {account.score}
-                <span className="text-xs font-normal ml-0.5" style={{ color: 'var(--text-muted)' }}>/100</span>
+                ▼
               </span>
             )}
           </div>
 
-          {/* Chevron */}
-          {isDone && (
-            <span
-              className="text-xs shrink-0 transition-transform duration-200"
-              style={{
-                color: 'var(--text-muted)',
-                transform: expanded ? 'rotate(180deg)' : 'rotate(0deg)',
-                display: 'inline-block',
-              }}
-            >
-              ▼
-            </span>
+          {/* Tech chips */}
+          {topTechs.length > 0 && (
+            <div className="flex flex-wrap gap-1 mt-2.5">
+              {topTechs.map(t => <SignalChip key={t} label={t} variant="tech" />)}
+            </div>
           )}
-        </div>
 
-        {/* Tech chips */}
-        {topTechs.length > 0 && (
-          <div className="flex flex-wrap gap-1 mt-2.5">
-            {topTechs.map(t => <SignalChip key={t} label={t} variant="tech" />)}
-          </div>
-        )}
+          {/* Error message */}
+          {isError && account.error_message && (
+            <p className="text-xs mt-1.5 text-red-400">{account.error_message}</p>
+          )}
+        </button>
 
-        {/* Error message */}
-        {isError && account.error_message && (
-          <p className="text-xs mt-1.5 ml-12 text-red-400">{account.error_message}</p>
+        {/* Cancel / delete button for scoring or error */}
+        {(isScoring || isError) && (
+          <button
+            onClick={() => onDelete(account.id)}
+            className="shrink-0 w-6 h-6 flex items-center justify-center rounded text-xs transition-colors hover:text-red-400"
+            style={{ color: 'var(--text-muted)' }}
+            title="Cancel"
+          >
+            ✕
+          </button>
         )}
-      </button>
+      </div>
 
       {/* Expanded detail */}
       {expanded && (
