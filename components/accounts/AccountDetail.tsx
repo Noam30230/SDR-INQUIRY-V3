@@ -134,7 +134,7 @@ export default function AccountDetail({ account, onDelete }: AccountDetailProps)
         <div className="flex gap-2">
           {account.domain && (
             <a
-              href={`https://${account.domain}`}
+              href={account.domain?.startsWith('http') ? account.domain : `https://${account.domain}`}
               target="_blank"
               rel="noopener noreferrer"
               className="text-xs px-3 py-1.5 rounded-lg transition-colors"
