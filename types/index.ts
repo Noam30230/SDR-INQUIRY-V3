@@ -18,15 +18,25 @@ export interface Signals {
 }
 
 export interface WebQuality {
-  score: number          // 0-30
-  hosting: string        // e.g. "AWS", "OVH", "Vercel"
+  score: number
+  hosting: string
   isResponsive: boolean
   hasHttps: boolean
   hasCareers: boolean
   hasBlog: boolean
-  framework: string      // e.g. "React", "Next.js", ""
-  isPageBuilder: boolean // Wix/Squarespace/Jimdo
+  framework: string
+  isPageBuilder: boolean
   techJobsCount: number
+  // SaaS qualification signals
+  hasPricing: boolean
+  hasSignup: boolean
+  hasDemo: boolean
+  hasDocs: boolean
+  hasLogin: boolean
+  hasApi: boolean
+  hasIntegrations: boolean
+  saasKeywords: string[]
+  consultingKeywords: string[]
 }
 
 export interface PressArticle {
