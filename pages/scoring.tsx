@@ -28,6 +28,7 @@ export default function ScoringPage() {
   const [accounts, setAccounts] = useState<Account[]>([])
   const [filter, setFilter] = useState<FilterTier>('all')
   const [isScoring, setIsScoring] = useState(false)
+  const [userEmail, setUserEmail] = useState('')
   const stopRef = useRef(false)
 
   const loadAccounts = useCallback(async () => {
@@ -41,6 +42,10 @@ export default function ScoringPage() {
   useEffect(() => {
     loadAccounts()
 
+    supabaseBrowser.auth.getSession().then(({ data }) => {
+      setUserEmail(data.session?.user?.email || '')
+    })
+
     const channel = supabaseBrowser
       .channel('accounts-realtime')
       .on('postgres_changes', { event: '*', schema: 'public', table: 'accounts' }, () => {
@@ -50,18 +55,6 @@ export default function ScoringPage() {
 
     return () => { supabaseBrowser.removeChannel(channel) }
   }, [loadAccounts])
-
-  async function scoreOne(name: string, domain?: string, salesforceId?: string) {
-    setIsScoring(true)
-    try {
-      await authFetch('/api/score', {
-        method: 'POST',
-        body: JSON.stringify({ companyName: name, domain, salesforceId }),
-      })
-    } finally {
-      setIsScoring(false)
-    }
-  }
 
   async function scoreBatch(items: Array<{ name: string; domain?: string; salesforceId?: string }>) {
     stopRef.current = false
@@ -110,7 +103,7 @@ export default function ScoringPage() {
         <Sidebar
           accounts={accounts}
           isScoring={isScoring}
-          onScoreOne={scoreOne}
+          userEmail={userEmail}
           onScoreBatch={scoreBatch}
           onStopBatch={stopBatch}
           onExport={handleExport}
@@ -121,11 +114,6 @@ export default function ScoringPage() {
               <h1 className="text-xl font-bold text-white">Scored accounts</h1>
               <p className="text-sm mt-0.5" style={{ color: 'var(--text-muted)' }}>
                 {accounts.length} account{accounts.length !== 1 ? 's' : ''}
-                {accounts.filter(a => a.status === 'scoring').length > 0 && (
-                  <span className="ml-2" style={{ color: 'var(--primary)' }}>
-                    · {accounts.filter(a => a.status === 'scoring').length} scoring...
-                  </span>
-                )}
               </p>
             </div>
           </div>

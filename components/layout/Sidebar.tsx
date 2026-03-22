@@ -7,50 +7,52 @@ import { detectColumns, parseRows, type ParsedRow } from '@/lib/csv-parser'
 interface SidebarProps {
   accounts: Account[]
   isScoring: boolean
-  onScoreOne: (name: string, domain?: string, salesforceId?: string) => Promise<void>
+  userEmail: string
   onScoreBatch: (items: ParsedRow[]) => Promise<void>
   onStopBatch: () => void
   onExport: () => void
 }
 
-const TIER_COLORS: Record<Tier, string> = {
-  T1: '#10b981', T2: '#f59e0b', T3: '#6b7280', DQ: '#ef4444',
+const TIERS: Array<{ tier: Tier; emoji: string; color: string }> = [
+  { tier: 'T1', emoji: '🔥', color: '#10b981' },
+  { tier: 'T2', emoji: '⚡', color: '#f59e0b' },
+  { tier: 'T3', emoji: '❄️', color: '#6b7280' },
+  { tier: 'DQ', emoji: '🚫', color: '#ef4444' },
+]
+
+function parseTextarea(raw: string): ParsedRow[] {
+  return raw
+    .split('\n')
+    .map(line => line.trim())
+    .filter(Boolean)
+    .map(line => {
+      const parts = line.split(',').map(p => p.trim())
+      return {
+        name: parts[0] || '',
+        domain: parts[1] || undefined,
+        salesforceId: parts[2] || undefined,
+      }
+    })
+    .filter(r => r.name.length > 0)
 }
 
-function TierCounter({ tier, count }: { tier: Tier; count: number }) {
-  return (
-    <div className="flex items-center justify-between py-1.5">
-      <div className="flex items-center gap-2">
-        <span className="w-2 h-2 rounded-full" style={{ background: TIER_COLORS[tier] }} />
-        <span className="text-sm font-medium" style={{ color: TIER_COLORS[tier] }}>{tier}</span>
-      </div>
-      <span className="text-sm font-semibold tabular-nums text-white">{count}</span>
-    </div>
-  )
-}
-
-export default function Sidebar({ accounts, isScoring, onScoreOne, onScoreBatch, onStopBatch, onExport }: SidebarProps) {
-  const [companyName, setCompanyName] = useState('')
-  const [domain, setDomain] = useState('')
+export default function Sidebar({ accounts, isScoring, userEmail, onScoreBatch, onStopBatch, onExport }: SidebarProps) {
+  const [tab, setTab] = useState<'manual' | 'csv'>('manual')
+  const [text, setText] = useState('')
   const [csvPreview, setCsvPreview] = useState<ParsedRow[]>([])
   const [csvMapping, setCsvMapping] = useState<{ nameCol: string; domainCol: string | null; sfdcCol: string | null } | null>(null)
   const fileRef = useRef<HTMLInputElement>(null)
 
   const doneAccounts = accounts.filter(a => a.status === 'done')
-  const counters = {
+  const scoringCount = accounts.filter(a => a.status === 'scoring' || a.status === 'pending').length
+  const counters: Record<Tier, number> = {
     T1: doneAccounts.filter(a => a.tier === 'T1').length,
     T2: doneAccounts.filter(a => a.tier === 'T2').length,
     T3: doneAccounts.filter(a => a.tier === 'T3').length,
     DQ: doneAccounts.filter(a => a.tier === 'DQ').length,
   }
 
-  async function handleSubmit(e: React.FormEvent) {
-    e.preventDefault()
-    if (!companyName.trim()) return
-    await onScoreOne(companyName.trim(), domain.trim() || undefined)
-    setCompanyName('')
-    setDomain('')
-  }
+  const manualQueue = parseTextarea(text)
 
   function handleCsvUpload(e: React.ChangeEvent<HTMLInputElement>) {
     const file = e.target.files?.[0]
@@ -69,200 +71,222 @@ export default function Sidebar({ accounts, isScoring, onScoreOne, onScoreBatch,
     })
   }
 
-  async function handleStartBatch() {
-    if (csvPreview.length === 0) return
-    await onScoreBatch(csvPreview)
+  async function handleStart() {
+    const items = tab === 'manual' ? manualQueue : csvPreview
+    if (items.length === 0) return
+    await onScoreBatch(items)
+    setText('')
     setCsvPreview([])
     setCsvMapping(null)
     if (fileRef.current) fileRef.current.value = ''
   }
 
-  function handleLogout() {
-    supabaseBrowser.auth.signOut()
-  }
+  const queueCount = tab === 'manual' ? manualQueue.length : csvPreview.length
 
   return (
     <aside
-      className="flex flex-col h-full"
+      className="flex flex-col h-full overflow-y-auto"
       style={{
-        width: 280,
-        minWidth: 280,
+        width: 300,
+        minWidth: 300,
         background: 'var(--bg-card)',
         borderRight: '1px solid var(--border)',
         padding: '20px 16px',
       }}
     >
-      {/* Logo */}
-      <div className="flex items-center gap-2.5 mb-6">
-        <div className="w-8 h-8 rounded-lg flex items-center justify-center shrink-0 overflow-hidden"
-          style={{ background: 'rgba(124,58,237,0.15)', border: '1px solid rgba(124,58,237,0.3)' }}>
-          <img src="/logo.png" alt="Datadog" className="w-6 h-6 object-contain" />
+      {/* Header */}
+      <div className="mb-5">
+        <div className="flex items-start justify-between gap-2 mb-1">
+          <div className="flex items-center gap-2.5">
+            <div className="w-9 h-9 rounded-lg flex items-center justify-center shrink-0 overflow-hidden"
+              style={{ background: 'rgba(124,58,237,0.15)', border: '1px solid rgba(124,58,237,0.3)' }}>
+              <img src="/logo.png" alt="Datadog" className="w-6 h-6 object-contain" />
+            </div>
+            <div>
+              <div className="text-sm font-bold text-white leading-tight">Account Scorer</div>
+              <div className="text-xs font-semibold tracking-widest uppercase" style={{ color: '#7c3aed' }}>
+                Powered by Noam Ramillon
+              </div>
+            </div>
+          </div>
+          <button
+            onClick={() => supabaseBrowser.auth.signOut()}
+            className="text-xs px-2.5 py-1.5 rounded-lg shrink-0 transition-colors"
+            style={{ color: 'var(--text-muted)', border: '1px solid var(--border)', background: 'var(--bg-hover)' }}
+          >
+            Log out
+          </button>
         </div>
-        <div>
-          <div className="text-sm font-bold text-white leading-tight">Account Scorer</div>
-          <div className="text-xs" style={{ color: 'var(--text-muted)' }}>Datadog SDR</div>
+        {userEmail && (
+          <p className="text-xs mt-2 flex items-center gap-1.5" style={{ color: 'var(--text-muted)' }}>
+            <span>👤</span> {userEmail}
+          </p>
+        )}
+      </div>
+
+      {/* Tier grid */}
+      <div className="grid grid-cols-4 gap-1.5 mb-5">
+        {TIERS.map(({ tier, emoji, color }) => (
+          <div
+            key={tier}
+            className="rounded-lg p-2 text-center"
+            style={{ background: `${color}12`, border: `1px solid ${color}30` }}
+          >
+            <div className="text-lg font-bold tabular-nums leading-tight" style={{ color }}>
+              {counters[tier]}
+            </div>
+            <div className="text-xs mt-0.5" style={{ color }}>
+              {tier} {emoji}
+            </div>
+          </div>
+        ))}
+      </div>
+
+      {/* Status bar */}
+      {(isScoring || doneAccounts.length > 0) && (
+        <div
+          className="rounded-lg px-3 py-2 mb-4 text-xs flex items-center gap-2"
+          style={{
+            background: isScoring ? 'rgba(124,58,237,0.08)' : 'rgba(16,185,129,0.08)',
+            border: `1px solid ${isScoring ? 'rgba(124,58,237,0.2)' : 'rgba(16,185,129,0.2)'}`,
+            color: isScoring ? '#a78bfa' : '#34d399',
+          }}
+        >
+          {isScoring ? (
+            <>
+              <div className="w-3 h-3 border-2 border-t-transparent rounded-full animate-spin shrink-0"
+                style={{ borderColor: '#a78bfa', borderTopColor: 'transparent' }} />
+              Scoring {scoringCount > 1 ? `${scoringCount} accounts` : 'account'}...
+            </>
+          ) : (
+            <>✅ Done · {doneAccounts.length} account{doneAccounts.length !== 1 ? 's' : ''} analyzed</>
+          )}
         </div>
+      )}
+
+      <div className="mb-1" style={{ borderTop: '1px solid var(--border)' }} />
+
+      {/* Tabs */}
+      <div className="flex gap-1 my-3 p-1 rounded-lg" style={{ background: 'var(--bg-hover)' }}>
+        {(['manual', 'csv'] as const).map(t => (
+          <button
+            key={t}
+            onClick={() => setTab(t)}
+            className="flex-1 py-1.5 text-xs font-semibold rounded-md transition-colors capitalize"
+            style={{
+              background: tab === t ? 'var(--bg-card)' : 'transparent',
+              color: tab === t ? 'white' : 'var(--text-muted)',
+              border: tab === t ? '1px solid var(--border)' : '1px solid transparent',
+            }}
+          >
+            {t === 'manual' ? '✏️ Manual' : '📂 CSV'}
+          </button>
+        ))}
       </div>
 
       {/* Manual input */}
-      <form onSubmit={handleSubmit} className="space-y-2 mb-5">
-        <input
-          type="text"
-          value={companyName}
-          onChange={e => setCompanyName(e.target.value)}
-          placeholder="Company name"
-          className="w-full px-3 py-2 text-sm text-white placeholder-gray-600 rounded-lg outline-none"
-          style={{ background: 'var(--bg-hover)', border: '1px solid var(--border)' }}
-        />
-        <input
-          type="text"
-          value={domain}
-          onChange={e => setDomain(e.target.value)}
-          placeholder="domain.com"
-          required
-          className="w-full px-3 py-2 text-sm text-white placeholder-gray-600 rounded-lg outline-none"
-          style={{ background: 'var(--bg-hover)', border: '1px solid var(--border)' }}
-        />
+      {tab === 'manual' && (
+        <div className="space-y-2 mb-4">
+          <textarea
+            value={text}
+            onChange={e => setText(e.target.value)}
+            placeholder={"Pennylane, pennylane.com\nQonto, qonto.com, SF-001234"}
+            rows={5}
+            className="w-full px-3 py-2 text-sm text-white placeholder-gray-600 rounded-lg outline-none resize-none"
+            style={{ background: 'var(--bg-hover)', border: '1px solid var(--border)', fontFamily: 'monospace' }}
+          />
+          <p className="text-xs" style={{ color: 'var(--text-muted)', opacity: 0.7 }}>
+            Format: Name, site.com, CharID — 1 per line
+          </p>
+        </div>
+      )}
+
+      {/* CSV input */}
+      {tab === 'csv' && (
+        <div className="space-y-2 mb-4">
+          <input
+            ref={fileRef}
+            type="file"
+            accept=".csv"
+            onChange={handleCsvUpload}
+            className="w-full text-xs file:mr-2 file:py-1 file:px-2 file:rounded file:border-0 file:text-xs file:font-medium cursor-pointer"
+            style={{ color: 'var(--text-muted)' }}
+          />
+          <p className="text-xs" style={{ color: 'var(--text-muted)', opacity: 0.7 }}>
+            Columns: <code className="text-purple-300">company</code>, <code className="text-purple-300">domain</code>
+          </p>
+
+          {csvPreview.length > 0 && csvMapping && (
+            <div className="rounded-lg p-2 text-xs space-y-1.5" style={{ background: 'var(--bg-hover)', border: '1px solid var(--border)' }}>
+              <div className="flex flex-wrap gap-1 pb-1.5" style={{ borderBottom: '1px solid var(--border)' }}>
+                <span className="px-1.5 py-0.5 rounded" style={{ background: 'rgba(124,58,237,0.15)', color: '#a78bfa' }}>
+                  name: {csvMapping.nameCol}
+                </span>
+                {csvMapping.domainCol && (
+                  <span className="px-1.5 py-0.5 rounded" style={{ background: 'rgba(16,185,129,0.1)', color: '#6ee7b7' }}>
+                    domain: {csvMapping.domainCol}
+                  </span>
+                )}
+                {csvMapping.sfdcCol && (
+                  <span className="px-1.5 py-0.5 rounded" style={{ background: 'rgba(245,158,11,0.1)', color: '#fcd34d' }}>
+                    SFDC: {csvMapping.sfdcCol}
+                  </span>
+                )}
+              </div>
+              <p style={{ color: 'var(--text-muted)' }}>{csvPreview.length} companies detected</p>
+              <div className="max-h-20 overflow-y-auto space-y-0.5">
+                {csvPreview.slice(0, 5).map((item, i) => (
+                  <div key={i} className="truncate text-white opacity-70">{item.name}</div>
+                ))}
+                {csvPreview.length > 5 && (
+                  <p style={{ color: 'var(--text-muted)' }}>+{csvPreview.length - 5} more...</p>
+                )}
+              </div>
+            </div>
+          )}
+        </div>
+      )}
+
+      {/* Start / Stop */}
+      {isScoring ? (
         <button
-          type="submit"
-          disabled={!companyName.trim() || !domain.trim() || isScoring}
-          className="w-full py-2 text-sm font-semibold text-white rounded-lg transition-colors disabled:opacity-40 disabled:cursor-not-allowed"
+          onClick={onStopBatch}
+          className="w-full py-2.5 text-sm font-semibold rounded-lg mb-3"
+          style={{ background: 'rgba(239,68,68,0.15)', border: '1px solid rgba(239,68,68,0.3)', color: '#f87171' }}
+        >
+          ⏹ Stop
+        </button>
+      ) : (
+        <button
+          onClick={handleStart}
+          disabled={queueCount === 0}
+          className="w-full py-2.5 text-sm font-semibold text-white rounded-lg mb-3 transition-colors disabled:opacity-30 disabled:cursor-not-allowed"
           style={{ background: 'var(--primary)' }}
         >
-          ▶ Score this account
+          ▶ Start analysis · {queueCount} account{queueCount !== 1 ? 's' : ''}
         </button>
-      </form>
+      )}
 
-      <div className="mb-4" style={{ borderTop: '1px solid var(--border)' }} />
-
-      {/* CSV Upload */}
-      <div className="mb-4 space-y-2">
-        <label className="text-xs font-semibold uppercase tracking-wider" style={{ color: 'var(--text-muted)' }}>
-          CSV Import
-        </label>
-        <input
-          ref={fileRef}
-          type="file"
-          accept=".csv"
-          onChange={handleCsvUpload}
-          className="w-full text-xs file:mr-2 file:py-1 file:px-2 file:rounded file:border-0 file:text-xs file:font-medium cursor-pointer"
-          style={{ color: 'var(--text-muted)' }}
-        />
-        <p className="text-xs" style={{ color: 'var(--text-muted)', opacity: 0.7 }}>
-          Columns: <code className="text-purple-300">company</code>, <code className="text-purple-300">domain</code>
-        </p>
-
-        {csvPreview.length > 0 && csvMapping && (
-          <div className="rounded-lg p-2 text-xs space-y-1.5" style={{ background: 'var(--bg-hover)', border: '1px solid var(--border)' }}>
-            {/* Detected columns */}
-            <div className="flex flex-wrap gap-1 pb-1.5" style={{ borderBottom: '1px solid var(--border)' }}>
-              <span className="px-1.5 py-0.5 rounded text-xs" style={{ background: 'rgba(124,58,237,0.15)', color: '#a78bfa' }}>
-                name: {csvMapping.nameCol}
-              </span>
-              {csvMapping.domainCol && (
-                <span className="px-1.5 py-0.5 rounded text-xs" style={{ background: 'rgba(16,185,129,0.1)', color: '#6ee7b7' }}>
-                  domain: {csvMapping.domainCol}
-                </span>
-              )}
-              {csvMapping.sfdcCol && (
-                <span className="px-1.5 py-0.5 rounded text-xs" style={{ background: 'rgba(245,158,11,0.1)', color: '#fcd34d' }}>
-                  SFDC ID: {csvMapping.sfdcCol}
-                </span>
-              )}
-            </div>
-            <p style={{ color: 'var(--text-muted)' }}>{csvPreview.length} companies detected</p>
-            <div className="max-h-24 overflow-y-auto space-y-0.5">
-              {csvPreview.slice(0, 5).map((item, i) => (
-                <div key={i} className="flex items-center gap-1.5 truncate">
-                  <span className="text-white opacity-70 truncate flex-1">{item.name}</span>
-                  {item.salesforceId && (
-                    <span className="shrink-0 px-1 py-0.5 rounded text-xs font-mono"
-                      style={{ background: 'rgba(245,158,11,0.1)', color: '#fcd34d' }}>
-                      {item.salesforceId}
-                    </span>
-                  )}
-                </div>
-              ))}
-              {csvPreview.length > 5 && (
-                <p style={{ color: 'var(--text-muted)' }}>+{csvPreview.length - 5} more...</p>
-              )}
-            </div>
-          </div>
-        )}
-
-        {csvPreview.length > 0 && (
-          <div className="flex gap-1.5">
-            <button
-              onClick={handleStartBatch}
-              disabled={isScoring}
-              className="flex-1 py-2 text-xs font-semibold text-white rounded-lg disabled:opacity-40"
-              style={{ background: 'var(--primary)' }}
-            >
-              ▶ Start ({csvPreview.length})
-            </button>
-            <button
-              onClick={() => { setCsvPreview([]); setCsvMapping(null); if (fileRef.current) fileRef.current.value = '' }}
-              className="px-3 py-2 text-xs rounded-lg"
-              style={{ background: 'var(--bg-hover)', border: '1px solid var(--border)', color: 'var(--text-muted)' }}
-            >
-              ✕
-            </button>
-          </div>
-        )}
-
-        {isScoring && csvPreview.length === 0 && (
-          <button
-            onClick={onStopBatch}
-            className="w-full py-2 text-xs font-semibold rounded-lg"
-            style={{ background: 'rgba(239,68,68,0.15)', border: '1px solid rgba(239,68,68,0.3)', color: '#f87171' }}
-          >
-            ⏹ Stop
-          </button>
-        )}
-      </div>
-
-      <div className="mb-4" style={{ borderTop: '1px solid var(--border)' }} />
-
-      {/* Counters */}
-      <div className="mb-5">
-        <label className="text-xs font-semibold uppercase tracking-wider mb-2 block" style={{ color: 'var(--text-muted)' }}>
-          Results
-        </label>
-        <div className="divide-y" style={{ borderColor: 'var(--border)' }}>
-          {((['T1', 'T2', 'T3', 'DQ'] as Tier[])).map(tier => (
-            <TierCounter key={tier} tier={tier} count={counters[tier]} />
-          ))}
-        </div>
-        <div className="flex items-center justify-between mt-2 pt-2 border-t" style={{ borderColor: 'var(--border)' }}>
-          <span className="text-xs" style={{ color: 'var(--text-muted)' }}>Total scored</span>
-          <span className="text-sm font-bold text-white">{doneAccounts.length}</span>
-        </div>
-      </div>
+      {/* Export */}
+      <button
+        onClick={onExport}
+        disabled={doneAccounts.length === 0}
+        className="w-full py-2.5 text-sm font-medium rounded-lg transition-colors disabled:opacity-30 mb-3"
+        style={{
+          background: 'rgba(124,58,237,0.12)',
+          border: '1px solid rgba(124,58,237,0.25)',
+          color: '#a78bfa',
+        }}
+      >
+        ↓ Export all ({doneAccounts.length})
+      </button>
 
       <div className="flex-1" />
 
-      {/* Export + Logout */}
-      <div className="space-y-2 mt-4">
-        <button
-          onClick={onExport}
-          disabled={doneAccounts.length === 0}
-          className="w-full py-2 text-sm font-medium rounded-lg transition-colors disabled:opacity-40"
-          style={{
-            background: 'rgba(124,58,237,0.15)',
-            border: '1px solid rgba(124,58,237,0.3)',
-            color: '#a78bfa',
-          }}
-        >
-          ↓ Export CSV
-        </button>
-        <button
-          onClick={handleLogout}
-          className="w-full py-2 text-xs rounded-lg transition-colors"
-          style={{ color: 'var(--text-muted)', border: '1px solid var(--border)' }}
-        >
-          Log out
-        </button>
-      </div>
+      {/* Sources footer */}
+      <p className="text-xs text-center pt-3" style={{ color: 'var(--text-muted)', opacity: 0.6, borderTop: '1px solid var(--border)' }}>
+        Sources: 🌐 Website · 📰 Press · 🐙 GitHub · 🤖 GPT-4o
+      </p>
     </aside>
   )
 }
