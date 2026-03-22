@@ -13,11 +13,11 @@ interface SidebarProps {
   onExport: () => void
 }
 
-const TIERS: Array<{ tier: Tier; emoji: string; color: string }> = [
-  { tier: 'T1', emoji: '🔥', color: '#10b981' },
-  { tier: 'T2', emoji: '⚡', color: '#f59e0b' },
-  { tier: 'T3', emoji: '❄️', color: '#6b7280' },
-  { tier: 'DQ', emoji: '🚫', color: '#ef4444' },
+const TIERS: Array<{ tier: Tier; color: string }> = [
+  { tier: 'T1', color: '#10b981' },
+  { tier: 'T2', color: '#f59e0b' },
+  { tier: 'T3', color: '#6b7280' },
+  { tier: 'DQ', color: '#ef4444' },
 ]
 
 function parseTextarea(raw: string): ParsedRow[] {
@@ -104,8 +104,8 @@ export default function Sidebar({ accounts, isScoring, userEmail, onScoreBatch, 
             </div>
             <div>
               <div className="text-sm font-bold text-white leading-tight">Account Scorer</div>
-              <div className="text-xs font-semibold tracking-widest uppercase" style={{ color: '#7c3aed' }}>
-                Powered by Noam Ramillon
+              <div className="text-xs" style={{ color: 'var(--text-muted)' }}>
+                by Noam Ramillon
               </div>
             </div>
           </div>
@@ -126,17 +126,17 @@ export default function Sidebar({ accounts, isScoring, userEmail, onScoreBatch, 
 
       {/* Tier grid */}
       <div className="grid grid-cols-4 gap-1.5 mb-5">
-        {TIERS.map(({ tier, emoji, color }) => (
+        {TIERS.map(({ tier, color }) => (
           <div
             key={tier}
             className="rounded-lg p-2 text-center"
-            style={{ background: `${color}12`, border: `1px solid ${color}30` }}
+            style={{ background: `${color}10`, border: `1px solid ${color}25` }}
           >
             <div className="text-lg font-bold tabular-nums leading-tight" style={{ color }}>
               {counters[tier]}
             </div>
-            <div className="text-xs mt-0.5" style={{ color }}>
-              {tier} {emoji}
+            <div className="text-xs mt-0.5 font-medium" style={{ color: 'var(--text-muted)' }}>
+              {tier}
             </div>
           </div>
         ))}
