@@ -28,21 +28,31 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
   if (!user) return res.status(401).json({ error: 'Non authentifié' })
 
   const { companyName: inputName, domain: inputDomain, salesforceId } = req.body as {
-    companyName?: string; domain: string; salesforceId?: string
+    companyName: string; domain?: string; salesforceId?: string
   }
-  if (!inputDomain?.trim()) return res.status(400).json({ error: 'Domain required' })
+  if (!inputName?.trim()) return res.status(400).json({ error: 'Company name required' })
 
-  const domain = inputDomain.trim().replace(/^https?:\/\//i, '').replace(/^www\./i, '').replace(/\/.*$/, '').toLowerCase()
+  const companyName = inputName.trim()
+  const domain = (inputDomain || '').trim().replace(/^https?:\/\//i, '').replace(/^www\./i, '').replace(/\/.*$/, '').toLowerCase()
 
-  // Temporary placeholder name — will be resolved after site-quality collection
-  const placeholderName = inputName?.trim() || domain.split('.')[0].replace(/^./, c => c.toUpperCase())
+  // Duplicate check — same domain already scored for this user
+  if (domain) {
+    const { data: existing } = await supabaseAdmin
+      .from('accounts')
+      .select('id')
+      .eq('user_id', user.id)
+      .eq('domain', domain)
+      .eq('status', 'done')
+      .maybeSingle()
+    if (existing) return res.status(409).json({ error: 'already_scored', id: existing.id })
+  }
 
   // Crée le compte
   const { data: account, error: insertError } = await supabaseAdmin
     .from('accounts')
     .insert({
       user_id: user.id,
-      company_name: placeholderName,
+      company_name: companyName,
       domain: domain || null,
       salesforce_id: salesforceId || null,
       status: 'scoring',
@@ -60,21 +70,13 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
     const isFrench = domain.endsWith('.fr')
 
     const [github, wappalyzer, siteQuality, search, news, pappers] = await Promise.all([
-      timeout(safeCollect(() => import('@/lib/collectors/github').then(m => m.collectGitHub(placeholderName, domain)))),
+      timeout(safeCollect(() => import('@/lib/collectors/github').then(m => m.collectGitHub(companyName, domain)))),
       timeout(safeCollect(() => domain ? import('@/lib/collectors/wappalyzer').then(m => m.collectWappalyzer(domain)) : Promise.resolve(null))),
       timeout(safeCollect(() => domain ? import('@/lib/collectors/site-quality').then(m => m.collectSiteQuality(domain)) : Promise.resolve(null))),
-      timeout(safeCollect(() => import('@/lib/collectors/brave').then(m => m.collectBrave(placeholderName, domain)))),
-      timeout(safeCollect(() => import('@/lib/collectors/newsapi').then(m => m.collectNews(placeholderName)))),
-      timeout(safeCollect(() => isFrench ? import('@/lib/collectors/pappers').then(m => m.collectPappers(placeholderName, domain)) : Promise.resolve(null))),
+      timeout(safeCollect(() => import('@/lib/collectors/brave').then(m => m.collectBrave(companyName, domain)))),
+      timeout(safeCollect(() => import('@/lib/collectors/newsapi').then(m => m.collectNews(companyName)))),
+      timeout(safeCollect(() => isFrench ? import('@/lib/collectors/pappers').then(m => m.collectPappers(companyName, domain)) : Promise.resolve(null))),
     ])
-
-    // Resolve final company name: user input > og:site_name/title > domain slug
-    const companyName = inputName?.trim() || siteQuality?.detectedName || placeholderName
-
-    // Update with resolved name if different from placeholder
-    if (companyName !== placeholderName) {
-      await supabaseAdmin.from('accounts').update({ company_name: companyName }).eq('id', account.id)
-    }
 
     const aggregated: AggregatedData = {
       companyName,
