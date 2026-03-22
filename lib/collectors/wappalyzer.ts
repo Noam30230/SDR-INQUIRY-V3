@@ -24,9 +24,16 @@ const SIGNATURES: Array<{ name: string; categories: string[]; patterns: RegExp[]
   { name: 'Mixpanel', categories: ['Analytics'], patterns: [/mixpanel/i] },
   { name: 'Amplitude', categories: ['Analytics'], patterns: [/amplitude/i] },
 
+  // Cloud providers — detected from HTML content (deterministic)
+  { name: 'Azure', categories: ['Cloud'], patterns: [/azurefd\.net|azurewebsites\.net|azureedge\.net|blob\.core\.windows\.net|login\.microsoftonline\.com|js\.monitor\.azure\.com|appinsights|azure-api\.net/i] },
+  { name: 'AWS', categories: ['Cloud'], patterns: [/amazonaws\.com|cloudfront\.net|execute-api\.[a-z0-9-]+\.amazonaws|s3\.[a-z0-9-]+\.amazonaws/i] },
+  { name: 'GCP', categories: ['Cloud'], patterns: [/storage\.googleapis\.com|firebaseapp\.com|firebase\.com|appspot\.com|\.googleapis\.com/i] },
+
   // Monitoring
   { name: 'Datadog', categories: ['Application performance monitoring'], patterns: [/datadoghq\.com|dd-rum/i] },
   { name: 'Sentry', categories: ['Application performance monitoring'], patterns: [/sentry\.io|@sentry\//i] },
+  { name: 'New Relic', categories: ['Application performance monitoring'], patterns: [/newrelic\.com|nr-data\.net/i] },
+  { name: 'Dynatrace', categories: ['Application performance monitoring'], patterns: [/dynatrace\.com|dtrum\(/i] },
 
   // Chat / Support
   { name: 'Intercom', categories: ['Live chat'], patterns: [/intercom\.io|intercomSettings/i] },
@@ -38,7 +45,8 @@ const SIGNATURES: Array<{ name: string; categories: string[]; patterns: RegExp[]
 
 const HEADER_SIGNATURES: Array<{ name: string; categories: string[]; headers: string[]; pattern: RegExp }> = [
   { name: 'Cloudflare', categories: ['CDN'], headers: ['cf-ray', 'cf-cache-status'], pattern: /.*/ },
-  { name: 'AWS CloudFront', categories: ['CDN'], headers: ['x-amz-cf-id', 'x-amz-cf-pop'], pattern: /.*/ },
+  { name: 'AWS', categories: ['Cloud'], headers: ['x-amz-cf-id', 'x-amz-cf-pop', 'x-amz-request-id'], pattern: /.*/ },
+  { name: 'Azure', categories: ['Cloud'], headers: ['x-azure-ref', 'x-azure-fdid', 'x-ms-request-id', 'x-ms-version'], pattern: /.*/ },
   { name: 'Vercel', categories: ['PaaS'], headers: ['x-vercel-id'], pattern: /.*/ },
   { name: 'Netlify', categories: ['PaaS'], headers: ['x-nf-request-id'], pattern: /.*/ },
   { name: 'Fastly', categories: ['CDN'], headers: ['x-fastly-request-id', 'fastly-restarts'], pattern: /.*/ },
