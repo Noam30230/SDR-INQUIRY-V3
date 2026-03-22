@@ -102,10 +102,8 @@ export function aggregate(data: AggregatedData): {
 
   // Signaux cloud depuis Brave
   if (data.brave?.cloudSignals) {
+    // Cloud providers come exclusively from DNS+ASN (siteQuality.hosting) — not mapped here
     const cloudMap: Record<string, string> = {
-      aws: 'AWS', 'amazon web services': 'AWS',
-      gcp: 'GCP', 'google cloud': 'GCP',
-      azure: 'Azure', 'microsoft azure': 'Azure',
       kubernetes: 'Kubernetes', docker: 'Docker', terraform: 'Terraform',
       serverless: 'Serverless', snowflake: 'Snowflake', databricks: 'Databricks',
       kafka: 'Kafka', spark: 'Spark', airflow: 'Airflow',
