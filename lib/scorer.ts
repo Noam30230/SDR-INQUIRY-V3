@@ -98,9 +98,10 @@ export async function scoreAccount(data: AggregatedData): Promise<ScorerOutput> 
   const userPrompt = buildUserPrompt(data)
 
   const completion = await openai.chat.completions.create({
-    model: 'gpt-4o',
+    model: 'gpt-4o-mini',
     response_format: { type: 'json_object' },
     temperature: 0.2,
+    max_tokens: 600,
     messages: [
       { role: 'system', content: SYSTEM_PROMPT },
       {
