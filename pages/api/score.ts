@@ -66,15 +66,14 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
     const timeout = <T>(p: Promise<T | null>): Promise<T | null> =>
       Promise.race([p, new Promise<null>(r => setTimeout(() => r(null), 5000))])
 
-    const isFrench = domain.endsWith('.fr')
-
+    // Try Pappers for all companies — it returns null gracefully if not found
     const [github, wappalyzer, siteQuality, search, news, pappers] = await Promise.all([
       timeout(safeCollect(() => import('@/lib/collectors/github').then(m => m.collectGitHub(companyName, domain)))),
       timeout(safeCollect(() => domain ? import('@/lib/collectors/wappalyzer').then(m => m.collectWappalyzer(domain)) : Promise.resolve(null))),
       timeout(safeCollect(() => domain ? import('@/lib/collectors/site-quality').then(m => m.collectSiteQuality(domain)) : Promise.resolve(null))),
       timeout(safeCollect(() => import('@/lib/collectors/brave').then(m => m.collectBrave(companyName, domain)))),
       timeout(safeCollect(() => import('@/lib/collectors/newsapi').then(m => m.collectNews(companyName)))),
-      timeout(safeCollect(() => isFrench ? import('@/lib/collectors/pappers').then(m => m.collectPappers(companyName, domain)) : Promise.resolve(null))),
+      timeout(safeCollect(() => import('@/lib/collectors/pappers').then(m => m.collectPappers(companyName, domain)))),
     ])
 
     const aggregated: AggregatedData = {
@@ -121,6 +120,7 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
         web_quality: webQuality,
         press_signals: { articles: aggregated.news?.articles || [] },
         reasoning: scored.reasoning,
+        raw_data: { pappers: aggregated.pappers ?? null },
         status: 'done',
         domain: domain || null,
       })
