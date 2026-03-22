@@ -22,7 +22,8 @@ async function serperSearch(query: string, apiKey: string, num = 5): Promise<str
 }
 
 const TECH_JOB_KEYWORDS = ['devops', 'sre', 'platform', 'cloud', 'kubernetes', 'infrastructure', 'backend', 'software engineer', 'data engineer', 'security', 'mlops', 'data scientist']
-const CLOUD_KEYWORDS = ['aws', 'amazon web services', 'gcp', 'google cloud', 'azure', 'microsoft azure', 'kubernetes', 'docker', 'terraform', 'serverless', 'databricks', 'snowflake', 'kafka', 'spark', 'airflow', 'dbt', 'redshift', 'bigquery']
+// NB: cloud providers (aws/gcp/azure) are detected via DNS+ASN only — not here (too many false positives in search snippets)
+const CLOUD_KEYWORDS = ['kubernetes', 'docker', 'terraform', 'serverless', 'databricks', 'snowflake', 'kafka', 'spark', 'airflow', 'dbt', 'redshift', 'bigquery']
 const MONITORING_KEYWORDS = ['datadog', 'grafana', 'prometheus', 'elk', 'elasticsearch', 'splunk', 'new relic', 'pagerduty', 'opsgenie', 'dynatrace', 'cloudwatch', 'opentelemetry', 'jaeger', 'sentry', 'logstash', 'kibana']
 const FUNDING_KEYWORDS = ['series a', 'series b', 'series c', 'seed', 'levée de fonds', 'raised', 'funding', 'million', 'investment']
 
@@ -34,7 +35,7 @@ export async function collectBrave(companyName: string, domain?: string): Promis
 
   const [jobResults, cloudResults, monitoringResults, fundingResults] = await Promise.all([
     serperSearch(`${name} devops OR sre OR kubernetes OR "software engineer" OR infrastructure jobs hiring`, apiKey),
-    serperSearch(`${name} azure OR "amazon web services" OR aws OR "google cloud" OR gcp OR kubernetes OR docker OR terraform cloud infrastructure`, apiKey, 8),
+    serperSearch(`${name} kubernetes OR docker OR terraform OR snowflake OR databricks OR kafka OR spark infrastructure stack`, apiKey, 8),
     serperSearch(`${name} datadog OR grafana OR prometheus OR elk OR splunk OR "new relic" OR dynatrace monitoring observability`, apiKey, 8),
     serperSearch(`${name} funding OR "series" OR "raised" OR "levée de fonds" OR investment 2023 OR 2024 OR 2025`, apiKey),
   ])
