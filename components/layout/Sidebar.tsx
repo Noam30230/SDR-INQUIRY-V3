@@ -58,8 +58,8 @@ export default function Sidebar({ accounts, isScoring, onScoreOne, onScoreBatch,
       skipEmptyLines: true,
       complete: (results) => {
         const items = (results.data as Record<string, string>[]).map(row => ({
-          name: row['company'] || row['Company'] || row['nom'] || row['Nom'] || row['name'] || row['Name'] || Object.values(row)[0] || '',
-          domain: row['domain'] || row['Domain'] || row['domaine'] || row['Domaine'] || undefined,
+          name: row['company'] || row['Company'] || row['name'] || row['Name'] || Object.values(row)[0] || '',
+          domain: row['domain'] || row['Domain'] || undefined,
         })).filter(item => item.name.trim())
         setCsvPreview(items)
       },
@@ -100,13 +100,13 @@ export default function Sidebar({ accounts, isScoring, onScoreOne, onScoreBatch,
         </div>
       </div>
 
-      {/* Saisie manuelle */}
+      {/* Manual input */}
       <form onSubmit={handleSubmit} className="space-y-2 mb-5">
         <input
           type="text"
           value={companyName}
           onChange={e => setCompanyName(e.target.value)}
-          placeholder="Nom de l'entreprise"
+          placeholder="Company name"
           className="w-full px-3 py-2 text-sm text-white placeholder-gray-600 rounded-lg outline-none"
           style={{ background: 'var(--bg-hover)', border: '1px solid var(--border)' }}
         />
@@ -114,7 +114,7 @@ export default function Sidebar({ accounts, isScoring, onScoreOne, onScoreBatch,
           type="text"
           value={domain}
           onChange={e => setDomain(e.target.value)}
-          placeholder="domaine.com (optionnel)"
+          placeholder="domain.com (optional)"
           className="w-full px-3 py-2 text-sm text-white placeholder-gray-600 rounded-lg outline-none"
           style={{ background: 'var(--bg-hover)', border: '1px solid var(--border)' }}
         />
@@ -124,17 +124,16 @@ export default function Sidebar({ accounts, isScoring, onScoreOne, onScoreBatch,
           className="w-full py-2 text-sm font-semibold text-white rounded-lg transition-colors disabled:opacity-40 disabled:cursor-not-allowed"
           style={{ background: 'var(--primary)' }}
         >
-          ▶ Scorer ce compte
+          ▶ Score this account
         </button>
       </form>
 
-      {/* Séparateur */}
       <div className="mb-4" style={{ borderTop: '1px solid var(--border)' }} />
 
-      {/* Upload CSV */}
+      {/* CSV Upload */}
       <div className="mb-4 space-y-2">
         <label className="text-xs font-semibold uppercase tracking-wider" style={{ color: 'var(--text-muted)' }}>
-          Import CSV
+          CSV Import
         </label>
         <input
           ref={fileRef}
@@ -145,18 +144,18 @@ export default function Sidebar({ accounts, isScoring, onScoreOne, onScoreBatch,
           style={{ color: 'var(--text-muted)' }}
         />
         <p className="text-xs" style={{ color: 'var(--text-muted)', opacity: 0.7 }}>
-          Colonnes : <code className="text-purple-300">company</code>, <code className="text-purple-300">domain</code>
+          Columns: <code className="text-purple-300">company</code>, <code className="text-purple-300">domain</code>
         </p>
 
         {csvPreview.length > 0 && (
           <div className="rounded-lg p-2 text-xs" style={{ background: 'var(--bg-hover)', border: '1px solid var(--border)' }}>
-            <p style={{ color: 'var(--text-muted)' }}>{csvPreview.length} entreprises détectées</p>
+            <p style={{ color: 'var(--text-muted)' }}>{csvPreview.length} companies detected</p>
             <div className="mt-1 max-h-24 overflow-y-auto space-y-0.5">
               {csvPreview.slice(0, 5).map((item, i) => (
                 <p key={i} className="truncate text-white opacity-70">{item.name}</p>
               ))}
               {csvPreview.length > 5 && (
-                <p style={{ color: 'var(--text-muted)' }}>+{csvPreview.length - 5} autres...</p>
+                <p style={{ color: 'var(--text-muted)' }}>+{csvPreview.length - 5} more...</p>
               )}
             </div>
           </div>
@@ -170,7 +169,7 @@ export default function Sidebar({ accounts, isScoring, onScoreOne, onScoreBatch,
               className="flex-1 py-2 text-xs font-semibold text-white rounded-lg disabled:opacity-40"
               style={{ background: 'var(--primary)' }}
             >
-              ▶ Lancer ({csvPreview.length})
+              ▶ Start ({csvPreview.length})
             </button>
             <button
               onClick={() => { setCsvPreview([]); if (fileRef.current) fileRef.current.value = '' }}
@@ -188,18 +187,17 @@ export default function Sidebar({ accounts, isScoring, onScoreOne, onScoreBatch,
             className="w-full py-2 text-xs font-semibold rounded-lg"
             style={{ background: 'rgba(239,68,68,0.15)', border: '1px solid rgba(239,68,68,0.3)', color: '#f87171' }}
           >
-            ⏹ Arrêter
+            ⏹ Stop
           </button>
         )}
       </div>
 
-      {/* Séparateur */}
       <div className="mb-4" style={{ borderTop: '1px solid var(--border)' }} />
 
-      {/* Compteurs */}
+      {/* Counters */}
       <div className="mb-5">
         <label className="text-xs font-semibold uppercase tracking-wider mb-2 block" style={{ color: 'var(--text-muted)' }}>
-          Résultats
+          Results
         </label>
         <div className="divide-y" style={{ borderColor: 'var(--border)' }}>
           {((['T1', 'T2', 'T3', 'DQ'] as Tier[])).map(tier => (
@@ -207,15 +205,14 @@ export default function Sidebar({ accounts, isScoring, onScoreOne, onScoreBatch,
           ))}
         </div>
         <div className="flex items-center justify-between mt-2 pt-2 border-t" style={{ borderColor: 'var(--border)' }}>
-          <span className="text-xs" style={{ color: 'var(--text-muted)' }}>Total scorés</span>
+          <span className="text-xs" style={{ color: 'var(--text-muted)' }}>Total scored</span>
           <span className="text-sm font-bold text-white">{doneAccounts.length}</span>
         </div>
       </div>
 
-      {/* Espace flexible */}
       <div className="flex-1" />
 
-      {/* Export + Déconnexion */}
+      {/* Export + Logout */}
       <div className="space-y-2 mt-4">
         <button
           onClick={onExport}
@@ -227,14 +224,14 @@ export default function Sidebar({ accounts, isScoring, onScoreOne, onScoreBatch,
             color: '#a78bfa',
           }}
         >
-          ↓ Exporter CSV
+          ↓ Export CSV
         </button>
         <button
           onClick={handleLogout}
           className="w-full py-2 text-xs rounded-lg transition-colors"
           style={{ color: 'var(--text-muted)', border: '1px solid var(--border)' }}
         >
-          Déconnexion
+          Log out
         </button>
       </div>
     </aside>

@@ -11,7 +11,7 @@ interface AccountListProps {
 }
 
 const FILTER_OPTIONS: Array<{ value: FilterTier; label: string }> = [
-  { value: 'all', label: 'Tous' },
+  { value: 'all', label: 'All' },
   { value: 'T1', label: 'T1' },
   { value: 'T2', label: 'T2' },
   { value: 'T3', label: 'T3' },
@@ -27,7 +27,7 @@ export default function AccountList({ accounts, filter, onFilterChange, onDelete
 
   return (
     <div className="flex flex-col h-full min-h-0">
-      {/* Filtres */}
+      {/* Filters */}
       <div className="flex gap-1.5 mb-4 shrink-0">
         {FILTER_OPTIONS.map(opt => {
           const count = opt.value === 'all'
@@ -52,15 +52,15 @@ export default function AccountList({ accounts, filter, onFilterChange, onDelete
         })}
       </div>
 
-      {/* Liste */}
+      {/* List */}
       <div className="flex-1 overflow-y-auto space-y-2 pr-1">
         {filtered.length === 0 ? (
           <div className="text-center py-16">
             <div className="text-3xl mb-3">🎯</div>
             <p className="text-sm" style={{ color: 'var(--text-muted)' }}>
               {accounts.length === 0
-                ? 'Entre un nom d\'entreprise pour commencer'
-                : 'Aucun compte dans ce tier'}
+                ? 'Enter a company name to get started'
+                : 'No accounts in this tier'}
             </p>
           </div>
         ) : (

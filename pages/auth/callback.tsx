@@ -18,7 +18,7 @@ export default function AuthCallback() {
       <div className="text-center">
         <div className="w-8 h-8 border-2 border-t-transparent rounded-full animate-spin mx-auto mb-3"
           style={{ borderColor: 'var(--primary)' }} />
-        <p className="text-sm" style={{ color: 'var(--text-muted)' }}>Connexion en cours...</p>
+        <p className="text-sm" style={{ color: 'var(--text-muted)' }}>Signing in...</p>
       </div>
     </div>
   )

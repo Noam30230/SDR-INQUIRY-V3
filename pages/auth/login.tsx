@@ -30,7 +30,7 @@ export default function LoginPage() {
       const { error } = await supabaseBrowser.auth.signInWithPassword({ email, password })
       if (error) {
         if (error.message.includes('Invalid login credentials')) {
-          setError("Identifiants incorrects. Pas encore de compte ? Clique sur Sign up.")
+          setError("Incorrect credentials. No account yet? Click Sign up.")
         } else {
           setError(error.message)
         }
@@ -41,12 +41,12 @@ export default function LoginPage() {
       const { error } = await supabaseBrowser.auth.signUp({ email, password })
       if (error) {
         if (error.message.includes('already registered')) {
-          setError("Cet email a déjà un compte. Clique sur Log in.")
+          setError("This email already has an account. Click Log in.")
         } else {
           setError(error.message)
         }
       } else {
-        setSuccess("Compte créé ! Tu peux maintenant te connecter.")
+        setSuccess("Account created! You can now log in.")
         setMode('signin')
         setPassword('')
       }
@@ -129,6 +129,7 @@ export default function LoginPage() {
           </h2>
           <p className="text-sm mb-6" style={{ color: 'var(--text-muted)' }}>
             {mode === 'signin' ? 'Log in to your workspace' : 'Start scoring your accounts'}
+
           </p>
 
           {/* Toggle Log in / Sign up */}
@@ -196,7 +197,7 @@ export default function LoginPage() {
               style={{ background: 'linear-gradient(135deg, #7c3aed, #6d28d9)' }}
             >
               {loading
-                ? (mode === 'signin' ? 'Connexion...' : 'Création...')
+                ? (mode === 'signin' ? 'Signing in...' : 'Creating account...')
                 : (mode === 'signin' ? 'Log in to Account Scorer →' : 'Create my account →')}
             </button>
           </form>

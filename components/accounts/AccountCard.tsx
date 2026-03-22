@@ -35,14 +35,12 @@ export default function AccountCard({ account, onDelete }: AccountCardProps) {
         border: `1px solid ${expanded ? 'rgba(124,58,237,0.3)' : 'var(--border)'}`,
       }}
     >
-      {/* Header cliquable */}
       <button
         onClick={() => !isScoring && !isError && setExpanded(v => !v)}
         className="w-full text-left px-4 py-3.5"
         disabled={isScoring || isError}
       >
         <div className="flex items-center justify-between gap-3">
-          {/* Nom + domaine */}
           <div className="flex-1 min-w-0">
             <div className="flex items-center gap-2">
               <span className="font-semibold text-sm text-white truncate">{account.company_name}</span>
@@ -53,7 +51,6 @@ export default function AccountCard({ account, onDelete }: AccountCardProps) {
             )}
           </div>
 
-          {/* Score + status */}
           <div className="shrink-0 w-32">
             {isScoring && (
               <div className="flex items-center gap-2">
@@ -62,15 +59,12 @@ export default function AccountCard({ account, onDelete }: AccountCardProps) {
                 <span className="text-xs" style={{ color: 'var(--text-muted)' }}>Scoring...</span>
               </div>
             )}
-            {isError && (
-              <span className="text-xs text-red-400">Erreur</span>
-            )}
+            {isError && <span className="text-xs text-red-400">Error</span>}
             {account.status === 'done' && account.score !== null && (
               <ScoreBar score={account.score} />
             )}
           </div>
 
-          {/* Chevron */}
           {account.status === 'done' && (
             <span className="text-xs shrink-0" style={{ color: 'var(--text-muted)' }}>
               {expanded ? '▲' : '▼'}
@@ -78,20 +72,17 @@ export default function AccountCard({ account, onDelete }: AccountCardProps) {
           )}
         </div>
 
-        {/* Tech chips */}
         {topTechs.length > 0 && !isScoring && (
           <div className="flex flex-wrap gap-1 mt-2">
             {topTechs.map(t => <SignalChip key={t} label={t} variant="tech" />)}
           </div>
         )}
 
-        {/* Error message */}
         {isError && account.error_message && (
           <p className="text-xs mt-1 text-red-400">{account.error_message}</p>
         )}
       </button>
 
-      {/* Détail dépliable */}
       {expanded && (
         <div className="px-4 pb-4 border-t" style={{ borderColor: 'var(--border)' }}>
           <AccountDetail account={account} onDelete={onDelete} />

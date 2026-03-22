@@ -7,12 +7,7 @@ const CATEGORY_ICONS: Record<keyof TechStack, string> = {
   Security: '🔒', Other: '🔧',
 }
 
-interface TechGroupProps {
-  category: keyof TechStack
-  items: string[]
-}
-
-function TechGroup({ category, items }: TechGroupProps) {
+function TechGroup({ category, items }: { category: keyof TechStack; items: string[] }) {
   if (!items.length) return null
   return (
     <div>
@@ -23,9 +18,7 @@ function TechGroup({ category, items }: TechGroupProps) {
         </span>
       </div>
       <div className="flex flex-wrap gap-1.5">
-        {items.map(item => (
-          <SignalChip key={item} label={item} variant="tech" />
-        ))}
+        {items.map(item => <SignalChip key={item} label={item} variant="tech" />)}
       </div>
     </div>
   )
@@ -46,7 +39,7 @@ export default function AccountDetail({ account, onDelete }: AccountDetailProps)
       {hasTech && (
         <div>
           <h4 className="text-xs font-semibold uppercase tracking-wider mb-3" style={{ color: 'var(--text-muted)' }}>
-            Stack Technique
+            Tech Stack
           </h4>
           <div className="space-y-3">
             {techCategories.map(cat => (
@@ -56,18 +49,17 @@ export default function AccountDetail({ account, onDelete }: AccountDetailProps)
         </div>
       )}
 
-      {/* Signaux */}
+      {/* Signals */}
       <div className="grid grid-cols-2 gap-4">
         {(account.signals?.positive || []).length > 0 && (
           <div>
             <h4 className="text-xs font-semibold uppercase tracking-wider mb-2" style={{ color: '#34d399' }}>
-              ✅ Signaux positifs
+              ✅ Positive signals
             </h4>
             <ul className="space-y-1">
               {account.signals.positive.map((s, i) => (
                 <li key={i} className="text-xs flex items-start gap-1.5" style={{ color: 'var(--text)' }}>
-                  <span className="text-green-400 mt-0.5 shrink-0">+</span>
-                  {s}
+                  <span className="text-green-400 mt-0.5 shrink-0">+</span>{s}
                 </li>
               ))}
             </ul>
@@ -76,13 +68,12 @@ export default function AccountDetail({ account, onDelete }: AccountDetailProps)
         {(account.signals?.negative || []).length > 0 && (
           <div>
             <h4 className="text-xs font-semibold uppercase tracking-wider mb-2" style={{ color: '#f87171' }}>
-              ⚠️ Signaux négatifs
+              ⚠️ Negative signals
             </h4>
             <ul className="space-y-1">
               {account.signals.negative.map((s, i) => (
                 <li key={i} className="text-xs flex items-start gap-1.5" style={{ color: 'var(--text)' }}>
-                  <span className="text-red-400 mt-0.5 shrink-0">−</span>
-                  {s}
+                  <span className="text-red-400 mt-0.5 shrink-0">−</span>{s}
                 </li>
               ))}
             </ul>
@@ -90,11 +81,11 @@ export default function AccountDetail({ account, onDelete }: AccountDetailProps)
         )}
       </div>
 
-      {/* Qualité site web */}
+      {/* Web quality */}
       {account.web_quality && (
         <div>
           <h4 className="text-xs font-semibold uppercase tracking-wider mb-2" style={{ color: 'var(--text-muted)' }}>
-            🌐 Site Web
+            🌐 Website
           </h4>
           <div className="flex flex-wrap gap-1.5">
             {(account.web_quality as { hasHttps: boolean }).hasHttps && <SignalChip label="HTTPS ✓" variant="positive" />}
@@ -103,31 +94,27 @@ export default function AccountDetail({ account, onDelete }: AccountDetailProps)
               <SignalChip label={(account.web_quality as { framework: string }).framework} variant="tech" />
             )}
             {(account.web_quality as { hosting: string }).hosting && (
-              <SignalChip label={`Hébergeur: ${(account.web_quality as { hosting: string }).hosting}`} variant="neutral" />
+              <SignalChip label={`Host: ${(account.web_quality as { hosting: string }).hosting}`} variant="neutral" />
             )}
-            {(account.web_quality as { hasCareers: boolean }).hasCareers && <SignalChip label="Page carrières ✓" variant="positive" />}
+            {(account.web_quality as { hasCareers: boolean }).hasCareers && <SignalChip label="Careers page ✓" variant="positive" />}
             {(account.web_quality as { hasBlog: boolean }).hasBlog && <SignalChip label="Blog ✓" variant="positive" />}
-            {(account.web_quality as { isPageBuilder: boolean }).isPageBuilder && (
-              <SignalChip label={`Page builder ⚠️`} variant="negative" />
-            )}
+            {(account.web_quality as { isPageBuilder: boolean }).isPageBuilder && <SignalChip label="Page builder ⚠️" variant="negative" />}
           </div>
         </div>
       )}
 
-      {/* Articles presse */}
+      {/* Press */}
       {(account.press_signals?.articles || []).length > 0 && (
         <div>
           <h4 className="text-xs font-semibold uppercase tracking-wider mb-2" style={{ color: 'var(--text-muted)' }}>
-            📰 Actualités récentes
+            📰 Recent news
           </h4>
           <ul className="space-y-1.5">
             {account.press_signals.articles.map((a, i) => (
-              <li key={i} className="text-xs" style={{ color: 'var(--text-muted)' }}>
-                <span className="text-xs" style={{ color: 'var(--text-muted)', marginRight: 6 }}>[{a.date}]</span>
+              <li key={i} className="text-xs">
+                <span className="mr-1.5" style={{ color: 'var(--text-muted)' }}>[{a.date}]</span>
                 <a href={a.url} target="_blank" rel="noopener noreferrer"
-                  className="hover:underline" style={{ color: '#a78bfa' }}>
-                  {a.title}
-                </a>
+                  className="hover:underline" style={{ color: '#a78bfa' }}>{a.title}</a>
                 <span className="ml-1" style={{ color: 'var(--text-muted)' }}>— {a.source}</span>
               </li>
             ))}
@@ -135,11 +122,11 @@ export default function AccountDetail({ account, onDelete }: AccountDetailProps)
         </div>
       )}
 
-      {/* Raisonnement GPT */}
+      {/* GPT reasoning */}
       {account.reasoning && (
         <div>
           <h4 className="text-xs font-semibold uppercase tracking-wider mb-2" style={{ color: 'var(--text-muted)' }}>
-            🧠 Analyse GPT-4o
+            🧠 GPT-4o Analysis
           </h4>
           <p className="text-xs leading-relaxed" style={{ color: 'var(--text)', opacity: 0.85 }}>
             {account.reasoning}
@@ -148,32 +135,18 @@ export default function AccountDetail({ account, onDelete }: AccountDetailProps)
       )}
 
       {/* Actions */}
-      <div className="pt-2 border-t flex justify-end" style={{ borderColor: 'var(--border)' }}>
+      <div className="pt-2 border-t flex justify-end gap-2" style={{ borderColor: 'var(--border)' }}>
         {account.domain && (
-          <a
-            href={`https://${account.domain}`}
-            target="_blank"
-            rel="noopener noreferrer"
-            className="text-xs px-3 py-1.5 rounded mr-2 transition-colors"
-            style={{
-              color: '#a78bfa',
-              background: 'rgba(124,58,237,0.1)',
-              border: '1px solid rgba(124,58,237,0.2)',
-            }}
-          >
-            Visiter le site ↗
+          <a href={`https://${account.domain}`} target="_blank" rel="noopener noreferrer"
+            className="text-xs px-3 py-1.5 rounded transition-colors"
+            style={{ color: '#a78bfa', background: 'rgba(124,58,237,0.1)', border: '1px solid rgba(124,58,237,0.2)' }}>
+            Visit website ↗
           </a>
         )}
-        <button
-          onClick={() => onDelete(account.id)}
+        <button onClick={() => onDelete(account.id)}
           className="text-xs px-3 py-1.5 rounded transition-colors"
-          style={{
-            color: '#f87171',
-            background: 'rgba(239,68,68,0.08)',
-            border: '1px solid rgba(239,68,68,0.2)',
-          }}
-        >
-          Supprimer
+          style={{ color: '#f87171', background: 'rgba(239,68,68,0.08)', border: '1px solid rgba(239,68,68,0.2)' }}>
+          Delete
         </button>
       </div>
     </div>
