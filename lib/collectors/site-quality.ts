@@ -104,8 +104,54 @@ export async function collectSiteQuality(domain: string): Promise<SiteQualityDat
     // Careers — depuis les liens de la page principale (sans fetcher la page)
     result.hasCareers = links.some(href => /\/careers|\/jobs|\/recrutement|\/rejoindre|\/offres|hiring/i.test(href))
 
+    // Détection cloud depuis les URLs/scripts embarqués dans le HTML (très fiable)
+    if (!result.hosting) {
+      const CLOUD_URL_PATTERNS: Array<{ pattern: RegExp; name: string }> = [
+        { pattern: /blob\.core\.windows\.net|azurewebsites\.net|azurefd\.net|azure-api\.net|\.azure\b/i, name: 'Azure' },
+        { pattern: /\.amazonaws\.com|cloudfront\.net|s3-website|elasticbeanstalk\.com/i, name: 'AWS' },
+        { pattern: /googleapis\.com|appspot\.com|\.run\.app|\.cloudfunctions\.net/i, name: 'GCP' },
+        { pattern: /\.digitalocean\.com/i, name: 'DigitalOcean' },
+        { pattern: /\.ovh\.net|\.ovhcloud\.com/i, name: 'OVH' },
+        { pattern: /\.scaleway\.com/i, name: 'Scaleway' },
+        { pattern: /\.hetzner\.com|hetzner\.cloud/i, name: 'Hetzner' },
+      ]
+      for (const { pattern, name } of CLOUD_URL_PATTERNS) {
+        if (pattern.test(html)) { result.hosting = name; break }
+      }
+    }
+
   } catch {
     // site inaccessible
+  }
+
+  // Fetch mentions-légales pour récupérer l'hébergeur (obligatoire en France)
+  if (!result.hosting && result.loadable) {
+    const legalPaths = ['/mentions-legales', '/mentions-légales', '/legal-notice', '/legal', '/en/legal']
+    for (const path of legalPaths) {
+      try {
+        const legalRes = await fetch(`${base}${path}`, {
+          headers: { 'User-Agent': 'Mozilla/5.0 (compatible; AccountScorer/1.0)' },
+          signal: AbortSignal.timeout(2000),
+        })
+        if (legalRes.ok) {
+          const legalText = await legalRes.text()
+          for (const { pattern, name } of HOSTING_PATTERNS) {
+            if (pattern.test(legalText)) { result.hosting = name; break }
+          }
+          if (result.hosting) break
+          // Also check cloud URL patterns in legal text
+          const CLOUD_URL_PATTERNS: Array<{ pattern: RegExp; name: string }> = [
+            { pattern: /blob\.core\.windows\.net|azurewebsites\.net|azure/i, name: 'Azure' },
+            { pattern: /amazonaws\.com|cloudfront\.net/i, name: 'AWS' },
+            { pattern: /googleapis\.com|google cloud/i, name: 'GCP' },
+          ]
+          for (const { pattern, name } of CLOUD_URL_PATTERNS) {
+            if (pattern.test(legalText)) { result.hosting = name; break }
+          }
+          if (result.hosting) break
+        }
+      } catch { /* ignore */ }
+    }
   }
 
   return result
