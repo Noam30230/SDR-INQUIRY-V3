@@ -101,10 +101,26 @@ export function aggregate(data: AggregatedData): {
     const cloudMap: Record<string, string> = {
       aws: 'AWS', gcp: 'GCP', azure: 'Azure', kubernetes: 'Kubernetes',
       docker: 'Docker', terraform: 'Terraform', snowflake: 'Snowflake',
-      databricks: 'Databricks',
+      databricks: 'Databricks', kafka: 'Kafka', spark: 'Spark',
+      airflow: 'Airflow', dbt: 'dbt', redshift: 'Redshift', bigquery: 'BigQuery',
     }
     for (const signal of data.brave.cloudSignals) {
       const tech = cloudMap[signal.toLowerCase()]
+      if (tech && !extraTechs.includes(tech)) extraTechs.push(tech)
+    }
+  }
+
+  // Signaux monitoring depuis Brave
+  if (data.brave?.monitoringSignals) {
+    const monitoringMap: Record<string, string> = {
+      datadog: 'Datadog', grafana: 'Grafana', prometheus: 'Prometheus',
+      elk: 'ELK', elasticsearch: 'Elasticsearch', splunk: 'Splunk',
+      'new relic': 'New Relic', pagerduty: 'PagerDuty', opsgenie: 'OpsGenie',
+      dynatrace: 'Dynatrace', cloudwatch: 'CloudWatch', opentelemetry: 'OpenTelemetry',
+      jaeger: 'Jaeger', sentry: 'Sentry', logstash: 'Logstash', kibana: 'Kibana',
+    }
+    for (const signal of data.brave.monitoringSignals) {
+      const tech = monitoringMap[signal.toLowerCase()]
       if (tech && !extraTechs.includes(tech)) extraTechs.push(tech)
     }
   }
