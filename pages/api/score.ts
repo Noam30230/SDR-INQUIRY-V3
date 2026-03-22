@@ -37,14 +37,13 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
 
   // Duplicate check — same domain already scored for this user
   if (domain) {
-    const { data: existing } = await supabaseAdmin
+    const { count } = await supabaseAdmin
       .from('accounts')
-      .select('id')
+      .select('id', { count: 'exact', head: true })
       .eq('user_id', user.id)
       .eq('domain', domain)
       .eq('status', 'done')
-      .maybeSingle()
-    if (existing) return res.status(409).json({ error: 'already_scored', id: existing.id })
+    if ((count ?? 0) > 0) return res.status(409).json({ error: 'already_scored' })
   }
 
   // Crée le compte
