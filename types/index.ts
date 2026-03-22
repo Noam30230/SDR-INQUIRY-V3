@@ -115,7 +115,17 @@ export interface SiteQualityData {
   hosting: string
   techJobsFound: string[]
   loadable: boolean
-  detectedName?: string  // extracted from og:site_name or <title>
+  detectedName?: string
+  // SaaS qualification signals
+  hasPricing: boolean
+  hasSignup: boolean
+  hasDemo: boolean
+  hasDocs: boolean
+  hasLogin: boolean
+  hasApi: boolean
+  hasIntegrations: boolean
+  saasKeywords: string[]     // positive SaaS keywords found in page copy
+  consultingKeywords: string[] // ESN/consulting signals found
 }
 
 // Payload Brave Search

@@ -101,6 +101,15 @@ export async function collectSiteQuality(domain: string): Promise<SiteQualityDat
     hosting: '',
     techJobsFound: [],
     loadable: false,
+    hasPricing: false,
+    hasSignup: false,
+    hasDemo: false,
+    hasDocs: false,
+    hasLogin: false,
+    hasApi: false,
+    hasIntegrations: false,
+    saasKeywords: [],
+    consultingKeywords: [],
   }
 
   // Lance le fetch principal + la résolution DNS en parallèle
@@ -193,8 +202,64 @@ export async function collectSiteQuality(domain: string): Promise<SiteQualityDat
 
   // Blog / Careers
   const links = $('a[href]').map((_, el) => $(el).attr('href') || '').get()
+  const linkTexts = $('a').map((_, el) => $(el).text().toLowerCase()).get().join(' ')
+  const navText = $('nav, header').text().toLowerCase()
   result.hasBlog = links.some(href => /\/blog|\/changelog|\/updates|\/news/i.test(href))
   result.hasCareers = links.some(href => /\/careers|\/jobs|\/recrutement|\/rejoindre|\/offres|hiring/i.test(href))
+
+  // SaaS / product signals from page structure and copy
+  result.hasPricing = links.some(href => /\/pricing|\/plans|\/tarif/i.test(href)) ||
+    /pricing|plans|tarifs/i.test(navText)
+  result.hasSignup = /sign.?up|get.?started|start.?free|essai.?gratuit|s'inscrire|créer.?un.?compte/i.test(linkTexts)
+  result.hasDemo = /demo|request.?demo|book.?demo|voir.?une.?démo/i.test(linkTexts)
+  result.hasDocs = links.some(href => /\/docs|\/documentation|\/developers|\/api-reference/i.test(href)) ||
+    /\bdocs\b|documentation/i.test(navText)
+  result.hasLogin = /log.?in|sign.?in|connexion|se.?connecter/i.test(linkTexts)
+  result.hasApi = links.some(href => /\/api|\/developers/i.test(href)) || /\bapi\b/i.test(navText)
+  result.hasIntegrations = links.some(href => /\/integrations|\/marketplace|\/partners/i.test(href)) ||
+    /integrations|marketplace/i.test(navText)
+
+  // SaaS keywords in visible text (strong product signals)
+  const bodyText = $('body').text().toLowerCase()
+  const SAAS_KEYWORDS = [
+    { kw: 'platform', label: 'platform' },
+    { kw: 'automate', label: 'automation' },
+    { kw: 'dashboard', label: 'dashboard' },
+    { kw: 'workflow', label: 'workflow' },
+    { kw: 'integration', label: 'integrations' },
+    { kw: 'api', label: 'API' },
+    { kw: 'saas', label: 'SaaS' },
+    { kw: 'free trial', label: 'free trial' },
+    { kw: 'essai gratuit', label: 'free trial' },
+    { kw: 'scalable', label: 'scalable' },
+    { kw: 'real-time', label: 'real-time' },
+    { kw: 'time en temps réel', label: 'real-time' },
+  ]
+  const foundSaas = new Set<string>()
+  for (const { kw, label } of SAAS_KEYWORDS) {
+    if (bodyText.includes(kw)) foundSaas.add(label)
+  }
+  result.saasKeywords = Array.from(foundSaas)
+
+  // Consulting / ESN signals (DQ indicators)
+  const CONSULTING_KEYWORDS = [
+    { kw: 'our services', label: 'services company' },
+    { kw: 'nos services', label: 'services company' },
+    { kw: 'nos expertises', label: 'expertise/consulting' },
+    { kw: 'our expertise', label: 'expertise/consulting' },
+    { kw: 'conseil en', label: 'consulting' },
+    { kw: 'consulting', label: 'consulting' },
+    { kw: 'prestation', label: 'service billing' },
+    { kw: 'régie', label: 'staff augmentation' },
+    { kw: 'freelance', label: 'freelance/agency' },
+    { kw: 'agence', label: 'agency' },
+    { kw: 'on behalf of', label: 'agency work' },
+  ]
+  const foundConsulting = new Set<string>()
+  for (const { kw, label } of CONSULTING_KEYWORDS) {
+    if (bodyText.includes(kw)) foundConsulting.add(label)
+  }
+  result.consultingKeywords = Array.from(foundConsulting)
 
   return result
 }

@@ -56,18 +56,29 @@ function buildUserPrompt(data: AggregatedData): string {
   }
 
   if (data.siteQuality) {
-    lines.push(`\n[QUALITÉ DU SITE WEB]`)
-    lines.push(`Site accessible : ${data.siteQuality.loadable ? 'oui' : 'non'}`)
-    lines.push(`HTTPS : ${data.siteQuality.hasHttps ? 'oui' : 'non'}`)
-    lines.push(`Responsive : ${data.siteQuality.isResponsive ? 'oui' : 'non'}`)
-    lines.push(`Framework : ${data.siteQuality.framework || 'non détecté'}`)
-    lines.push(`Page builder : ${data.siteQuality.isPageBuilder ? data.siteQuality.pageBuilderName : 'non'}`)
-    lines.push(`Page carrières : ${data.siteQuality.hasCareers ? 'oui' : 'non'}`)
-    if (data.siteQuality.techJobsFound.length) {
-      lines.push(`Postes tech trouvés : ${data.siteQuality.techJobsFound.join(', ')}`)
-    }
-    lines.push(`Blog/changelog : ${data.siteQuality.hasBlog ? 'oui' : 'non'}`)
-    lines.push(`Hébergeur (mentions légales) : ${data.siteQuality.hosting || 'non détecté'}`)
+    const sq = data.siteQuality
+    lines.push(`\n[WEBSITE ANALYSIS]`)
+    lines.push(`Accessible: ${sq.loadable ? 'yes' : 'no'} | HTTPS: ${sq.hasHttps ? 'yes' : 'no'} | Responsive: ${sq.isResponsive ? 'yes' : 'no'}`)
+    lines.push(`Framework: ${sq.framework || 'unknown'} | Page builder: ${sq.isPageBuilder ? sq.pageBuilderName : 'no'}`)
+    lines.push(`Cloud host (DNS/ASN): ${sq.hosting || 'unknown'}`)
+
+    // SaaS product signals
+    const saasFlags = [
+      sq.hasPricing && 'pricing page',
+      sq.hasSignup && 'sign-up CTA',
+      sq.hasDemo && 'demo CTA',
+      sq.hasLogin && 'login portal',
+      sq.hasDocs && 'docs/API reference',
+      sq.hasApi && 'API page',
+      sq.hasIntegrations && 'integrations page',
+      sq.hasCareers && 'careers page',
+      sq.hasBlog && 'blog/changelog',
+    ].filter(Boolean)
+    if (saasFlags.length) lines.push(`SaaS product signals: ${saasFlags.join(', ')}`)
+    if (sq.saasKeywords.length) lines.push(`SaaS keywords in copy: ${sq.saasKeywords.join(', ')}`)
+
+    // Consulting/ESN signals
+    if (sq.consultingKeywords.length) lines.push(`⚠️ Consulting/agency signals: ${sq.consultingKeywords.join(', ')}`)
   }
 
   if (data.brave) {

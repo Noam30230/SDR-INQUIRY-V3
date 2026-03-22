@@ -94,6 +94,12 @@ export default function AccountDetail({ account, onDelete }: AccountDetailProps)
             {(account.web_quality as { hosting: string }).hosting && (
               <SignalChip label={`Host: ${(account.web_quality as { hosting: string }).hosting}`} variant="neutral" />
             )}
+            {(account.web_quality as { hasPricing: boolean }).hasPricing && <SignalChip label="Pricing page" variant="positive" />}
+            {(account.web_quality as { hasSignup: boolean }).hasSignup && <SignalChip label="Sign-up CTA" variant="positive" />}
+            {(account.web_quality as { hasDemo: boolean }).hasDemo && <SignalChip label="Demo CTA" variant="positive" />}
+            {(account.web_quality as { hasLogin: boolean }).hasLogin && <SignalChip label="Login portal" variant="positive" />}
+            {(account.web_quality as { hasDocs: boolean }).hasDocs && <SignalChip label="Docs / API" variant="positive" />}
+            {(account.web_quality as { hasIntegrations: boolean }).hasIntegrations && <SignalChip label="Integrations" variant="positive" />}
             {(account.web_quality as { hasCareers: boolean }).hasCareers && <SignalChip label="Careers page" variant="positive" />}
             {(account.web_quality as { hasBlog: boolean }).hasBlog && <SignalChip label="Blog" variant="positive" />}
             {(account.web_quality as { isPageBuilder: boolean }).isPageBuilder && <SignalChip label="Page builder" variant="negative" />}
