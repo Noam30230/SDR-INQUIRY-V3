@@ -118,7 +118,7 @@ export async function collectSiteQuality(domain: string): Promise<SiteQualityDat
       result.hasCareers = true
       const careersText = careersHtml.toLowerCase()
       const found = TECH_JOB_KEYWORDS.filter(kw => careersText.includes(kw))
-      result.techJobsFound = [...new Set(found)].slice(0, 10)
+      result.techJobsFound = Array.from(new Set(found)).slice(0, 10)
       break
     }
   }
