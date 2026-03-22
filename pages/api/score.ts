@@ -1,16 +1,16 @@
 import type { NextApiRequest, NextApiResponse } from 'next'
 import { createClient } from '@supabase/supabase-js'
 import { supabaseAdmin } from '@/lib/supabase-admin'
-import { collectPappers } from '@/lib/collectors/pappers'
-import { collectGitHub } from '@/lib/collectors/github'
-import { collectWappalyzer } from '@/lib/collectors/wappalyzer'
-import { collectSiteQuality } from '@/lib/collectors/site-quality'
-import { collectBrave } from '@/lib/collectors/brave'
-import { collectNews } from '@/lib/collectors/newsapi'
-import { collectOpenCorporates } from '@/lib/collectors/opencorporates'
-import { collectSumble } from '@/lib/collectors/sumble'
 import { scoreAccount } from '@/lib/scorer'
 import type { AggregatedData } from '@/types'
+
+async function safeCollect<T>(fn: () => Promise<T>): Promise<T | null> {
+  try {
+    return await fn()
+  } catch {
+    return null
+  }
+}
 
 export default async function handler(req: NextApiRequest, res: NextApiResponse) {
   if (req.method !== 'POST') return res.status(405).json({ error: 'Method not allowed' })
@@ -27,55 +27,59 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
   const { data: { user } } = await supabase.auth.getUser()
   if (!user) return res.status(401).json({ error: 'Non authentifié' })
 
-  const { companyName, domain: inputDomain, salesforceId } = req.body as { companyName: string; domain?: string; salesforceId?: string }
+  const { companyName, domain: inputDomain, salesforceId } = req.body as {
+    companyName: string; domain?: string; salesforceId?: string
+  }
   if (!companyName?.trim()) return res.status(400).json({ error: 'Company name required' })
 
-  // Crée le compte avec status 'scoring'
+  const domain = inputDomain?.trim() || ''
+
+  // Crée le compte
   const { data: account, error: insertError } = await supabaseAdmin
     .from('accounts')
-    .insert({ user_id: user.id, company_name: companyName.trim(), domain: inputDomain || null, salesforce_id: salesforceId || null, status: 'scoring' })
+    .insert({
+      user_id: user.id,
+      company_name: companyName.trim(),
+      domain: domain || null,
+      salesforce_id: salesforceId || null,
+      status: 'scoring',
+    })
     .select()
     .single()
 
   if (insertError || !account) return res.status(500).json({ error: 'Erreur création compte' })
 
-  // Scoring synchrone — tout se passe avant de répondre
   try {
-    const domain = inputDomain?.trim() || ''
+    // Collecte parallèle — chaque collecteur a 5s max, tout le bloc 7s max
+    const timeout = <T>(p: Promise<T | null>): Promise<T | null> =>
+      Promise.race([p, new Promise<null>(r => setTimeout(() => r(null), 5000))])
+
     const isFrench = domain.endsWith('.fr')
 
-    const withTimeout = <T>(p: Promise<T>, ms: number): Promise<T | null> =>
-      Promise.race([p, new Promise<null>(r => setTimeout(() => r(null), ms))])
-
-    const [pappers, github, wappalyzer, siteQuality, brave, news, opencorp, sumble] =
-      await Promise.allSettled([
-        withTimeout(isFrench ? collectPappers(companyName, domain) : Promise.resolve(null), 6000),
-        withTimeout(collectGitHub(companyName, domain), 6000),
-        withTimeout(domain ? collectWappalyzer(domain) : Promise.resolve(null), 6000),
-        withTimeout(domain ? collectSiteQuality(domain) : Promise.resolve(null), 6000),
-        withTimeout(collectBrave(companyName, domain), 6000),
-        withTimeout(collectNews(companyName), 6000),
-        withTimeout(!isFrench ? collectOpenCorporates(companyName) : Promise.resolve(null), 6000),
-        withTimeout(collectSumble(companyName, domain), 6000),
-      ])
+    const [github, wappalyzer, siteQuality, search, news, pappers] = await Promise.all([
+      timeout(safeCollect(() => import('@/lib/collectors/github').then(m => m.collectGitHub(companyName, domain)))),
+      timeout(safeCollect(() => domain ? import('@/lib/collectors/wappalyzer').then(m => m.collectWappalyzer(domain)) : Promise.resolve(null))),
+      timeout(safeCollect(() => domain ? import('@/lib/collectors/site-quality').then(m => m.collectSiteQuality(domain)) : Promise.resolve(null))),
+      timeout(safeCollect(() => import('@/lib/collectors/brave').then(m => m.collectBrave(companyName, domain)))),
+      timeout(safeCollect(() => import('@/lib/collectors/newsapi').then(m => m.collectNews(companyName)))),
+      timeout(safeCollect(() => isFrench ? import('@/lib/collectors/pappers').then(m => m.collectPappers(companyName, domain)) : Promise.resolve(null))),
+    ])
 
     const aggregated: AggregatedData = {
       companyName,
       domain,
-      pappers: pappers.status === 'fulfilled' ? pappers.value ?? undefined : undefined,
-      github: github.status === 'fulfilled' ? github.value ?? undefined : undefined,
-      wappalyzer: wappalyzer.status === 'fulfilled' ? wappalyzer.value ?? undefined : undefined,
-      siteQuality: siteQuality.status === 'fulfilled' ? siteQuality.value ?? undefined : undefined,
-      brave: brave.status === 'fulfilled' ? brave.value ?? undefined : undefined,
-      news: news.status === 'fulfilled' ? news.value ?? undefined : undefined,
+      github: github ?? undefined,
+      wappalyzer: wappalyzer ?? undefined,
+      siteQuality: siteQuality ?? undefined,
+      brave: search ?? undefined,
+      news: news ?? undefined,
+      pappers: pappers ?? undefined,
     }
 
     const scored = await scoreAccount(aggregated)
 
     const sq = aggregated.siteQuality
     const webQuality = sq ? {
-      score: (sq.hasHttps ? 5 : 0) + (sq.isResponsive ? 5 : 0) + (sq.framework ? 10 : 0) +
-        (sq.hasCareers ? 5 : 0) + (sq.hasBlog ? 5 : 0) + (sq.isPageBuilder ? -5 : 0),
       hosting: sq.hosting,
       isResponsive: sq.isResponsive,
       hasHttps: sq.hasHttps,
@@ -96,13 +100,6 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
         web_quality: webQuality,
         press_signals: { articles: aggregated.news?.articles || [] },
         reasoning: scored.reasoning,
-        raw_data: {
-          pappers: pappers.status === 'fulfilled' ? pappers.value : null,
-          github: github.status === 'fulfilled' ? github.value : null,
-          brave: brave.status === 'fulfilled' ? brave.value : null,
-          opencorporates: opencorp.status === 'fulfilled' ? opencorp.value : null,
-          sumble: sumble.status === 'fulfilled' ? sumble.value : null,
-        },
         status: 'done',
         domain: domain || null,
       })
@@ -111,11 +108,11 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
     return res.status(200).json({ id: account.id, status: 'done' })
 
   } catch (err) {
+    const msg = err instanceof Error ? err.message : 'Erreur inconnue'
     await supabaseAdmin
       .from('accounts')
-      .update({ status: 'error', error_message: err instanceof Error ? err.message : 'Erreur inconnue' })
+      .update({ status: 'error', error_message: msg })
       .eq('id', account.id)
-
-    return res.status(500).json({ error: 'Scoring failed' })
+    return res.status(500).json({ error: msg })
   }
 }
