@@ -114,13 +114,14 @@ export default function Sidebar({ accounts, isScoring, onScoreOne, onScoreBatch,
           type="text"
           value={domain}
           onChange={e => setDomain(e.target.value)}
-          placeholder="domain.com (optional)"
+          placeholder="domain.com"
+          required
           className="w-full px-3 py-2 text-sm text-white placeholder-gray-600 rounded-lg outline-none"
           style={{ background: 'var(--bg-hover)', border: '1px solid var(--border)' }}
         />
         <button
           type="submit"
-          disabled={!companyName.trim() || isScoring}
+          disabled={!companyName.trim() || !domain.trim() || isScoring}
           className="w-full py-2 text-sm font-semibold text-white rounded-lg transition-colors disabled:opacity-40 disabled:cursor-not-allowed"
           style={{ background: 'var(--primary)' }}
         >
