@@ -25,7 +25,7 @@ const TECH_CATEGORIES: Record<string, keyof TechStack> = {
   Snowflake: 'Data', Databricks: 'Data', Airflow: 'Data', dbt: 'Data',
   Kafka: 'Data', Spark: 'Data', BigQuery: 'Data', Redshift: 'Data',
   PostgreSQL: 'Data', MySQL: 'Data', MongoDB: 'Data', Redis: 'Data',
-  Elasticsearch: 'Data', ClickHouse: 'Data', Fivetran: 'Data',
+  ClickHouse: 'Data', Fivetran: 'Data',
   // AI
   OpenAI: 'AI', 'Hugging Face': 'AI', LangChain: 'AI', TensorFlow: 'AI',
   PyTorch: 'AI', 'Google AI': 'AI', Anthropic: 'AI', Cohere: 'AI',
