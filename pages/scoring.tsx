@@ -7,25 +7,40 @@ import type { Account, Tier } from '@/types'
 
 type FilterTier = 'all' | Tier
 
+async function getToken(): Promise<string> {
+  const { data } = await supabaseBrowser.auth.getSession()
+  return data.session?.access_token || ''
+}
+
+async function authFetch(url: string, options: RequestInit = {}) {
+  const token = await getToken()
+  return fetch(url, {
+    ...options,
+    headers: {
+      'Content-Type': 'application/json',
+      Authorization: `Bearer ${token}`,
+      ...options.headers,
+    },
+  })
+}
+
 export default function ScoringPage() {
   const [accounts, setAccounts] = useState<Account[]>([])
   const [filter, setFilter] = useState<FilterTier>('all')
   const [isScoring, setIsScoring] = useState(false)
   const stopRef = useRef(false)
 
-  // Charger les comptes depuis Supabase
   const loadAccounts = useCallback(async () => {
-    const { data } = await supabaseBrowser
-      .from('accounts')
-      .select('*')
-      .order('created_at', { ascending: false })
-    if (data) setAccounts(data as Account[])
+    const res = await authFetch('/api/accounts')
+    if (res.ok) {
+      const data = await res.json()
+      setAccounts(data as Account[])
+    }
   }, [])
 
   useEffect(() => {
     loadAccounts()
 
-    // Realtime : écouter les mises à jour de la table accounts
     const channel = supabaseBrowser
       .channel('accounts-realtime')
       .on('postgres_changes', { event: '*', schema: 'public', table: 'accounts' }, () => {
@@ -39,12 +54,10 @@ export default function ScoringPage() {
   async function scoreOne(name: string, domain?: string) {
     setIsScoring(true)
     try {
-      await fetch('/api/score', {
+      await authFetch('/api/score', {
         method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ companyName: name, domain }),
       })
-      // Le realtime mettra à jour la liste automatiquement
     } finally {
       setIsScoring(false)
     }
@@ -55,12 +68,10 @@ export default function ScoringPage() {
     setIsScoring(true)
     for (const item of items) {
       if (stopRef.current) break
-      await fetch('/api/score', {
+      await authFetch('/api/score', {
         method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ companyName: item.name, domain: item.domain }),
       })
-      // Petite pause pour ne pas saturer l'API
       await new Promise(r => setTimeout(r, 500))
     }
     setIsScoring(false)
@@ -72,13 +83,25 @@ export default function ScoringPage() {
   }
 
   async function deleteAccount(id: string) {
-    await fetch(`/api/accounts/${id}`, { method: 'DELETE' })
+    await authFetch(`/api/accounts/${id}`, { method: 'DELETE' })
     setAccounts(prev => prev.filter(a => a.id !== id))
   }
 
-  function handleExport() {
+  async function handleExport() {
+    const token = await getToken()
     const tierParam = filter !== 'all' ? `?tier=${filter}` : ''
-    window.open(`/api/export${tierParam}`, '_blank')
+    const res = await fetch(`/api/export${tierParam}`, {
+      headers: { Authorization: `Bearer ${token}` },
+    })
+    if (res.ok) {
+      const blob = await res.blob()
+      const url = URL.createObjectURL(blob)
+      const a = document.createElement('a')
+      a.href = url
+      a.download = `account-scorer-${new Date().toISOString().split('T')[0]}.csv`
+      a.click()
+      URL.revokeObjectURL(url)
+    }
   }
 
   return (
@@ -92,8 +115,6 @@ export default function ScoringPage() {
           onStopBatch={stopBatch}
           onExport={handleExport}
         />
-
-        {/* Main */}
         <main className="flex-1 flex flex-col min-w-0 p-6 overflow-hidden">
           <div className="flex items-center justify-between mb-5 shrink-0">
             <div>
@@ -108,7 +129,6 @@ export default function ScoringPage() {
               </p>
             </div>
           </div>
-
           <AccountList
             accounts={accounts}
             filter={filter}

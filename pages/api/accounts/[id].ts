@@ -1,8 +1,16 @@
 import type { NextApiRequest, NextApiResponse } from 'next'
-import { getServerClient } from '@/lib/supabase'
+import { createClient } from '@supabase/supabase-js'
 
 export default async function handler(req: NextApiRequest, res: NextApiResponse) {
-  const supabase = getServerClient(req, res)
+  const token = req.headers.authorization?.replace('Bearer ', '')
+  if (!token) return res.status(401).json({ error: 'Non authentifié' })
+
+  const supabase = createClient(
+    process.env.NEXT_PUBLIC_SUPABASE_URL!,
+    process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!,
+    { global: { headers: { Authorization: `Bearer ${token}` } } }
+  )
+
   const { data: { user } } = await supabase.auth.getUser()
   if (!user) return res.status(401).json({ error: 'Non authentifié' })
 
@@ -14,7 +22,6 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
       .delete()
       .eq('id', id)
       .eq('user_id', user.id)
-
     if (error) return res.status(500).json({ error: error.message })
     return res.status(200).json({ success: true })
   }
@@ -24,9 +31,7 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
       .from('accounts')
       .select('*')
       .eq('id', id)
-      .eq('user_id', user.id)
       .single()
-
     if (error) return res.status(404).json({ error: 'Compte non trouvé' })
     return res.status(200).json(data)
   }

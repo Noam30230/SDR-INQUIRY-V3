@@ -1,5 +1,6 @@
 import type { NextApiRequest, NextApiResponse } from 'next'
-import { getServerClient, supabaseAdmin } from '@/lib/supabase'
+import { createClient } from '@supabase/supabase-js'
+import { supabaseAdmin } from '@/lib/supabase'
 import { collectPappers } from '@/lib/collectors/pappers'
 import { collectGitHub } from '@/lib/collectors/github'
 import { collectWappalyzer } from '@/lib/collectors/wappalyzer'
@@ -14,39 +15,36 @@ import type { AggregatedData } from '@/types'
 export default async function handler(req: NextApiRequest, res: NextApiResponse) {
   if (req.method !== 'POST') return res.status(405).json({ error: 'Method not allowed' })
 
-  // Auth
-  const supabase = getServerClient(req, res)
+  const token = req.headers.authorization?.replace('Bearer ', '')
+  if (!token) return res.status(401).json({ error: 'Non authentifié' })
+
+  const supabase = createClient(
+    process.env.NEXT_PUBLIC_SUPABASE_URL!,
+    process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!,
+    { global: { headers: { Authorization: `Bearer ${token}` } } }
+  )
+
   const { data: { user } } = await supabase.auth.getUser()
   if (!user) return res.status(401).json({ error: 'Non authentifié' })
 
   const { companyName, domain: inputDomain } = req.body as { companyName: string; domain?: string }
-  if (!companyName?.trim()) return res.status(400).json({ error: 'Nom d\'entreprise requis' })
+  if (!companyName?.trim()) return res.status(400).json({ error: "Nom d'entreprise requis" })
 
-  // Créer l'entrée en base avec status=scoring
   const { data: account, error: insertError } = await supabaseAdmin
     .from('accounts')
-    .insert({
-      user_id: user.id,
-      company_name: companyName.trim(),
-      domain: inputDomain || null,
-      status: 'scoring',
-    })
+    .insert({ user_id: user.id, company_name: companyName.trim(), domain: inputDomain || null, status: 'scoring' })
     .select()
     .single()
 
-  if (insertError || !account) {
-    return res.status(500).json({ error: 'Erreur création compte en base' })
-  }
+  if (insertError || !account) return res.status(500).json({ error: 'Erreur création compte' })
 
-  // Répondre immédiatement avec l'ID (le scoring continue en arrière-plan)
   res.status(202).json({ id: account.id, status: 'scoring' })
 
-  // --- Scoring asynchrone ---
+  // Scoring asynchrone
   try {
     const domain = inputDomain?.trim() || ''
     const isFrench = domain.endsWith('.fr')
 
-    // Collecte parallèle
     const [pappers, github, wappalyzer, siteQuality, brave, news, opencorp, sumble] =
       await Promise.allSettled([
         isFrench ? collectPappers(companyName, domain) : Promise.resolve(null),
@@ -70,14 +68,12 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
       news: news.status === 'fulfilled' ? news.value ?? undefined : undefined,
     }
 
-    // Scoring GPT-4o
     const scored = await scoreAccount(aggregated)
 
-    // Construire web_quality depuis siteQuality
     const sq = aggregated.siteQuality
     const webQuality = sq ? {
       score: (sq.hasHttps ? 5 : 0) + (sq.isResponsive ? 5 : 0) + (sq.framework ? 10 : 0) +
-             (sq.hasCareers ? 5 : 0) + (sq.hasBlog ? 5 : 0) + (!sq.isPageBuilder ? 0 : -5),
+        (sq.hasCareers ? 5 : 0) + (sq.hasBlog ? 5 : 0) + (sq.isPageBuilder ? -5 : 0),
       hosting: sq.hosting,
       isResponsive: sq.isResponsive,
       hasHttps: sq.hasHttps,
@@ -88,7 +84,6 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
       techJobsCount: sq.techJobsFound.length,
     } : null
 
-    // Mise à jour en base
     await supabaseAdmin
       .from('accounts')
       .update({
@@ -114,10 +109,7 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
   } catch (err) {
     await supabaseAdmin
       .from('accounts')
-      .update({
-        status: 'error',
-        error_message: err instanceof Error ? err.message : 'Erreur inconnue',
-      })
+      .update({ status: 'error', error_message: err instanceof Error ? err.message : 'Erreur inconnue' })
       .eq('id', account.id)
   }
 }
