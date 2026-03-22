@@ -13,7 +13,7 @@ export async function collectOpenCorporates(companyName: string): Promise<OpenCo
   try {
     const res = await fetch(
       `https://api.opencorporates.com/v0.4/companies/search?q=${encodeURIComponent(companyName)}&per_page=3&format=json`,
-      { signal: AbortSignal.timeout(8000) }
+      { signal: AbortSignal.timeout(4000) }
     )
     if (!res.ok) return null
 

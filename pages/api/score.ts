@@ -1,4 +1,6 @@
 import type { NextApiRequest, NextApiResponse } from 'next'
+
+export const config = { maxDuration: 60 }
 import { createClient } from '@supabase/supabase-js'
 import { supabaseAdmin } from '@/lib/supabase-admin'
 import { collectPappers } from '@/lib/collectors/pappers'

@@ -13,7 +13,7 @@ export async function collectPappers(companyName: string, domain?: string): Prom
     // Recherche par nom
     const searchRes = await fetch(
       `${BASE}/recherche?api_token=${apiKey}&q=${encodeURIComponent(companyName)}&par_page=3`,
-      { signal: AbortSignal.timeout(8000) }
+      { signal: AbortSignal.timeout(4000) }
     )
     if (!searchRes.ok) return null
 
@@ -28,7 +28,7 @@ export async function collectPappers(companyName: string, domain?: string): Prom
     // Détail de l'entreprise
     const detailRes = await fetch(
       `${BASE}/entreprise?api_token=${apiKey}&siren=${siren}&champs=siren,nom_entreprise,forme_juridique,code_naf,libelle_code_naf,tranche_effectif_salarie,chiffre_affaires,dirigeants,date_creation`,
-      { signal: AbortSignal.timeout(8000) }
+      { signal: AbortSignal.timeout(4000) }
     )
     if (!detailRes.ok) return null
 

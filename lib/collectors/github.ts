@@ -18,7 +18,7 @@ export async function collectGitHub(companyName: string, domain?: string): Promi
 
     const searchRes = await fetch(
       `${BASE}/search/users?q=${encodeURIComponent(query)}+type:org&per_page=3`,
-      { headers, signal: AbortSignal.timeout(8000) }
+      { headers, signal: AbortSignal.timeout(4000) }
     )
     if (!searchRes.ok) return null
 
@@ -32,7 +32,7 @@ export async function collectGitHub(companyName: string, domain?: string): Promi
     // Repos publics
     const reposRes = await fetch(
       `${BASE}/orgs/${orgLogin}/repos?per_page=30&sort=updated&type=public`,
-      { headers, signal: AbortSignal.timeout(8000) }
+      { headers, signal: AbortSignal.timeout(4000) }
     )
     if (!reposRes.ok) return { orgFound: true, orgName: orgLogin, repoCount: 0, languages: [], recentActivity: false, stars: 0 }
 
@@ -56,7 +56,7 @@ export async function collectGitHub(companyName: string, domain?: string): Promi
     await Promise.allSettled(
       topRepos.map(async (repo: { full_name: string }) => {
         const langRes = await fetch(`${BASE}/repos/${repo.full_name}/languages`, {
-          headers, signal: AbortSignal.timeout(5000),
+          headers, signal: AbortSignal.timeout(4000),
         })
         if (langRes.ok) {
           const langs = await langRes.json()

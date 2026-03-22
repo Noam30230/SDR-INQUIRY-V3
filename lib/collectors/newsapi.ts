@@ -10,7 +10,7 @@ export async function collectNews(companyName: string): Promise<NewsData | null>
       `https://newsapi.org/v2/everything?q=${encodeURIComponent(`"${companyName}"`)}&language=fr,en&sortBy=publishedAt&pageSize=5&from=${from}`,
       {
         headers: { 'X-Api-Key': apiKey },
-        signal: AbortSignal.timeout(8000),
+        signal: AbortSignal.timeout(4000),
       }
     )
     if (!res.ok) return null

@@ -41,7 +41,7 @@ async function fetchPage(url: string): Promise<string | null> {
   try {
     const res = await fetch(url, {
       headers: { 'User-Agent': 'Mozilla/5.0 (compatible; AccountScorer/1.0)' },
-      signal: AbortSignal.timeout(8000),
+      signal: AbortSignal.timeout(4000),
     })
     if (!res.ok) return null
     return await res.text()

@@ -9,7 +9,7 @@ async function serperSearch(query: string, apiKey: string, num = 5): Promise<str
         'Content-Type': 'application/json',
       },
       body: JSON.stringify({ q: query, num }),
-      signal: AbortSignal.timeout(8000),
+      signal: AbortSignal.timeout(4000),
     })
     if (!res.ok) return []
     const data = await res.json()
