@@ -72,9 +72,10 @@ function buildUserPrompt(data: AggregatedData): string {
 
   if (data.brave) {
     lines.push(`\n[SIGNAUX WEB (Brave Search)]`)
-    if (data.brave.techJobs.length) lines.push(`Recrutement tech : ${data.brave.techJobs.join(', ')}`)
-    if (data.brave.cloudSignals.length) lines.push(`Signaux cloud : ${data.brave.cloudSignals.join(', ')}`)
-    if (data.brave.fundingSignals.length) lines.push(`Signaux financement : ${data.brave.fundingSignals.join(', ')}`)
+    if (data.brave.techJobs.length) lines.push(`Tech hiring signals: ${data.brave.techJobs.join(', ')}`)
+    if (data.brave.cloudSignals.length) lines.push(`Cloud/infra signals: ${data.brave.cloudSignals.join(', ')}`)
+    if (data.brave.monitoringSignals.length) lines.push(`Monitoring/observability tools detected: ${data.brave.monitoringSignals.join(', ')}`)
+    if (data.brave.fundingSignals.length) lines.push(`Funding signals: ${data.brave.fundingSignals.join(', ')}`)
     if (data.brave.newsHeadlines.length) {
       lines.push(`Actualités récentes :`)
       data.brave.newsHeadlines.forEach(h => lines.push(`  - ${h}`))
