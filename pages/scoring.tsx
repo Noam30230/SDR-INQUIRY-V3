@@ -61,10 +61,11 @@ export default function ScoringPage() {
     setIsScoring(true)
     for (const item of items) {
       if (stopRef.current) break
-      await authFetch('/api/score', {
+      const res = await authFetch('/api/score', {
         method: 'POST',
         body: JSON.stringify({ companyName: item.name, domain: item.domain, salesforceId: item.salesforceId }),
       })
+      if (res.status === 409) continue  // already scored, skip
       await new Promise(r => setTimeout(r, 500))
     }
     setIsScoring(false)
