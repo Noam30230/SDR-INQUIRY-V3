@@ -1,6 +1,6 @@
 import type { NextApiRequest, NextApiResponse } from 'next'
 import { createClient } from '@supabase/supabase-js'
-import { supabaseAdmin } from '@/lib/supabase'
+import { supabaseAdmin } from '@/lib/supabase-admin'
 import { collectPappers } from '@/lib/collectors/pappers'
 import { collectGitHub } from '@/lib/collectors/github'
 import { collectWappalyzer } from '@/lib/collectors/wappalyzer'

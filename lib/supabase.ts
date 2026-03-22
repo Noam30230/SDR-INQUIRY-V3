@@ -1,11 +1,8 @@
 import { createClient } from '@supabase/supabase-js'
 
-const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL!
-const supabaseAnonKey = process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!
-const supabaseServiceKey = process.env.SUPABASE_SERVICE_KEY!
-
-// Client côté navigateur (pages / composants)
-export const supabaseBrowser = createClient(supabaseUrl, supabaseAnonKey)
-
-// Client admin côté serveur uniquement (API routes) — contourne le RLS
-export const supabaseAdmin = createClient(supabaseUrl, supabaseServiceKey)
+// Client côté navigateur uniquement (pages / composants)
+// Utilise uniquement des variables NEXT_PUBLIC_ disponibles côté client
+export const supabaseBrowser = createClient(
+  process.env.NEXT_PUBLIC_SUPABASE_URL!,
+  process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!
+)
