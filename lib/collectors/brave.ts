@@ -1,24 +1,20 @@
 import type { BraveSearchData } from '@/types'
 
-const BASE = 'https://api.search.brave.com/res/v1/web/search'
-
-async function braveSearch(query: string, apiKey: string, count = 5): Promise<string[]> {
+async function serperSearch(query: string, apiKey: string, num = 5): Promise<string[]> {
   try {
-    const res = await fetch(
-      `${BASE}?q=${encodeURIComponent(query)}&count=${count}&search_lang=en&country=us`,
-      {
-        headers: {
-          Accept: 'application/json',
-          'Accept-Encoding': 'gzip',
-          'X-Subscription-Token': apiKey,
-        },
-        signal: AbortSignal.timeout(8000),
-      }
-    )
+    const res = await fetch('https://google.serper.dev/search', {
+      method: 'POST',
+      headers: {
+        'X-API-KEY': apiKey,
+        'Content-Type': 'application/json',
+      },
+      body: JSON.stringify({ q: query, num }),
+      signal: AbortSignal.timeout(8000),
+    })
     if (!res.ok) return []
     const data = await res.json()
-    return (data.web?.results || []).map((r: { title: string; description: string }) =>
-      `${r.title} — ${r.description || ''}`
+    return (data.organic || []).map((r: { title: string; snippet?: string }) =>
+      `${r.title} — ${r.snippet || ''}`
     )
   } catch {
     return []
@@ -30,15 +26,15 @@ const CLOUD_KEYWORDS = ['aws', 'gcp', 'azure', 'kubernetes', 'docker', 'terrafor
 const FUNDING_KEYWORDS = ['series a', 'series b', 'series c', 'seed', 'levée de fonds', 'raised', 'funding', 'million', 'investment']
 
 export async function collectBrave(companyName: string, domain?: string): Promise<BraveSearchData | null> {
-  const apiKey = process.env.BRAVE_SEARCH_API_KEY
+  const apiKey = process.env.SERPER_API_KEY
   if (!apiKey) return null
 
   const name = `"${companyName}"`
 
   const [jobResults, cloudResults, fundingResults] = await Promise.all([
-    braveSearch(`${name} devops OR sre OR kubernetes OR "software engineer" jobs hiring`, apiKey),
-    braveSearch(`${name} aws OR gcp OR azure OR "cloud native" OR microservices OR kubernetes technology`, apiKey),
-    braveSearch(`${name} funding OR "series" OR "raised" OR "levée de fonds" OR investment 2023 OR 2024 OR 2025`, apiKey),
+    serperSearch(`${name} devops OR sre OR kubernetes OR "software engineer" jobs hiring`, apiKey),
+    serperSearch(`${name} aws OR gcp OR azure OR "cloud native" OR microservices OR kubernetes technology`, apiKey),
+    serperSearch(`${name} funding OR "series" OR "raised" OR "levée de fonds" OR investment 2023 OR 2024 OR 2025`, apiKey),
   ])
 
   const allJobText = jobResults.join(' ').toLowerCase()
