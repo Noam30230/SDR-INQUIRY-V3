@@ -7,18 +7,86 @@ const PAGE_BUILDER_NAMES: Record<string, string> = {
   'webflow.io': 'Webflow', 'godaddy.com': 'GoDaddy', 'site123.com': 'Site123',
 }
 
-const HOSTING_PATTERNS: Array<{ pattern: RegExp; name: string }> = [
-  { pattern: /amazon|amazonaws|aws/i, name: 'AWS' },
-  { pattern: /google|gcp|googlecloud/i, name: 'GCP' },
-  { pattern: /microsoft|azure/i, name: 'Azure' },
+// Patterns pour headers HTTP (Vercel, Netlify, Cloudflare exposent leurs propres headers)
+const HEADER_HOSTING_PATTERNS: Array<{ pattern: RegExp; name: string }> = [
   { pattern: /vercel/i, name: 'Vercel' },
   { pattern: /netlify/i, name: 'Netlify' },
-  { pattern: /ovh/i, name: 'OVH' },
-  { pattern: /scaleway/i, name: 'Scaleway' },
-  { pattern: /hetzner/i, name: 'Hetzner' },
-  { pattern: /digitalocean/i, name: 'DigitalOcean' },
   { pattern: /cloudflare/i, name: 'Cloudflare' },
+  { pattern: /awselb|amazon/i, name: 'AWS' },
+  { pattern: /microsoft|azure/i, name: 'Azure' },
+  { pattern: /google/i, name: 'GCP' },
+  { pattern: /ovh/i, name: 'OVH' },
 ]
+
+// Mapping ASN org → cloud provider (lookup ip-api.com, gratuit, sans clé)
+function orgToProvider(org: string): string {
+  const o = org.toLowerCase()
+  if (o.includes('microsoft')) return 'Azure'
+  if (o.includes('amazon') || o.includes('aws')) return 'AWS'
+  if (o.includes('google')) return 'GCP'
+  if (o.includes('cloudflare')) return 'Cloudflare'
+  if (o.includes('ovh')) return 'OVH'
+  if (o.includes('hetzner')) return 'Hetzner'
+  if (o.includes('digitalocean')) return 'DigitalOcean'
+  if (o.includes('scaleway')) return 'Scaleway'
+  if (o.includes('fastly')) return 'Fastly'
+  if (o.includes('akamai')) return 'Akamai'
+  if (o.includes('netlify')) return 'Netlify'
+  if (o.includes('vercel')) return 'Vercel'
+  return ''
+}
+
+// Résolution DNS → IP via Google DoH, puis lookup ASN via ip-api.com
+async function detectHostingByDNS(domain: string): Promise<string> {
+  try {
+    const cleanDomain = domain.replace(/^https?:\/\//, '').replace(/\/.*$/, '')
+    const dnsRes = await fetch(
+      `https://dns.google/resolve?name=${cleanDomain}&type=A`,
+      { signal: AbortSignal.timeout(3000) }
+    )
+    if (!dnsRes.ok) return ''
+    const dnsData = await dnsRes.json()
+    const ip: string = dnsData.Answer?.find((r: { type: number }) => r.type === 1)?.data
+    if (!ip) return ''
+
+    const ipRes = await fetch(
+      `http://ip-api.com/json/${ip}?fields=as,org,isp`,
+      { signal: AbortSignal.timeout(2000) }
+    )
+    if (!ipRes.ok) return ''
+    const ipData = await ipRes.json()
+    const orgStr = `${ipData.org || ''} ${ipData.isp || ''} ${ipData.as || ''}`
+    return orgToProvider(orgStr)
+  } catch {
+    return ''
+  }
+}
+
+// Fetch mentions-légales (obligatoire en France, hébergeur toujours mentionné)
+async function detectHostingFromLegal(base: string): Promise<string> {
+  const legalPaths = ['/mentions-legales', '/mentions-légales', '/legal-notice', '/legal', '/en/legal']
+  for (const path of legalPaths) {
+    try {
+      const res = await fetch(`${base}${path}`, {
+        headers: { 'User-Agent': 'Mozilla/5.0 (compatible; AccountScorer/1.0)' },
+        signal: AbortSignal.timeout(2000),
+      })
+      if (!res.ok) continue
+      const text = (await res.text()).toLowerCase()
+      // Cherche des mentions explicites du fournisseur cloud
+      if (text.includes('microsoft azure') || text.includes('azure')) return 'Azure'
+      if (text.includes('amazon web services') || text.includes('amazonaws')) return 'AWS'
+      if (text.includes('google cloud')) return 'GCP'
+      if (text.includes('ovhcloud') || text.includes('ovh sas')) return 'OVH'
+      if (text.includes('hetzner')) return 'Hetzner'
+      if (text.includes('digitalocean')) return 'DigitalOcean'
+      if (text.includes('scaleway')) return 'Scaleway'
+      if (text.includes('cloudflare')) return 'Cloudflare'
+      if (res.ok) break // page trouvée mais provider non identifié, stop
+    } catch { /* ignore */ }
+  }
+  return ''
+}
 
 export async function collectSiteQuality(domain: string): Promise<SiteQualityData> {
   const base = domain.startsWith('http') ? domain : `https://${domain}`
@@ -35,124 +103,98 @@ export async function collectSiteQuality(domain: string): Promise<SiteQualityDat
     loadable: false,
   }
 
-  try {
-    const res = await fetch(base, {
-      headers: { 'User-Agent': 'Mozilla/5.0 (compatible; AccountScorer/1.0)' },
-      signal: AbortSignal.timeout(4000),
-    })
-    if (!res.ok) return result
-
-    // Hosting depuis les headers HTTP (pas besoin de fetcher mentions-légales)
-    const server = res.headers.get('server') || ''
-    const powered = res.headers.get('x-powered-by') || ''
-    const headerStr = [
-      server, powered,
-      res.headers.get('cf-ray') ? 'cloudflare' : '',
-      res.headers.get('x-vercel-id') ? 'vercel' : '',
-      res.headers.get('x-amz-cf-id') ? 'aws' : '',
-      res.headers.get('x-nf-request-id') ? 'netlify' : '',
-    ].join(' ')
-
-    for (const { pattern, name } of HOSTING_PATTERNS) {
-      if (pattern.test(headerStr)) { result.hosting = name; break }
-    }
-
-    const html = await res.text()
-    result.loadable = true
-    const $ = cheerio.load(html)
-    const allText = html.toLowerCase()
-
-    // Company name extraction
-    const ogSiteName = $('meta[property="og:site_name"]').attr('content')?.trim()
-    if (ogSiteName && ogSiteName.length < 60) {
-      result.detectedName = ogSiteName
-    } else {
-      const titleRaw = $('title').text()?.trim()
-      if (titleRaw) {
-        const firstPart = titleRaw.split(/\s*[|·—\-–]\s*/)[0].trim()
-        if (firstPart && firstPart.length > 0 && firstPart.length < 60) {
-          result.detectedName = firstPart
-        }
-      }
-    }
-
-    // Responsive
-    result.isResponsive = !!$('meta[name="viewport"]').length
-
-    // Page builder
-    for (const builder of PAGE_BUILDERS) {
-      if (allText.includes(builder)) {
-        result.isPageBuilder = true
-        result.pageBuilderName = PAGE_BUILDER_NAMES[builder] || builder
-        break
-      }
-    }
-
-    // Framework
-    if (allText.includes('__next') || allText.includes('_next/static')) result.framework = 'Next.js'
-    else if (allText.includes('nuxt') || allText.includes('__nuxt')) result.framework = 'Nuxt'
-    else if (allText.includes('gatsby')) result.framework = 'Gatsby'
-    else if (allText.includes('react')) result.framework = 'React'
-    else if (allText.includes('vue')) result.framework = 'Vue'
-    else if (allText.includes('angular')) result.framework = 'Angular'
-    else if (allText.includes('svelte')) result.framework = 'Svelte'
-
-    // Blog / changelog — depuis les liens de la page principale
-    const links = $('a[href]').map((_, el) => $(el).attr('href') || '').get()
-    result.hasBlog = links.some(href => /\/blog|\/changelog|\/updates|\/news/i.test(href))
-
-    // Careers — depuis les liens de la page principale (sans fetcher la page)
-    result.hasCareers = links.some(href => /\/careers|\/jobs|\/recrutement|\/rejoindre|\/offres|hiring/i.test(href))
-
-    // Détection cloud depuis les URLs/scripts embarqués dans le HTML (très fiable)
-    if (!result.hosting) {
-      const CLOUD_URL_PATTERNS: Array<{ pattern: RegExp; name: string }> = [
-        { pattern: /blob\.core\.windows\.net|azurewebsites\.net|azurefd\.net|azure-api\.net|\.azure\b/i, name: 'Azure' },
-        { pattern: /\.amazonaws\.com|cloudfront\.net|s3-website|elasticbeanstalk\.com/i, name: 'AWS' },
-        { pattern: /googleapis\.com|appspot\.com|\.run\.app|\.cloudfunctions\.net/i, name: 'GCP' },
-        { pattern: /\.digitalocean\.com/i, name: 'DigitalOcean' },
-        { pattern: /\.ovh\.net|\.ovhcloud\.com/i, name: 'OVH' },
-        { pattern: /\.scaleway\.com/i, name: 'Scaleway' },
-        { pattern: /\.hetzner\.com|hetzner\.cloud/i, name: 'Hetzner' },
-      ]
-      for (const { pattern, name } of CLOUD_URL_PATTERNS) {
-        if (pattern.test(html)) { result.hosting = name; break }
-      }
-    }
-
-  } catch {
-    // site inaccessible
-  }
-
-  // Fetch mentions-légales pour récupérer l'hébergeur (obligatoire en France)
-  if (!result.hosting && result.loadable) {
-    const legalPaths = ['/mentions-legales', '/mentions-légales', '/legal-notice', '/legal', '/en/legal']
-    for (const path of legalPaths) {
+  // Lance le fetch principal + la résolution DNS en parallèle
+  const [pageResult, dnsHosting] = await Promise.all([
+    (async () => {
       try {
-        const legalRes = await fetch(`${base}${path}`, {
+        const res = await fetch(base, {
           headers: { 'User-Agent': 'Mozilla/5.0 (compatible; AccountScorer/1.0)' },
-          signal: AbortSignal.timeout(2000),
+          signal: AbortSignal.timeout(4000),
         })
-        if (legalRes.ok) {
-          const legalText = await legalRes.text()
-          for (const { pattern, name } of HOSTING_PATTERNS) {
-            if (pattern.test(legalText)) { result.hosting = name; break }
-          }
-          if (result.hosting) break
-          // Also check cloud URL patterns in legal text
-          const CLOUD_URL_PATTERNS: Array<{ pattern: RegExp; name: string }> = [
-            { pattern: /blob\.core\.windows\.net|azurewebsites\.net|azure/i, name: 'Azure' },
-            { pattern: /amazonaws\.com|cloudfront\.net/i, name: 'AWS' },
-            { pattern: /googleapis\.com|google cloud/i, name: 'GCP' },
-          ]
-          for (const { pattern, name } of CLOUD_URL_PATTERNS) {
-            if (pattern.test(legalText)) { result.hosting = name; break }
-          }
-          if (result.hosting) break
+        if (!res.ok) return null
+
+        // Hosting depuis les headers HTTP
+        const headerStr = [
+          res.headers.get('server') || '',
+          res.headers.get('x-powered-by') || '',
+          res.headers.get('cf-ray') ? 'cloudflare' : '',
+          res.headers.get('x-vercel-id') ? 'vercel' : '',
+          res.headers.get('x-amz-cf-id') ? 'awselb' : '',
+          res.headers.get('x-nf-request-id') ? 'netlify' : '',
+        ].join(' ')
+
+        let headerHosting = ''
+        for (const { pattern, name } of HEADER_HOSTING_PATTERNS) {
+          if (pattern.test(headerStr)) { headerHosting = name; break }
         }
-      } catch { /* ignore */ }
+
+        const html = await res.text()
+        return { html, headerHosting }
+      } catch {
+        return null
+      }
+    })(),
+    detectHostingByDNS(domain),
+  ])
+
+  if (!pageResult) return result
+
+  const { html, headerHosting } = pageResult
+  result.loadable = true
+
+  // Priorité : headers > DNS/ASN
+  result.hosting = headerHosting || dnsHosting
+
+  // Si Cloudflare proxy détecté (masque l'origine), essayer les mentions légales
+  if (!result.hosting || result.hosting === 'Cloudflare') {
+    const legalHosting = await detectHostingFromLegal(base)
+    if (legalHosting && legalHosting !== 'Cloudflare') {
+      result.hosting = legalHosting
+    } else if (!result.hosting) {
+      result.hosting = legalHosting
     }
   }
+
+  const $ = cheerio.load(html)
+  const allText = html.toLowerCase()
+
+  // Company name
+  const ogSiteName = $('meta[property="og:site_name"]').attr('content')?.trim()
+  if (ogSiteName && ogSiteName.length < 60) {
+    result.detectedName = ogSiteName
+  } else {
+    const titleRaw = $('title').text()?.trim()
+    if (titleRaw) {
+      const firstPart = titleRaw.split(/\s*[|·—\-–]\s*/)[0].trim()
+      if (firstPart && firstPart.length < 60) result.detectedName = firstPart
+    }
+  }
+
+  // Responsive
+  result.isResponsive = !!$('meta[name="viewport"]').length
+
+  // Page builder
+  for (const builder of PAGE_BUILDERS) {
+    if (allText.includes(builder)) {
+      result.isPageBuilder = true
+      result.pageBuilderName = PAGE_BUILDER_NAMES[builder] || builder
+      break
+    }
+  }
+
+  // Framework
+  if (allText.includes('__next') || allText.includes('_next/static')) result.framework = 'Next.js'
+  else if (allText.includes('nuxt') || allText.includes('__nuxt')) result.framework = 'Nuxt'
+  else if (allText.includes('gatsby')) result.framework = 'Gatsby'
+  else if (allText.includes('react')) result.framework = 'React'
+  else if (allText.includes('vue')) result.framework = 'Vue'
+  else if (allText.includes('angular')) result.framework = 'Angular'
+  else if (allText.includes('svelte')) result.framework = 'Svelte'
+
+  // Blog / Careers
+  const links = $('a[href]').map((_, el) => $(el).attr('href') || '').get()
+  result.hasBlog = links.some(href => /\/blog|\/changelog|\/updates|\/news/i.test(href))
+  result.hasCareers = links.some(href => /\/careers|\/jobs|\/recrutement|\/rejoindre|\/offres|hiring/i.test(href))
 
   return result
 }
