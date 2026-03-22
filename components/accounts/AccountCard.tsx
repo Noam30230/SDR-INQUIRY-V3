@@ -52,19 +52,18 @@ export default function AccountCard({ account, onDelete }: AccountCardProps) {
           disabled={isScoring || isError}
         >
           <div className="flex items-center gap-3">
-            {/* Company info */}
-            <div className="flex-1 min-w-0">
-              <div className="flex items-center gap-2 flex-wrap">
-                <span className="font-semibold text-sm text-white leading-tight">{account.company_name}</span>
-                {account.salesforce_id && (
-                  <span
-                    className="text-xs font-mono px-1.5 py-0.5 rounded shrink-0"
-                    style={{ background: 'rgba(245,158,11,0.1)', color: '#fcd34d', border: '1px solid rgba(245,158,11,0.2)' }}
-                  >
-                    {account.salesforce_id}
-                  </span>
-                )}
-              </div>
+            {/* Company info + tech chips inline */}
+            <div className="flex-1 min-w-0 flex items-center gap-2 flex-wrap">
+              <span className="font-semibold text-sm text-white leading-tight shrink-0">{account.company_name}</span>
+              {account.salesforce_id && (
+                <span
+                  className="text-xs font-mono px-1.5 py-0.5 rounded shrink-0"
+                  style={{ background: 'rgba(245,158,11,0.1)', color: '#fcd34d', border: '1px solid rgba(245,158,11,0.2)' }}
+                >
+                  {account.salesforce_id}
+                </span>
+              )}
+              {topTechs.map(t => <SignalChip key={t} label={t} variant="tech" />)}
             </div>
 
             {/* Right: tier + score OR spinner */}
@@ -98,13 +97,6 @@ export default function AccountCard({ account, onDelete }: AccountCardProps) {
               </span>
             )}
           </div>
-
-          {/* Tech chips */}
-          {topTechs.length > 0 && (
-            <div className="flex flex-wrap gap-1 mt-2.5">
-              {topTechs.map(t => <SignalChip key={t} label={t} variant="tech" />)}
-            </div>
-          )}
 
           {/* Error message */}
           {isError && account.error_message && (
