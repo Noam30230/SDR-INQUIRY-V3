@@ -44,16 +44,19 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
     const domain = inputDomain?.trim() || ''
     const isFrench = domain.endsWith('.fr')
 
+    const withTimeout = <T>(p: Promise<T>, ms: number): Promise<T | null> =>
+      Promise.race([p, new Promise<null>(r => setTimeout(() => r(null), ms))])
+
     const [pappers, github, wappalyzer, siteQuality, brave, news, opencorp, sumble] =
       await Promise.allSettled([
-        isFrench ? collectPappers(companyName, domain) : Promise.resolve(null),
-        collectGitHub(companyName, domain),
-        domain ? collectWappalyzer(domain) : Promise.resolve(null),
-        domain ? collectSiteQuality(domain) : Promise.resolve(null),
-        collectBrave(companyName, domain),
-        collectNews(companyName),
-        !isFrench ? collectOpenCorporates(companyName) : Promise.resolve(null),
-        collectSumble(companyName, domain),
+        withTimeout(isFrench ? collectPappers(companyName, domain) : Promise.resolve(null), 6000),
+        withTimeout(collectGitHub(companyName, domain), 6000),
+        withTimeout(domain ? collectWappalyzer(domain) : Promise.resolve(null), 6000),
+        withTimeout(domain ? collectSiteQuality(domain) : Promise.resolve(null), 6000),
+        withTimeout(collectBrave(companyName, domain), 6000),
+        withTimeout(collectNews(companyName), 6000),
+        withTimeout(!isFrench ? collectOpenCorporates(companyName) : Promise.resolve(null), 6000),
+        withTimeout(collectSumble(companyName, domain), 6000),
       ])
 
     const aggregated: AggregatedData = {

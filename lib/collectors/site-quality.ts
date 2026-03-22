@@ -18,43 +18,13 @@ const HOSTING_PATTERNS: Array<{ pattern: RegExp; name: string }> = [
   { pattern: /hetzner/i, name: 'Hetzner' },
   { pattern: /digitalocean/i, name: 'DigitalOcean' },
   { pattern: /cloudflare/i, name: 'Cloudflare' },
-  { pattern: /infomaniak/i, name: 'Infomaniak' },
-  { pattern: /1and1|ionos/i, name: 'IONOS' },
-  { pattern: /online\.net|iliad/i, name: 'Online.net' },
 ]
-
-const TECH_JOB_KEYWORDS = [
-  'devops', 'sre', 'site reliability', 'platform engineer', 'cloud engineer',
-  'software engineer', 'backend', 'frontend', 'full stack', 'fullstack',
-  'data engineer', 'ml engineer', 'security engineer', 'infrastructure',
-  'kubernetes', 'terraform', 'aws', 'gcp', 'azure',
-]
-
-function detectHostingFromText(text: string): string {
-  for (const { pattern, name } of HOSTING_PATTERNS) {
-    if (pattern.test(text)) return name
-  }
-  return ''
-}
-
-async function fetchPage(url: string): Promise<string | null> {
-  try {
-    const res = await fetch(url, {
-      headers: { 'User-Agent': 'Mozilla/5.0 (compatible; AccountScorer/1.0)' },
-      signal: AbortSignal.timeout(4000),
-    })
-    if (!res.ok) return null
-    return await res.text()
-  } catch {
-    return null
-  }
-}
 
 export async function collectSiteQuality(domain: string): Promise<SiteQualityData> {
   const base = domain.startsWith('http') ? domain : `https://${domain}`
   const result: SiteQualityData = {
     isResponsive: false,
-    hasHttps: false,
+    hasHttps: base.startsWith('https://'),
     hasCareers: false,
     hasBlog: false,
     framework: '',
@@ -65,62 +35,63 @@ export async function collectSiteQuality(domain: string): Promise<SiteQualityDat
     loadable: false,
   }
 
-  // Check HTTPS
-  result.hasHttps = base.startsWith('https://')
+  try {
+    const res = await fetch(base, {
+      headers: { 'User-Agent': 'Mozilla/5.0 (compatible; AccountScorer/1.0)' },
+      signal: AbortSignal.timeout(4000),
+    })
+    if (!res.ok) return result
 
-  // Fetch page principale
-  const html = await fetchPage(base)
-  if (!html) return result
+    // Hosting depuis les headers HTTP (pas besoin de fetcher mentions-légales)
+    const server = res.headers.get('server') || ''
+    const powered = res.headers.get('x-powered-by') || ''
+    const headerStr = [
+      server, powered,
+      res.headers.get('cf-ray') ? 'cloudflare' : '',
+      res.headers.get('x-vercel-id') ? 'vercel' : '',
+      res.headers.get('x-amz-cf-id') ? 'aws' : '',
+      res.headers.get('x-nf-request-id') ? 'netlify' : '',
+    ].join(' ')
 
-  result.loadable = true
-  const $ = cheerio.load(html)
-
-  // Responsive
-  result.isResponsive = !!$('meta[name="viewport"]').length
-
-  // Page builder detection via scripts/links
-  const allText = html.toLowerCase()
-  for (const builder of PAGE_BUILDERS) {
-    if (allText.includes(builder)) {
-      result.isPageBuilder = true
-      result.pageBuilderName = PAGE_BUILDER_NAMES[builder] || builder
-      break
+    for (const { pattern, name } of HOSTING_PATTERNS) {
+      if (pattern.test(headerStr)) { result.hosting = name; break }
     }
-  }
 
-  // Blog / changelog
-  const links = $('a[href]').map((_, el) => $(el).attr('href') || '').get()
-  result.hasBlog = links.some(href => /\/blog|\/changelog|\/updates|\/news/i.test(href))
+    const html = await res.text()
+    result.loadable = true
+    const $ = cheerio.load(html)
+    const allText = html.toLowerCase()
 
-  // Framework detection (simple heuristic)
-  if (allText.includes('__next') || allText.includes('_next/static')) result.framework = 'Next.js'
-  else if (allText.includes('nuxt') || allText.includes('__nuxt')) result.framework = 'Nuxt'
-  else if (allText.includes('gatsby')) result.framework = 'Gatsby'
-  else if (allText.includes('react')) result.framework = 'React'
-  else if (allText.includes('vue')) result.framework = 'Vue'
-  else if (allText.includes('angular')) result.framework = 'Angular'
-  else if (allText.includes('svelte')) result.framework = 'Svelte'
+    // Responsive
+    result.isResponsive = !!$('meta[name="viewport"]').length
 
-  // Page mentions légales → hébergeur
-  const mentionsHtml = await fetchPage(`${base}/mentions-legales`)
-    || await fetchPage(`${base}/legal-notice`)
-    || await fetchPage(`${base}/legal`)
-  if (mentionsHtml) {
-    const mentionsText = cheerio.load(mentionsHtml).text()
-    result.hosting = detectHostingFromText(mentionsText)
-  }
-
-  // Page carrières / jobs
-  const careersUrls = ['/careers', '/jobs', '/recrutement', '/rejoindre', '/offres', '/we-are-hiring']
-  for (const path of careersUrls) {
-    const careersHtml = await fetchPage(`${base}${path}`)
-    if (careersHtml) {
-      result.hasCareers = true
-      const careersText = careersHtml.toLowerCase()
-      const found = TECH_JOB_KEYWORDS.filter(kw => careersText.includes(kw))
-      result.techJobsFound = Array.from(new Set(found)).slice(0, 10)
-      break
+    // Page builder
+    for (const builder of PAGE_BUILDERS) {
+      if (allText.includes(builder)) {
+        result.isPageBuilder = true
+        result.pageBuilderName = PAGE_BUILDER_NAMES[builder] || builder
+        break
+      }
     }
+
+    // Framework
+    if (allText.includes('__next') || allText.includes('_next/static')) result.framework = 'Next.js'
+    else if (allText.includes('nuxt') || allText.includes('__nuxt')) result.framework = 'Nuxt'
+    else if (allText.includes('gatsby')) result.framework = 'Gatsby'
+    else if (allText.includes('react')) result.framework = 'React'
+    else if (allText.includes('vue')) result.framework = 'Vue'
+    else if (allText.includes('angular')) result.framework = 'Angular'
+    else if (allText.includes('svelte')) result.framework = 'Svelte'
+
+    // Blog / changelog — depuis les liens de la page principale
+    const links = $('a[href]').map((_, el) => $(el).attr('href') || '').get()
+    result.hasBlog = links.some(href => /\/blog|\/changelog|\/updates|\/news/i.test(href))
+
+    // Careers — depuis les liens de la page principale (sans fetcher la page)
+    result.hasCareers = links.some(href => /\/careers|\/jobs|\/recrutement|\/rejoindre|\/offres|hiring/i.test(href))
+
+  } catch {
+    // site inaccessible
   }
 
   return result

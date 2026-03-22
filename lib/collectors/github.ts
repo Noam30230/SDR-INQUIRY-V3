@@ -11,14 +11,13 @@ export async function collectGitHub(companyName: string, domain?: string): Promi
   if (token) headers['Authorization'] = `Bearer ${token}`
 
   try {
-    // Recherche d'une organisation correspondante
     const query = domain
       ? domain.replace(/^www\./, '').split('.')[0]
       : companyName.toLowerCase().replace(/\s+/g, '')
 
     const searchRes = await fetch(
       `${BASE}/search/users?q=${encodeURIComponent(query)}+type:org&per_page=3`,
-      { headers, signal: AbortSignal.timeout(4000) }
+      { headers, signal: AbortSignal.timeout(2500) }
     )
     if (!searchRes.ok) return null
 
@@ -26,20 +25,17 @@ export async function collectGitHub(companyName: string, domain?: string): Promi
     const orgs = searchData.items || []
     if (orgs.length === 0) return { orgFound: false, orgName: '', repoCount: 0, languages: [], recentActivity: false, stars: 0 }
 
-    const org = orgs[0]
-    const orgLogin = org.login
+    const orgLogin = orgs[0].login
 
-    // Repos publics
     const reposRes = await fetch(
       `${BASE}/orgs/${orgLogin}/repos?per_page=30&sort=updated&type=public`,
-      { headers, signal: AbortSignal.timeout(4000) }
+      { headers, signal: AbortSignal.timeout(2500) }
     )
     if (!reposRes.ok) return { orgFound: true, orgName: orgLogin, repoCount: 0, languages: [], recentActivity: false, stars: 0 }
 
     const repos = await reposRes.json()
     if (!Array.isArray(repos)) return null
 
-    // Langages des 10 repos les plus récents
     const languageSet = new Set<string>()
     let totalStars = 0
     let recentActivity = false
@@ -50,20 +46,6 @@ export async function collectGitHub(companyName: string, domain?: string): Promi
       totalStars += repo.stargazers_count || 0
       if (new Date(repo.updated_at).getTime() > sixMonthsAgo) recentActivity = true
     }
-
-    // Langages supplémentaires via l'API languages des 5 premiers repos
-    const topRepos = repos.slice(0, 5)
-    await Promise.allSettled(
-      topRepos.map(async (repo: { full_name: string }) => {
-        const langRes = await fetch(`${BASE}/repos/${repo.full_name}/languages`, {
-          headers, signal: AbortSignal.timeout(4000),
-        })
-        if (langRes.ok) {
-          const langs = await langRes.json()
-          Object.keys(langs).forEach(l => languageSet.add(l))
-        }
-      })
-    )
 
     return {
       orgFound: true,
