@@ -20,6 +20,10 @@ const TIERS: Array<{ tier: Tier; color: string }> = [
   { tier: 'DQ', color: '#ef4444' },
 ]
 
+function cleanDomain(value: string): string {
+  return value.trim().replace(/^https?:\/\//i, '').replace(/^www\./i, '').replace(/\/.*$/, '').toLowerCase()
+}
+
 function parseTextarea(raw: string): ParsedRow[] {
   return raw
     .split('\n')
@@ -27,13 +31,15 @@ function parseTextarea(raw: string): ParsedRow[] {
     .filter(Boolean)
     .map(line => {
       const parts = line.split(',').map(p => p.trim())
-      return {
-        name: parts[0] || '',
-        domain: parts[1] || undefined,
-        salesforceId: parts[2] || undefined,
+      const first = parts[0] || ''
+      // If first part looks like a domain (contains a dot), use new format: domain, sfdc
+      if (first.includes('.')) {
+        return { domain: cleanDomain(first), salesforceId: parts[1] || undefined }
       }
+      // Legacy format: name, domain, sfdc
+      return { name: first || undefined, domain: cleanDomain(parts[1] || ''), salesforceId: parts[2] || undefined }
     })
-    .filter(r => r.name.length > 0)
+    .filter(r => r.domain.length > 0)
 }
 
 export default function Sidebar({ accounts, isScoring, userEmail, onScoreBatch, onStopBatch, onExport }: SidebarProps) {
@@ -63,7 +69,7 @@ export default function Sidebar({ accounts, isScoring, userEmail, onScoreBatch, 
       complete: (results) => {
         const headers = results.meta.fields || []
         const { nameCol, domainCol, sfdcCol } = detectColumns(headers)
-        if (!nameCol) return
+        if (!domainCol) return
         const rows = parseRows(results.data as Record<string, string>[], nameCol, domainCol, sfdcCol)
         setCsvPreview(rows)
         setCsvMapping({ nameCol, domainCol, sfdcCol })
@@ -190,13 +196,13 @@ export default function Sidebar({ accounts, isScoring, userEmail, onScoreBatch, 
           <textarea
             value={text}
             onChange={e => setText(e.target.value)}
-            placeholder={"Pennylane, pennylane.com\nQonto, qonto.com, SF-001234"}
+            placeholder={"pennylane.com\nqonto.com, SF-001234"}
             rows={5}
             className="w-full px-3 py-2 text-sm text-white placeholder-gray-600 rounded-lg outline-none resize-none"
             style={{ background: 'var(--bg-hover)', border: '1px solid var(--border)', fontFamily: 'monospace' }}
           />
           <p className="text-xs" style={{ color: 'var(--text-muted)', opacity: 0.7 }}>
-            Format: Name, site.com, CharID — 1 per line
+            Format: site.com, CharID (optional) — 1 per line
           </p>
         </div>
       )}
@@ -236,7 +242,7 @@ export default function Sidebar({ accounts, isScoring, userEmail, onScoreBatch, 
               <p style={{ color: 'var(--text-muted)' }}>{csvPreview.length} companies detected</p>
               <div className="max-h-20 overflow-y-auto space-y-0.5">
                 {csvPreview.slice(0, 5).map((item, i) => (
-                  <div key={i} className="truncate text-white opacity-70">{item.name}</div>
+                  <div key={i} className="truncate text-white opacity-70">{item.name || item.domain}</div>
                 ))}
                 {csvPreview.length > 5 && (
                   <p style={{ color: 'var(--text-muted)' }}>+{csvPreview.length - 5} more...</p>

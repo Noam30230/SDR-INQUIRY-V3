@@ -1,8 +1,8 @@
 // Smart CSV column detection — handles messy Salesforce exports and any column order
 
 export interface ParsedRow {
-  name: string
-  domain?: string
+  name?: string       // optional — auto-detected from site if not provided
+  domain: string      // required
   salesforceId?: string
 }
 
@@ -81,15 +81,16 @@ export function detectColumns(headers: string[]): {
 
 export function parseRows(
   data: Record<string, string>[],
-  nameCol: string,
+  nameCol: string | null,
   domainCol: string | null,
   sfdcCol: string | null
 ): ParsedRow[] {
   return data
-    .map(row => ({
-      name: (row[nameCol] || '').trim(),
-      domain: domainCol ? cleanDomain(row[domainCol] || '') : undefined,
-      salesforceId: sfdcCol ? (row[sfdcCol] || '').trim() : undefined,
-    }))
-    .filter(r => r.name)
+    .map(row => {
+      const name = nameCol ? (row[nameCol] || '').trim() || undefined : undefined
+      const domain = domainCol ? cleanDomain(row[domainCol] || '') : ''
+      const salesforceId = sfdcCol ? (row[sfdcCol] || '').trim() || undefined : undefined
+      return { name, domain, salesforceId }
+    })
+    .filter(r => r.domain.length > 0)
 }

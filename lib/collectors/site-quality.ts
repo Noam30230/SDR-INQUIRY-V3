@@ -62,6 +62,20 @@ export async function collectSiteQuality(domain: string): Promise<SiteQualityDat
     const $ = cheerio.load(html)
     const allText = html.toLowerCase()
 
+    // Company name extraction
+    const ogSiteName = $('meta[property="og:site_name"]').attr('content')?.trim()
+    if (ogSiteName && ogSiteName.length < 60) {
+      result.detectedName = ogSiteName
+    } else {
+      const titleRaw = $('title').text()?.trim()
+      if (titleRaw) {
+        const firstPart = titleRaw.split(/\s*[|·—\-–]\s*/)[0].trim()
+        if (firstPart && firstPart.length > 0 && firstPart.length < 60) {
+          result.detectedName = firstPart
+        }
+      }
+    }
+
     // Responsive
     result.isResponsive = !!$('meta[name="viewport"]').length
 

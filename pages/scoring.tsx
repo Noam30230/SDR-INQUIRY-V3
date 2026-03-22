@@ -56,7 +56,7 @@ export default function ScoringPage() {
     return () => { supabaseBrowser.removeChannel(channel) }
   }, [loadAccounts])
 
-  async function scoreBatch(items: Array<{ name: string; domain?: string; salesforceId?: string }>) {
+  async function scoreBatch(items: Array<{ name?: string; domain: string; salesforceId?: string }>) {
     stopRef.current = false
     setIsScoring(true)
     for (const item of items) {

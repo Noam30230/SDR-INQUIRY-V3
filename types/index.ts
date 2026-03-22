@@ -114,6 +114,7 @@ export interface SiteQualityData {
   hosting: string
   techJobsFound: string[]
   loadable: boolean
+  detectedName?: string  // extracted from og:site_name or <title>
 }
 
 // Payload Brave Search
