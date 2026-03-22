@@ -1,4 +1,4 @@
-import { useState, useRef } from 'react'
+import { useState, useRef, useEffect } from 'react'
 import Papa from 'papaparse'
 import type { Account, Tier } from '@/types'
 import { supabaseBrowser } from '@/lib/supabase'
@@ -42,6 +42,14 @@ export default function Sidebar({ accounts, isScoring, userEmail, onScoreBatch, 
   const [csvPreview, setCsvPreview] = useState<ParsedRow[]>([])
   const [csvMapping, setCsvMapping] = useState<{ nameCol: string | null; domainCol: string | null; sfdcCol: string | null } | null>(null)
   const fileRef = useRef<HTMLInputElement>(null)
+
+  // Fix #9: elapsed time counter while scoring
+  const [elapsed, setElapsed] = useState(0)
+  useEffect(() => {
+    if (!isScoring) { setElapsed(0); return }
+    const interval = setInterval(() => setElapsed(s => s + 1), 1000)
+    return () => clearInterval(interval)
+  }, [isScoring])
 
   const doneAccounts = accounts.filter(a => a.status === 'done')
   const scoringCount = accounts.filter(a => a.status === 'scoring' || a.status === 'pending').length
@@ -88,7 +96,7 @@ export default function Sidebar({ accounts, isScoring, userEmail, onScoreBatch, 
       className="flex flex-col h-full overflow-y-auto"
       style={{
         width: 300,
-        minWidth: 300,
+        minWidth: 260,  // Fix #1: allow slight shrink on smaller screens
         background: 'var(--bg-card)',
         borderRight: '1px solid var(--border)',
         padding: '20px 16px',
@@ -111,7 +119,7 @@ export default function Sidebar({ accounts, isScoring, userEmail, onScoreBatch, 
           </div>
           <button
             onClick={() => supabaseBrowser.auth.signOut()}
-            className="text-xs px-2.5 py-1.5 rounded-lg shrink-0 transition-colors"
+            className="text-xs px-2.5 py-1.5 rounded-lg shrink-0 transition-colors hover:text-white"
             style={{ color: 'var(--text-muted)', border: '1px solid var(--border)', background: 'var(--bg-hover)' }}
           >
             Log out
@@ -156,7 +164,11 @@ export default function Sidebar({ accounts, isScoring, userEmail, onScoreBatch, 
             <>
               <div className="w-3 h-3 border-2 border-t-transparent rounded-full animate-spin shrink-0"
                 style={{ borderColor: '#a78bfa', borderTopColor: 'transparent' }} />
-              Scoring {scoringCount > 1 ? `${scoringCount} accounts` : 'account'}...
+              {/* Fix #9: show elapsed time so user knows it's running */}
+              <span>
+                Scoring {scoringCount > 1 ? `${scoringCount} accounts` : 'account'}
+                <span className="ml-1 opacity-60">· {elapsed}s</span>
+              </span>
             </>
           ) : (
             <>✅ Done · {doneAccounts.length} account{doneAccounts.length !== 1 ? 's' : ''} analyzed</>
@@ -195,8 +207,9 @@ export default function Sidebar({ accounts, isScoring, userEmail, onScoreBatch, 
             className="w-full px-3 py-2 text-sm text-white placeholder-gray-600 rounded-lg outline-none resize-none"
             style={{ background: 'var(--bg-hover)', border: '1px solid var(--border)', fontFamily: 'monospace' }}
           />
+          {/* Fix #6: "CharID" → "Salesforce ID" */}
           <p className="text-xs" style={{ color: 'var(--text-muted)', opacity: 0.7 }}>
-            Format: Name, site.com, CharID — 1 per line
+            Format: Name, site.com, Salesforce ID — 1 per line
           </p>
         </div>
       )}
@@ -283,9 +296,9 @@ export default function Sidebar({ accounts, isScoring, userEmail, onScoreBatch, 
 
       <div className="flex-1" />
 
-      {/* Sources footer */}
+      {/* Fix #10: "GPT-4o" → "GPT-4o mini" */}
       <p className="text-xs text-center pt-3" style={{ color: 'var(--text-muted)', opacity: 0.6, borderTop: '1px solid var(--border)' }}>
-        Sources: 🌐 Website · 📰 Press · 🐙 GitHub · 🤖 GPT-4o
+        Sources: 🌐 Website · 🐙 GitHub · 🤖 GPT-4o mini
       </p>
     </aside>
   )

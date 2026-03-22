@@ -9,9 +9,9 @@ function getTopTechs(stack: TechStack): string[] {
   const techs: string[] = []
   for (const cat of priority) {
     techs.push(...(stack[cat] || []))
-    if (techs.length >= 4) break
+    if (techs.length >= 3) break  // Fix #7: reduced to 3 to avoid banner wrapping
   }
-  return techs.slice(0, 4)
+  return techs.slice(0, 3)
 }
 
 function scoreColor(score: number): string {
@@ -72,13 +72,19 @@ export default function AccountCard({ account, onDelete }: AccountCardProps) {
       }}
     >
       {/* Banner row */}
-      <div className="flex items-center gap-3 px-4 py-2.5">
+      <div className="flex items-center gap-3 px-4 py-2.5 min-w-0">
 
         {/* Tier badge */}
         {account.tier && <TierBadge tier={account.tier} size="sm" />}
 
-        {/* Company name */}
-        <span className="font-semibold text-sm text-white shrink-0">{account.company_name}</span>
+        {/* Company name — Fix #7: truncate long names to prevent banner wrapping */}
+        <span
+          className="font-semibold text-sm text-white shrink-0 truncate"
+          style={{ maxWidth: '180px' }}
+          title={account.company_name}
+        >
+          {account.company_name}
+        </span>
 
         {/* SF ID */}
         {account.salesforce_id && (
@@ -103,21 +109,20 @@ export default function AccountCard({ account, onDelete }: AccountCardProps) {
         )}
 
         {/* Error */}
-        {isError && <span className="text-xs font-medium text-red-400 shrink-0">Error</span>}
+        {isError && (
+          <span className="text-xs font-medium text-red-400 shrink-0" title={account.error_message || ''}>
+            ⚠ Error
+          </span>
+        )}
 
-        {/* Tech chips */}
+        {/* Tech chips — Fix #7: nowrap + overflow hidden keeps banner single-line */}
         {topTechs.length > 0 && (
-          <div className="flex items-center gap-1 flex-wrap flex-1 min-w-0">
+          <div className="flex items-center gap-1 overflow-hidden flex-1 min-w-0">
             {topTechs.map(t => <SignalChip key={t} label={t} variant="tech" />)}
           </div>
         )}
 
         {!topTechs.length && <div className="flex-1" />}
-
-        {/* Error message */}
-        {isError && account.error_message && (
-          <span className="text-xs text-red-400 truncate flex-1">{account.error_message}</span>
-        )}
 
         {/* Details button */}
         {isDone && (
@@ -134,11 +139,12 @@ export default function AccountCard({ account, onDelete }: AccountCardProps) {
           </button>
         )}
 
-        {/* Delete button — always visible */}
+        {/* Delete button */}
         <button
           onClick={() => onDelete(account.id)}
           className="shrink-0 w-6 h-6 flex items-center justify-center rounded text-xs transition-colors hover:text-red-400"
           style={{ color: 'var(--text-muted)' }}
+          title="Remove account"
         >
           ✕
         </button>
@@ -147,7 +153,8 @@ export default function AccountCard({ account, onDelete }: AccountCardProps) {
       {/* Expanded detail */}
       {expanded && (
         <div className="px-4 pb-4 border-t" style={{ borderColor: 'rgba(124,58,237,0.2)' }}>
-          <AccountDetail account={account} onDelete={onDelete} />
+          {/* Fix #2: removed onDelete prop — AccountDetail no longer has a duplicate delete button */}
+          <AccountDetail account={account} />
         </div>
       )}
     </div>

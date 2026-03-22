@@ -1,4 +1,4 @@
-import type { Account, TechStack } from '@/types'
+import type { Account, TechStack, WebQuality } from '@/types'
 import SignalChip from '@/components/ui/SignalChip'
 
 const CATEGORY_ICONS: Record<keyof TechStack, string> = {
@@ -11,7 +11,8 @@ function TechGroup({ category, items }: { category: keyof TechStack; items: stri
   if (!items.length) return null
   return (
     <div className="flex items-start gap-2">
-      <span className="text-xs shrink-0 mt-0.5 w-14 text-right" style={{ color: 'var(--text-muted)' }}>
+      {/* Fix #8: w-14 was too narrow for "Languages" — w-20 fits all category names */}
+      <span className="text-xs shrink-0 mt-0.5 w-20 text-right" style={{ color: 'var(--text-muted)' }}>
         {CATEGORY_ICONS[category]} {category}
       </span>
       <div className="flex flex-wrap gap-1">
@@ -23,21 +24,23 @@ function TechGroup({ category, items }: { category: keyof TechStack; items: stri
 
 interface AccountDetailProps {
   account: Account
-  onDelete: (id: string) => void
 }
 
-export default function AccountDetail({ account, onDelete }: AccountDetailProps) {
+export default function AccountDetail({ account }: AccountDetailProps) {
   const techCategories = Object.keys(account.tech_stack || {}) as Array<keyof TechStack>
   const hasTech = techCategories.some(cat => (account.tech_stack[cat] || []).length > 0)
   const positiveSignals = account.signals?.positive || []
   const negativeSignals = account.signals?.negative || []
+
+  // Fix #15: single cast instead of 10 individual casts
+  const wq = account.web_quality as WebQuality | null
 
   return (
     <div className="space-y-4 pt-4">
 
       {/* Signals */}
       {(positiveSignals.length > 0 || negativeSignals.length > 0) && (
-        <div className="grid grid-cols-2 gap-3">
+        <div className={positiveSignals.length > 0 && negativeSignals.length > 0 ? 'grid grid-cols-2 gap-3' : ''}>
           {positiveSignals.length > 0 && (
             <div className="rounded-lg p-3" style={{ background: 'rgba(16,185,129,0.05)', border: '1px solid rgba(16,185,129,0.15)' }}>
               <p className="text-xs font-semibold mb-2" style={{ color: '#34d399' }}>Positive signals</p>
@@ -80,29 +83,25 @@ export default function AccountDetail({ account, onDelete }: AccountDetailProps)
       )}
 
       {/* Web quality */}
-      {account.web_quality && (
+      {wq && (
         <div>
           <p className="text-xs font-semibold uppercase tracking-wider mb-2" style={{ color: 'var(--text-muted)' }}>
             Website
           </p>
           <div className="flex flex-wrap gap-1.5">
-            {(account.web_quality as { hasHttps: boolean }).hasHttps && <SignalChip label="HTTPS" variant="positive" />}
-            {(account.web_quality as { isResponsive: boolean }).isResponsive && <SignalChip label="Responsive" variant="positive" />}
-            {(account.web_quality as { framework: string }).framework && (
-              <SignalChip label={(account.web_quality as { framework: string }).framework} variant="tech" />
-            )}
-            {(account.web_quality as { hosting: string }).hosting && (
-              <SignalChip label={`Host: ${(account.web_quality as { hosting: string }).hosting}`} variant="neutral" />
-            )}
-            {(account.web_quality as { hasPricing: boolean }).hasPricing && <SignalChip label="Pricing page" variant="positive" />}
-            {(account.web_quality as { hasSignup: boolean }).hasSignup && <SignalChip label="Sign-up CTA" variant="positive" />}
-            {(account.web_quality as { hasDemo: boolean }).hasDemo && <SignalChip label="Demo CTA" variant="positive" />}
-            {(account.web_quality as { hasLogin: boolean }).hasLogin && <SignalChip label="Login portal" variant="positive" />}
-            {(account.web_quality as { hasDocs: boolean }).hasDocs && <SignalChip label="Docs / API" variant="positive" />}
-            {(account.web_quality as { hasIntegrations: boolean }).hasIntegrations && <SignalChip label="Integrations" variant="positive" />}
-            {(account.web_quality as { hasCareers: boolean }).hasCareers && <SignalChip label="Careers page" variant="positive" />}
-            {(account.web_quality as { hasBlog: boolean }).hasBlog && <SignalChip label="Blog" variant="positive" />}
-            {(account.web_quality as { isPageBuilder: boolean }).isPageBuilder && <SignalChip label="Page builder" variant="negative" />}
+            {wq.hasHttps && <SignalChip label="HTTPS" variant="positive" />}
+            {wq.isResponsive && <SignalChip label="Responsive" variant="positive" />}
+            {wq.framework && <SignalChip label={wq.framework} variant="tech" />}
+            {wq.hosting && <SignalChip label={`Host: ${wq.hosting}`} variant="neutral" />}
+            {wq.hasPricing && <SignalChip label="Pricing page" variant="positive" />}
+            {wq.hasSignup && <SignalChip label="Sign-up CTA" variant="positive" />}
+            {wq.hasDemo && <SignalChip label="Demo CTA" variant="positive" />}
+            {wq.hasLogin && <SignalChip label="Login portal" variant="positive" />}
+            {wq.hasDocs && <SignalChip label="Docs / API" variant="positive" />}
+            {wq.hasIntegrations && <SignalChip label="Integrations" variant="positive" />}
+            {wq.hasCareers && <SignalChip label="Careers page" variant="positive" />}
+            {wq.hasBlog && <SignalChip label="Blog" variant="positive" />}
+            {wq.isPageBuilder && <SignalChip label={`Page builder: ${wq.pageBuilderName}`} variant="negative" />}
           </div>
         </div>
       )}
@@ -128,36 +127,27 @@ export default function AccountDetail({ account, onDelete }: AccountDetailProps)
       {/* GPT reasoning */}
       {account.reasoning && (
         <div className="rounded-lg p-3" style={{ background: 'rgba(124,58,237,0.06)', border: '1px solid rgba(124,58,237,0.15)' }}>
-          <p className="text-xs font-semibold mb-1.5" style={{ color: '#a78bfa' }}>GPT-4o Analysis</p>
+          <p className="text-xs font-semibold mb-1.5" style={{ color: '#a78bfa' }}>GPT-4o mini Analysis</p>
           <p className="text-xs leading-relaxed" style={{ color: '#cbd5e1' }}>
             {account.reasoning}
           </p>
         </div>
       )}
 
-      {/* Actions */}
-      <div className="pt-1 flex items-center justify-between">
-        <div className="flex gap-2">
-          {account.domain && (
-            <a
-              href={account.domain?.startsWith('http') ? account.domain : `https://${account.domain}`}
-              target="_blank"
-              rel="noopener noreferrer"
-              className="text-xs px-3 py-1.5 rounded-lg transition-colors"
-              style={{ color: '#a78bfa', background: 'rgba(124,58,237,0.1)', border: '1px solid rgba(124,58,237,0.2)' }}
-            >
-              Visit website ↗
-            </a>
-          )}
+      {/* Fix #2: removed duplicate Delete button — only the ✕ in the card banner remains */}
+      {account.domain && (
+        <div className="pt-1">
+          <a
+            href={account.domain?.startsWith('http') ? account.domain : `https://${account.domain}`}
+            target="_blank"
+            rel="noopener noreferrer"
+            className="text-xs px-3 py-1.5 rounded-lg transition-colors"
+            style={{ color: '#a78bfa', background: 'rgba(124,58,237,0.1)', border: '1px solid rgba(124,58,237,0.2)' }}
+          >
+            Visit website ↗
+          </a>
         </div>
-        <button
-          onClick={() => onDelete(account.id)}
-          className="text-xs px-3 py-1.5 rounded-lg transition-colors"
-          style={{ color: '#f87171', background: 'rgba(239,68,68,0.08)', border: '1px solid rgba(239,68,68,0.2)' }}
-        >
-          Delete
-        </button>
-      </div>
+      )}
     </div>
   )
 }

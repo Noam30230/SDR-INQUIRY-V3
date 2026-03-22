@@ -28,6 +28,8 @@ export default function ScoringPage() {
   const [accounts, setAccounts] = useState<Account[]>([])
   const [filter, setFilter] = useState<FilterTier>('all')
   const [isScoring, setIsScoring] = useState(false)
+  const [isLoading, setIsLoading] = useState(true)   // Fix #4: initial loading state
+  const [toast, setToast] = useState('')              // Fix #5: duplicate feedback toast
   const [userEmail, setUserEmail] = useState('')
   const stopRef = useRef(false)
 
@@ -37,6 +39,7 @@ export default function ScoringPage() {
       const data = await res.json()
       setAccounts(data as Account[])
     }
+    setIsLoading(false)  // Fix #4: done loading
   }, [])
 
   useEffect(() => {
@@ -65,7 +68,13 @@ export default function ScoringPage() {
         method: 'POST',
         body: JSON.stringify({ companyName: item.name, domain: item.domain, salesforceId: item.salesforceId }),
       })
-      if (res.status === 409) continue  // already scored, skip
+      if (res.status === 409) {
+        // Fix #5: inform user instead of silently skipping
+        const label = item.name || item.domain
+        setToast(`"${label}" already scored`)
+        setTimeout(() => setToast(''), 3500)
+        continue
+      }
       await new Promise(r => setTimeout(r, 500))
     }
     setIsScoring(false)
@@ -123,8 +132,23 @@ export default function ScoringPage() {
             filter={filter}
             onFilterChange={setFilter}
             onDelete={deleteAccount}
+            isLoading={isLoading}
           />
         </main>
+
+        {/* Fix #5: toast for already-scored duplicates */}
+        {toast && (
+          <div
+            className="fixed bottom-5 right-5 px-4 py-2.5 rounded-xl text-sm font-medium shadow-lg z-50 transition-all"
+            style={{
+              background: 'rgba(245,158,11,0.15)',
+              border: '1px solid rgba(245,158,11,0.3)',
+              color: '#fcd34d',
+            }}
+          >
+            ⚠ {toast}
+          </div>
+        )}
       </div>
     </AuthGuard>
   )
