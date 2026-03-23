@@ -24,9 +24,14 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
   const { data: { user } } = await supabase.auth.getUser()
   if (!user) return res.status(401).json({ error: 'Non authentifié' })
 
-  const { tier } = req.query
+  const { tier, ids } = req.query
   let query = supabase.from('accounts').select('*').eq('status', 'done').order('score', { ascending: false })
-  if (tier && tier !== 'all') query = query.eq('tier', tier)
+  if (ids) {
+    const idList = (ids as string).split(',').filter(Boolean)
+    query = query.in('id', idList)
+  } else if (tier && tier !== 'all') {
+    query = query.eq('tier', tier)
+  }
 
   const { data: accounts, error } = await query
   if (error) return res.status(500).json({ error: error.message })

@@ -8,6 +8,8 @@ interface SidebarProps {
   accounts: Account[]
   isScoring: boolean
   userEmail: string
+  selectedIds?: Set<string>
+  exportLabel?: string
   onScoreBatch: (items: ParsedRow[]) => Promise<void>
   onStopBatch: () => void
   onExport: () => void
@@ -36,7 +38,7 @@ function parseTextarea(raw: string): ParsedRow[] {
     .filter(r => (r.name?.length ?? 0) > 0)
 }
 
-export default function Sidebar({ accounts, isScoring, userEmail, onScoreBatch, onStopBatch, onExport }: SidebarProps) {
+export default function Sidebar({ accounts, isScoring, userEmail, selectedIds, exportLabel, onScoreBatch, onStopBatch, onExport }: SidebarProps) {
   const [tab, setTab] = useState<'manual' | 'csv'>('manual')
   const [text, setText] = useState('')
   const [csvPreview, setCsvPreview] = useState<ParsedRow[]>([])
@@ -300,7 +302,7 @@ export default function Sidebar({ accounts, isScoring, userEmail, onScoreBatch, 
           color: '#a78bfa',
         }}
       >
-        ↓ Export all ({doneAccounts.length})
+        ↓ {exportLabel || `Export all (${doneAccounts.length})`}
       </button>
 
       <div className="flex-1" />

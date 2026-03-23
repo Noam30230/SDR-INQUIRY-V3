@@ -53,9 +53,11 @@ function ScoreRing({ score }: { score: number }) {
 interface AccountCardProps {
   account: Account
   onDelete: (id: string) => void
+  selected?: boolean
+  onToggleSelect?: (id: string) => void
 }
 
-export default function AccountCard({ account, onDelete }: AccountCardProps) {
+export default function AccountCard({ account, onDelete, selected, onToggleSelect }: AccountCardProps) {
   const [expanded, setExpanded] = useState(false)
 
   const isScoring = account.status === 'scoring' || account.status === 'pending'
@@ -68,11 +70,25 @@ export default function AccountCard({ account, onDelete }: AccountCardProps) {
       className="rounded-xl overflow-hidden transition-all duration-200"
       style={{
         background: expanded ? 'var(--bg-hover)' : 'var(--bg-card)',
-        border: `1px solid ${expanded ? 'rgba(124,58,237,0.35)' : 'var(--border)'}`,
+        border: `1px solid ${selected ? 'rgba(124,58,237,0.5)' : expanded ? 'rgba(124,58,237,0.35)' : 'var(--border)'}`,
       }}
     >
       {/* Banner row */}
       <div className="flex items-center gap-3 px-4 py-2.5 min-w-0">
+
+        {/* Checkbox */}
+        {onToggleSelect && (
+          <button
+            onClick={e => { e.stopPropagation(); onToggleSelect(account.id) }}
+            className="w-4 h-4 rounded shrink-0 flex items-center justify-center transition-all"
+            style={{
+              background: selected ? 'rgba(124,58,237,0.4)' : 'transparent',
+              border: `1px solid ${selected ? 'rgba(124,58,237,0.7)' : 'var(--border)'}`,
+            }}
+          >
+            {selected && <span className="text-violet-300 text-xs leading-none" style={{ fontSize: 9 }}>✓</span>}
+          </button>
+        )}
 
         {/* Tier badge */}
         {account.tier && <TierBadge tier={account.tier} size="sm" />}

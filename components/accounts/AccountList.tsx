@@ -8,7 +8,10 @@ interface AccountListProps {
   filter: FilterTier
   onFilterChange: (f: FilterTier) => void
   onDelete: (id: string) => void
-  isLoading?: boolean  // Fix #4: loading state prop
+  isLoading?: boolean
+  selectedIds?: Set<string>
+  onToggleSelect?: (id: string) => void
+  onToggleSelectAll?: (ids: string[]) => void
 }
 
 const FILTER_OPTIONS: Array<{ value: FilterTier; label: string }> = [
@@ -30,13 +33,28 @@ function SkeletonCard() {
   )
 }
 
-export default function AccountList({ accounts, filter, onFilterChange, onDelete, isLoading }: AccountListProps) {
+export default function AccountList({ accounts, filter, onFilterChange, onDelete, isLoading, selectedIds, onToggleSelect, onToggleSelectAll }: AccountListProps) {
   const filtered = filter === 'all' ? accounts : accounts.filter(a => a.tier === filter)
+  const filteredIds = filtered.map(a => a.id)
+  const allSelected = filteredIds.length > 0 && filteredIds.every(id => selectedIds?.has(id))
 
   return (
     <div className="flex flex-col h-full min-h-0">
-      {/* Filters */}
-      <div className="flex gap-1.5 mb-4 shrink-0">
+      {/* Filters + select all */}
+      <div className="flex items-center gap-1.5 mb-4 shrink-0">
+        {onToggleSelectAll && filtered.length > 0 && (
+          <button
+            onClick={() => onToggleSelectAll(filteredIds)}
+            className="w-5 h-5 rounded flex items-center justify-center shrink-0 transition-all"
+            style={{
+              background: allSelected ? 'rgba(124,58,237,0.3)' : 'var(--bg-card)',
+              border: `1px solid ${allSelected ? 'rgba(124,58,237,0.6)' : 'var(--border)'}`,
+            }}
+            title={allSelected ? 'Deselect all' : 'Select all visible'}
+          >
+            {allSelected && <span className="text-violet-300 text-xs leading-none">✓</span>}
+          </button>
+        )}
         {FILTER_OPTIONS.map(opt => {
           const count = opt.value === 'all'
             ? accounts.length
@@ -58,6 +76,11 @@ export default function AccountList({ accounts, filter, onFilterChange, onDelete
             </button>
           )
         })}
+        {(selectedIds?.size ?? 0) > 0 && (
+          <span className="ml-auto text-xs" style={{ color: '#a78bfa' }}>
+            {selectedIds!.size} selected
+          </span>
+        )}
       </div>
 
       {/* List */}
@@ -100,7 +123,13 @@ export default function AccountList({ accounts, filter, onFilterChange, onDelete
           </div>
         ) : (
           filtered.map(account => (
-            <AccountCard key={account.id} account={account} onDelete={onDelete} />
+            <AccountCard
+              key={account.id}
+              account={account}
+              onDelete={onDelete}
+              selected={selectedIds?.has(account.id)}
+              onToggleSelect={onToggleSelect}
+            />
           ))
         )}
       </div>

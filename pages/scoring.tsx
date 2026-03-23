@@ -123,9 +123,10 @@ export default function ScoringPage() {
   const [accounts, setAccounts] = useState<Account[]>([])
   const [filter, setFilter] = useState<FilterTier>('all')
   const [isScoring, setIsScoring] = useState(false)
-  const [isLoading, setIsLoading] = useState(true)   // Fix #4: initial loading state
-  const [toast, setToast] = useState('')              // Fix #5: duplicate feedback toast
+  const [isLoading, setIsLoading] = useState(true)
+  const [toast, setToast] = useState('')
   const [userEmail, setUserEmail] = useState('')
+  const [selectedIds, setSelectedIds] = useState<Set<string>>(new Set())
   const stopRef = useRef(false)
 
   const loadAccounts = useCallback(async () => {
@@ -197,8 +198,13 @@ export default function ScoringPage() {
 
   async function handleExport() {
     const token = await getToken()
-    const tierParam = filter !== 'all' ? `?tier=${filter}` : ''
-    const res = await fetch(`/api/export${tierParam}`, {
+    let param = ''
+    if (selectedIds.size > 0) {
+      param = `?ids=${Array.from(selectedIds).join(',')}`
+    } else if (filter !== 'all') {
+      param = `?tier=${filter}`
+    }
+    const res = await fetch(`/api/export${param}`, {
       headers: { Authorization: `Bearer ${token}` },
     })
     if (res.ok) {
@@ -212,6 +218,26 @@ export default function ScoringPage() {
     }
   }
 
+  function toggleSelect(id: string) {
+    setSelectedIds(prev => {
+      const next = new Set(prev)
+      next.has(id) ? next.delete(id) : next.add(id)
+      return next
+    })
+  }
+
+  function toggleSelectAll(ids: string[]) {
+    setSelectedIds(prev => {
+      const allSelected = ids.every(id => prev.has(id))
+      if (allSelected) {
+        const next = new Set(prev)
+        ids.forEach(id => next.delete(id))
+        return next
+      }
+      return new Set([...prev, ...ids])
+    })
+  }
+
   return (
     <AuthGuard>
       <div className="flex h-screen overflow-hidden" style={{ background: 'var(--bg-base)' }}>
@@ -219,6 +245,14 @@ export default function ScoringPage() {
           accounts={accounts}
           isScoring={isScoring}
           userEmail={userEmail}
+          selectedIds={selectedIds}
+          exportLabel={
+            selectedIds.size > 0
+              ? `Export selected (${selectedIds.size})`
+              : filter !== 'all'
+              ? `Export ${filter} (${accounts.filter(a => a.tier === filter).length})`
+              : undefined
+          }
           onScoreBatch={scoreBatch}
           onStopBatch={stopBatch}
           onExport={handleExport}
@@ -241,6 +275,9 @@ export default function ScoringPage() {
             onFilterChange={setFilter}
             onDelete={deleteAccount}
             isLoading={isLoading}
+            selectedIds={selectedIds}
+            onToggleSelect={toggleSelect}
+            onToggleSelectAll={toggleSelectAll}
           />
         </main>
 
