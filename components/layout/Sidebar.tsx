@@ -70,9 +70,9 @@ export default function Sidebar({ accounts, isScoring, userEmail, onScoreBatch, 
       skipEmptyLines: true,
       complete: (results) => {
         const headers = results.meta.fields || []
-        const { nameCol, domainCol, sfdcCol } = detectColumns(headers)
-        if (!domainCol) return
-        const rows = parseRows(results.data as Record<string, string>[], nameCol, domainCol, sfdcCol)
+        const data = results.data as Record<string, string>[]
+        const { nameCol, domainCol, sfdcCol } = detectColumns(headers, data)
+        const rows = parseRows(data, nameCol, domainCol, sfdcCol)
         setCsvPreview(rows)
         setCsvMapping({ nameCol, domainCol, sfdcCol })
       },
