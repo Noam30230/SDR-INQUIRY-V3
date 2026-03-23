@@ -68,6 +68,8 @@ export default function Sidebar({ accounts, isScoring, userEmail, onScoreBatch, 
     Papa.parse(file, {
       header: true,
       skipEmptyLines: true,
+      delimiter: '',        // auto-detect , or ; or \t
+      encoding: 'UTF-8',
       complete: (results) => {
         const headers = results.meta.fields || []
         const data = results.data as Record<string, string>[]
@@ -222,12 +224,14 @@ export default function Sidebar({ accounts, isScoring, userEmail, onScoreBatch, 
             Columns: <code className="text-purple-300">company</code>, <code className="text-purple-300">domain</code>
           </p>
 
-          {csvPreview.length > 0 && csvMapping && (
+          {csvMapping && (
             <div className="rounded-lg p-2 text-xs space-y-1.5" style={{ background: 'var(--bg-hover)', border: '1px solid var(--border)' }}>
               <div className="flex flex-wrap gap-1 pb-1.5" style={{ borderBottom: '1px solid var(--border)' }}>
-                <span className="px-1.5 py-0.5 rounded" style={{ background: 'rgba(124,58,237,0.15)', color: '#a78bfa' }}>
-                  name: {csvMapping.nameCol}
-                </span>
+                {csvMapping.nameCol && (
+                  <span className="px-1.5 py-0.5 rounded" style={{ background: 'rgba(124,58,237,0.15)', color: '#a78bfa' }}>
+                    name: {csvMapping.nameCol}
+                  </span>
+                )}
                 {csvMapping.domainCol && (
                   <span className="px-1.5 py-0.5 rounded" style={{ background: 'rgba(16,185,129,0.1)', color: '#6ee7b7' }}>
                     domain: {csvMapping.domainCol}
@@ -239,15 +243,27 @@ export default function Sidebar({ accounts, isScoring, userEmail, onScoreBatch, 
                   </span>
                 )}
               </div>
-              <p style={{ color: 'var(--text-muted)' }}>{csvPreview.length} companies detected</p>
-              <div className="max-h-20 overflow-y-auto space-y-0.5">
-                {csvPreview.slice(0, 5).map((item, i) => (
-                  <div key={i} className="truncate text-white opacity-70">{item.name || item.domain}</div>
-                ))}
-                {csvPreview.length > 5 && (
-                  <p style={{ color: 'var(--text-muted)' }}>+{csvPreview.length - 5} more...</p>
-                )}
-              </div>
+              {csvPreview.length === 0 ? (
+                <p className="text-red-400">
+                  ⚠ No domain values found. Check that the domain column contains URLs like <code>company.com</code>
+                </p>
+              ) : (
+                <>
+                  <p style={{ color: 'var(--text-muted)' }}>{csvPreview.length} companies detected</p>
+                  <div className="max-h-20 overflow-y-auto space-y-0.5">
+                    {csvPreview.slice(0, 5).map((item, i) => (
+                      <div key={i} className="truncate opacity-70" style={{ color: 'var(--text-base)' }}>
+                        {item.name && <span className="text-purple-300">{item.name}</span>}
+                        {item.name && item.domain && <span className="opacity-40"> · </span>}
+                        {item.domain}
+                      </div>
+                    ))}
+                    {csvPreview.length > 5 && (
+                      <p style={{ color: 'var(--text-muted)' }}>+{csvPreview.length - 5} more…</p>
+                    )}
+                  </div>
+                </>
+              )}
             </div>
           )}
         </div>
