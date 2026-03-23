@@ -38,13 +38,15 @@ export default function LoginPage() {
         router.replace('/scoring')
       }
     } else {
-      const { error } = await supabaseBrowser.auth.signUp({ email, password })
+      const { data, error } = await supabaseBrowser.auth.signUp({ email, password })
       if (error) {
         if (error.message.includes('already registered')) {
           setError("This email already has an account. Click Log in.")
         } else {
           setError(error.message)
         }
+      } else if (data.session) {
+        router.replace('/scoring')
       } else {
         setSuccess("Account created! You can now log in.")
         setMode('signin')
