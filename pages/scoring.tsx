@@ -7,6 +7,101 @@ import type { Account, Tier } from '@/types'
 
 type FilterTier = 'all' | Tier
 
+const TIERS: Tier[] = ['T1', 'T2', 'T3', 'DQ']
+
+function DeleteMenu({ accounts, onDelete }: { accounts: Account[]; onDelete: (t: 'all' | Tier) => void }) {
+  const [open, setOpen] = useState(false)
+  const [confirm, setConfirm] = useState<'all' | Tier | null>(null)
+  const ref = useRef<HTMLDivElement>(null)
+
+  useEffect(() => {
+    function handleClick(e: MouseEvent) {
+      if (ref.current && !ref.current.contains(e.target as Node)) setOpen(false)
+    }
+    document.addEventListener('mousedown', handleClick)
+    return () => document.removeEventListener('mousedown', handleClick)
+  }, [])
+
+  function handleSelect(tier: 'all' | Tier) {
+    setConfirm(tier)
+    setOpen(false)
+  }
+
+  function handleConfirm() {
+    if (confirm) { onDelete(confirm); setConfirm(null) }
+  }
+
+  const countByTier = (t: Tier) => accounts.filter(a => a.tier === t).length
+
+  return (
+    <div className="relative" ref={ref}>
+      <button
+        onClick={() => setOpen(o => !o)}
+        className="flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-medium transition-all"
+        style={{ background: 'rgba(239,68,68,0.08)', border: '1px solid rgba(239,68,68,0.2)', color: '#f87171' }}
+      >
+        🗑 Delete
+        <span className="opacity-60">▾</span>
+      </button>
+
+      {open && (
+        <div
+          className="absolute right-0 top-full mt-1 rounded-xl py-1 z-50 min-w-[160px]"
+          style={{ background: 'var(--bg-card)', border: '1px solid var(--border)', boxShadow: '0 8px 24px rgba(0,0,0,0.4)' }}
+        >
+          <button
+            onClick={() => handleSelect('all')}
+            className="w-full text-left px-3 py-2 text-xs hover:bg-red-500/10 transition-colors"
+            style={{ color: '#f87171' }}
+          >
+            Delete all ({accounts.length})
+          </button>
+          <div style={{ borderTop: '1px solid var(--border)', margin: '2px 0' }} />
+          {TIERS.map(t => {
+            const count = countByTier(t)
+            if (count === 0) return null
+            return (
+              <button
+                key={t}
+                onClick={() => handleSelect(t)}
+                className="w-full text-left px-3 py-2 text-xs hover:bg-white/5 transition-colors"
+                style={{ color: 'var(--text-muted)' }}
+              >
+                Delete {t} ({count})
+              </button>
+            )
+          })}
+        </div>
+      )}
+
+      {confirm && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center" style={{ background: 'rgba(0,0,0,0.6)' }}>
+          <div className="rounded-2xl p-6 max-w-sm w-full mx-4" style={{ background: 'var(--bg-card)', border: '1px solid var(--border)' }}>
+            <p className="text-sm text-white mb-1 font-semibold">Delete {confirm === 'all' ? 'all accounts' : `all ${confirm} accounts`}?</p>
+            <p className="text-xs mb-5" style={{ color: 'var(--text-muted)' }}>This action cannot be undone.</p>
+            <div className="flex gap-2">
+              <button
+                onClick={() => setConfirm(null)}
+                className="flex-1 py-2 rounded-lg text-xs font-medium"
+                style={{ background: 'var(--bg-hover)', color: 'var(--text-muted)' }}
+              >
+                Cancel
+              </button>
+              <button
+                onClick={handleConfirm}
+                className="flex-1 py-2 rounded-lg text-xs font-semibold"
+                style={{ background: 'rgba(239,68,68,0.15)', border: '1px solid rgba(239,68,68,0.3)', color: '#f87171' }}
+              >
+                Delete
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
+    </div>
+  )
+}
+
 async function getToken(): Promise<string> {
   const { data } = await supabaseBrowser.auth.getSession()
   return data.session?.access_token || ''
@@ -90,6 +185,16 @@ export default function ScoringPage() {
     setAccounts(prev => prev.filter(a => a.id !== id))
   }
 
+  async function deleteByTier(tier: 'all' | Tier) {
+    const param = tier !== 'all' ? `?tier=${tier}` : ''
+    await authFetch(`/api/accounts${param}`, { method: 'DELETE' })
+    if (tier === 'all') {
+      setAccounts([])
+    } else {
+      setAccounts(prev => prev.filter(a => a.tier !== tier))
+    }
+  }
+
   async function handleExport() {
     const token = await getToken()
     const tierParam = filter !== 'all' ? `?tier=${filter}` : ''
@@ -126,6 +231,9 @@ export default function ScoringPage() {
                 {accounts.length} account{accounts.length !== 1 ? 's' : ''}
               </p>
             </div>
+            {accounts.length > 0 && (
+              <DeleteMenu accounts={accounts} onDelete={deleteByTier} />
+            )}
           </div>
           <AccountList
             accounts={accounts}
