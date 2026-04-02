@@ -9,13 +9,13 @@ const SYSTEM_PROMPT = `You are a B2B account qualification expert for Datadog.
 Datadog is a cloud monitoring platform (APM, logs, infrastructure, security, synthetics).
 Your mission: search the web to find real signals about this company, then assign an SDR priority tier.
 
-SEARCH STRATEGY (do 2-3 targeted searches max):
-1. Search "[company name] tech stack cloud infrastructure" to find cloud/DevOps signals
-2. Search "[company name] hiring software engineer SRE" to find tech hiring signals
-3. Search "[company name] funding SaaS product" if business model is unclear
+SEARCH STRATEGY (do 3 targeted searches):
+1. Search "[company name] tech stack cloud infrastructure DevOps" to find cloud/infra signals
+2. Search "[company name] hiring engineer SRE DevOps" to find tech team signals
+3. Search "[company name] funding raised Series investment" to find funding stage
 
 TIERING CRITERIA:
-- T1 (high priority): SaaS or tech-forward company. Visible cloud stack (AWS/GCP/Azure), structured tech team, active DevOps/SRE/Platform/Backend hiring, modern website.
+- T1 (high priority): SaaS or tech-forward company. Visible cloud stack (AWS/GCP/Azure), structured tech team, active DevOps/SRE/Platform/Backend hiring, modern website. Any confirmed funding round (seed or above) boosts to T1 if other signals are present.
 - T2 (medium priority): partial tech presence, some positive signals (AI/cloud/API mentions), less concrete evidence.
 - T3 (low priority): traditional sector, few tech signals, basic site or page builder.
 - DQ (disqualified): IT consulting firms, pure services companies (no SaaS product), public institutions. Do NOT DQ based on sector — a legaltech SaaS, accounting SaaS, or HR SaaS are T1/T2.
@@ -28,6 +28,14 @@ SCORE (0-100):
 - 40-59: Mixed signals, uncertainty about business model
 - 20-39: Few tech signals, traditional sector
 - 0-19: Clearly DQ or no tech signal
+- Any confirmed funding round (pre-seed/seed/Series A/B/C+) adds +10 to the score
+
+FUNDING: Identify the funding stage from search results. Use one of: "pre-seed", "seed", "Series A", "Series B", "Series C+", "bootstrapped", "unknown".
+
+CALL ANGLE: Write ONE short sentence in English (max 15 words) for the SDR's opening angle. Use the strongest signal found. Examples:
+- "Just raised Series B — perfect timing to pitch observability as they scale"
+- "K8s stack with no monitoring detected — clear gap to fill"
+- "Prometheus user with fast-growing engineering team — strong displacement opportunity"
 
 After searching, respond ONLY with valid JSON, no markdown, no surrounding text. All signals and reasoning must be in English.`
 
@@ -92,6 +100,8 @@ function buildPrompt(data: AggregatedData): string {
   lines.push(`{`)
   lines.push(`  "tier": "T1" | "T2" | "T3" | "DQ",`)
   lines.push(`  "score": <0-100>,`)
+  lines.push(`  "funding": "pre-seed" | "seed" | "Series A" | "Series B" | "Series C+" | "bootstrapped" | "unknown",`)
+  lines.push(`  "call_angle": "One sentence SDR opening angle in English (max 15 words)",`)
   lines.push(`  "signals": {`)
   lines.push(`    "positive": ["signal 1", ...],`)
   lines.push(`    "negative": ["signal 1", ...]`)
@@ -138,6 +148,8 @@ export async function scoreAccount(data: AggregatedData): Promise<ScorerOutput> 
         negative: parsed.signals?.negative || [],
       },
       reasoning: parsed.reasoning || '',
+      funding: parsed.funding || 'unknown',
+      call_angle: parsed.call_angle || '',
     }
   } catch {
     return {

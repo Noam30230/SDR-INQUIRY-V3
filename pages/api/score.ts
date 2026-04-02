@@ -83,12 +83,32 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
       pappers: pappers ?? undefined,
     }
 
+    const EMPTY_STACK = { Cloud: [], Monitoring: [], DevOps: [], Languages: [], Data: [], AI: [], Security: [], Other: [] }
+
+    // Hard DQ rule: already a Datadog customer
+    const datadogInWappalyzer = wappalyzer?.technologies?.some(t => t.name.toLowerCase() === 'datadog')
+    const datadogInGitHub = github?.techSignals?.some(t => t.toLowerCase().includes('datadog'))
+    if (datadogInWappalyzer || datadogInGitHub) {
+      await supabaseAdmin.from('accounts').update({
+        tier: 'DQ',
+        score: 0,
+        signals: { positive: [], negative: ['Already a Datadog customer — no outbound needed'] },
+        tech_stack: EMPTY_STACK,
+        web_quality: null,
+        press_signals: { articles: [] },
+        reasoning: 'Datadog detected in this company\'s tech stack. They are already a customer — skip outbound.',
+        raw_data: { pappers: pappers ?? null, alreadyCustomer: true },
+        status: 'done',
+        domain: domain || null,
+      }).eq('id', account.id)
+      return res.status(200).json({ id: account.id, status: 'done' })
+    }
+
     // Hard DQ rule: ESN/IT consulting NAF code, BUT override if website shows SaaS signals
     if (pappers?.isDQCandidate) {
       const sq = siteQuality
       const hasSaaSSignals = !!(sq?.hasPricing || sq?.hasSignup || sq?.hasDemo || sq?.hasLogin || sq?.hasApi)
       if (!hasSaaSSignals) {
-        const EMPTY_STACK = { Cloud: [], Monitoring: [], DevOps: [], Languages: [], Data: [], AI: [], Security: [], Other: [] }
         await supabaseAdmin.from('accounts').update({
           tier: 'DQ',
           score: 5,
@@ -143,7 +163,11 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
         web_quality: webQuality,
         press_signals: { articles: aggregated.news?.articles || [] },
         reasoning: scored.reasoning,
-        raw_data: { pappers: aggregated.pappers ?? null },
+        raw_data: {
+          pappers: aggregated.pappers ?? null,
+          call_angle: scored.call_angle || null,
+          funding: scored.funding || null,
+        },
         status: 'done',
         domain: domain || null,
       })

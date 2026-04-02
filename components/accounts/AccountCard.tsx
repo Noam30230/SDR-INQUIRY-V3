@@ -110,6 +110,14 @@ export default function AccountCard({ account, onDelete, selected, onToggleSelec
           {account.company_name}
         </span>
 
+        {/* Funding badge */}
+        {isDone && (account.raw_data?.funding as string) && (account.raw_data.funding as string) !== 'unknown' && (
+          <span className="text-xs px-1.5 py-0.5 rounded shrink-0 font-medium"
+            style={{ background: 'rgba(245,158,11,0.1)', color: '#fcd34d', border: '1px solid rgba(245,158,11,0.2)' }}>
+            {account.raw_data.funding as string}
+          </span>
+        )}
+
         {/* SF ID */}
         {account.salesforce_id && (
           <span className="text-xs font-mono px-1.5 py-0.5 rounded shrink-0"
@@ -174,10 +182,22 @@ export default function AccountCard({ account, onDelete, selected, onToggleSelec
         </button>
       </div>
 
+      {/* Call angle — always visible on done accounts */}
+      {isDone && (account.raw_data?.call_angle as string) && (
+        <div
+          className="px-4 py-2 flex items-center gap-2 border-t"
+          style={{ borderColor: 'rgba(124,58,237,0.12)', background: 'rgba(124,58,237,0.04)' }}
+        >
+          <span className="text-xs shrink-0" style={{ color: 'var(--text-muted)' }}>📞</span>
+          <span className="text-xs italic" style={{ color: '#a78bfa' }}>
+            {account.raw_data.call_angle as string}
+          </span>
+        </div>
+      )}
+
       {/* Expanded detail */}
       {expanded && (
         <div className="px-4 pb-4 border-t" style={{ borderColor: 'rgba(124,58,237,0.2)' }}>
-          {/* Fix #2: removed onDelete prop — AccountDetail no longer has a duplicate delete button */}
           <AccountDetail account={account} />
         </div>
       )}

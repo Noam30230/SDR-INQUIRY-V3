@@ -171,4 +171,6 @@ export interface ScorerOutput {
   tech_stack: TechStack
   signals: Signals
   reasoning: string
+  call_angle?: string
+  funding?: string
 }
