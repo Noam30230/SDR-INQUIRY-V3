@@ -152,7 +152,7 @@ export default function AccountCard({ account, onDelete, selected, onToggleSelec
         {isDone && (
           <button
             onClick={() => setExpanded(v => !v)}
-            className="shrink-0 flex items-center gap-1 px-3 py-1 rounded-lg text-xs font-medium transition-colors"
+            className="shrink-0 flex items-center gap-1 px-3 py-1 rounded-lg text-xs font-medium transition-all hover:brightness-110"
             style={{
               background: expanded ? 'rgba(124,58,237,0.2)' : 'rgba(124,58,237,0.1)',
               border: '1px solid rgba(124,58,237,0.3)',

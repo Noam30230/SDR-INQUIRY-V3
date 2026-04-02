@@ -55,6 +55,21 @@ body {
   outline-offset: 2px;
 }
 
+/* Input focus glow */
+input:focus {
+  border-color: rgba(124, 58, 237, 0.5) !important;
+  box-shadow: 0 0 0 3px rgba(124, 58, 237, 0.08);
+  transition: border-color 0.15s, box-shadow 0.15s;
+}
+
+/* Button press feedback — applies to all buttons */
+button:not(:disabled) {
+  transition: opacity 0.15s, transform 0.1s;
+}
+button:not(:disabled):active {
+  transform: scale(0.97);
+}
+
 @layer utilities {
   .tier-t1 { color: var(--tier-t1); }
   .tier-t2 { color: var(--tier-t2); }

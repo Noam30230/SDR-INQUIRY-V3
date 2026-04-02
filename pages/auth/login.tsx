@@ -195,7 +195,7 @@ export default function LoginPage() {
             <button
               type="submit"
               disabled={loading || !email || !password}
-              className="w-full py-2.5 rounded-lg text-sm font-bold text-white transition-all disabled:opacity-50"
+              className="w-full py-2.5 rounded-lg text-sm font-bold text-white transition-all disabled:opacity-50 hover:brightness-110"
               style={{ background: 'linear-gradient(135deg, #7c3aed, #6d28d9)' }}
             >
               {loading

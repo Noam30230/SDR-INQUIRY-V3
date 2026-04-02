@@ -299,7 +299,7 @@ export default function Sidebar({ accounts, isScoring, userEmail, selectedIds, e
         <button
           onClick={handleStart}
           disabled={queueCount === 0}
-          className="w-full py-2.5 text-sm font-semibold text-white rounded-lg mb-3 transition-colors disabled:opacity-30 disabled:cursor-not-allowed"
+          className="w-full py-2.5 text-sm font-semibold text-white rounded-lg mb-3 transition-all disabled:opacity-30 disabled:cursor-not-allowed hover:brightness-110"
           style={{ background: 'var(--primary)' }}
         >
           ▶ Start analysis · {queueCount} account{queueCount !== 1 ? 's' : ''}
@@ -310,7 +310,7 @@ export default function Sidebar({ accounts, isScoring, userEmail, selectedIds, e
       <button
         onClick={onExport}
         disabled={doneAccounts.length === 0}
-        className="w-full py-2.5 text-sm font-medium rounded-lg transition-colors disabled:opacity-30 mb-3"
+        className="w-full py-2.5 text-sm font-medium rounded-lg transition-all disabled:opacity-30 mb-3 hover:brightness-110"
         style={{
           background: 'rgba(124,58,237,0.12)',
           border: '1px solid rgba(124,58,237,0.25)',
