@@ -6,11 +6,17 @@ type FilterTier = 'all' | Tier
 type SortOption = 'score_desc' | 'score_asc' | 'name' | 'recent'
 
 const SORT_OPTIONS: Array<{ value: SortOption; label: string }> = [
+  { value: 'recent', label: 'Recent' },
   { value: 'score_desc', label: 'Score ↓' },
   { value: 'score_asc', label: 'Score ↑' },
   { value: 'name', label: 'Name' },
-  { value: 'recent', label: 'Recent' },
 ]
+
+const TIER_COLORS: Record<string, string> = {
+  T1: '#10b981', T2: '#f59e0b', T3: '#6b7280', DQ: '#ef4444', all: 'var(--primary)',
+}
+
+const TIERS: Tier[] = ['T1', 'T2', 'T3', 'DQ']
 
 function sortAccounts(accounts: Account[], sort: SortOption): Account[] {
   return [...accounts].sort((a, b) => {
@@ -20,29 +26,6 @@ function sortAccounts(accounts: Account[], sort: SortOption): Account[] {
     if (sort === 'recent') return new Date(b.created_at || 0).getTime() - new Date(a.created_at || 0).getTime()
     return 0
   })
-}
-
-interface AccountListProps {
-  accounts: Account[]
-  filter: FilterTier
-  onFilterChange: (f: FilterTier) => void
-  onDelete: (id: string) => void
-  isLoading?: boolean
-  selectedIds?: Set<string>
-  onToggleSelect?: (id: string) => void
-  onToggleSelectAll?: (ids: string[]) => void
-}
-
-const FILTER_OPTIONS: Array<{ value: FilterTier; label: string }> = [
-  { value: 'all', label: 'All' },
-  { value: 'T1', label: 'T1' },
-  { value: 'T2', label: 'T2' },
-  { value: 'T3', label: 'T3' },
-  { value: 'DQ', label: 'DQ' },
-]
-
-const TIER_COLORS: Record<string, string> = {
-  T1: '#10b981', T2: '#f59e0b', T3: '#6b7280', DQ: '#ef4444', all: 'var(--primary)',
 }
 
 function SortDropdown({ sort, onSort }: { sort: SortOption; onSort: (s: SortOption) => void }) {
@@ -59,15 +42,11 @@ function SortDropdown({ sort, onSort }: { sort: SortOption; onSort: (s: SortOpti
   }, [])
 
   return (
-    <div className="relative ml-auto" ref={ref}>
+    <div className="relative" ref={ref}>
       <button
         onClick={() => setOpen(o => !o)}
         className="flex items-center gap-1.5 px-2.5 py-1 rounded-lg text-xs transition-colors"
-        style={{
-          background: 'var(--bg-card)',
-          border: '1px solid var(--border)',
-          color: 'var(--text-muted)',
-        }}
+        style={{ background: 'var(--bg-card)', border: '1px solid var(--border)', color: 'var(--text-muted)' }}
       >
         ↕ {current.label} <span className="opacity-50">▾</span>
       </button>
@@ -92,23 +71,159 @@ function SortDropdown({ sort, onSort }: { sort: SortOption; onSort: (s: SortOpti
   )
 }
 
-// Fix #4: skeleton cards while loading
+function FilterDropdown({ filter, accounts, onFilterChange }: {
+  filter: FilterTier
+  accounts: Account[]
+  onFilterChange: (f: FilterTier) => void
+}) {
+  const [open, setOpen] = useState(false)
+  const ref = useRef<HTMLDivElement>(null)
+
+  useEffect(() => {
+    function handler(e: MouseEvent) {
+      if (ref.current && !ref.current.contains(e.target as Node)) setOpen(false)
+    }
+    document.addEventListener('mousedown', handler)
+    return () => document.removeEventListener('mousedown', handler)
+  }, [])
+
+  const isFiltered = filter !== 'all'
+
+  return (
+    <div className="relative" ref={ref}>
+      <button
+        onClick={() => setOpen(o => !o)}
+        className="flex items-center gap-1.5 px-2.5 py-1 rounded-lg text-xs transition-colors"
+        style={{
+          background: isFiltered ? `${TIER_COLORS[filter]}15` : 'var(--bg-card)',
+          border: `1px solid ${isFiltered ? TIER_COLORS[filter] + '50' : 'var(--border)'}`,
+          color: isFiltered ? TIER_COLORS[filter] : 'var(--text-muted)',
+        }}
+      >
+        {isFiltered ? filter : 'Filter'} <span className="opacity-50">▾</span>
+      </button>
+      {open && (
+        <div
+          className="absolute left-0 top-full mt-1 rounded-xl py-1 z-50 min-w-[120px]"
+          style={{ background: 'var(--bg-card)', border: '1px solid var(--border)', boxShadow: '0 8px 24px rgba(0,0,0,0.4)' }}
+        >
+          <button
+            onClick={() => { onFilterChange('all'); setOpen(false) }}
+            className="w-full text-left px-3 py-1.5 text-xs transition-colors hover:bg-white/5"
+            style={{ color: filter === 'all' ? '#a78bfa' : 'var(--text-muted)' }}
+          >
+            {filter === 'all' && <span className="mr-1.5">✓</span>}All ({accounts.length})
+          </button>
+          <div style={{ borderTop: '1px solid var(--border)', margin: '2px 0' }} />
+          {TIERS.map(t => {
+            const count = accounts.filter(a => a.tier === t).length
+            return (
+              <button
+                key={t}
+                onClick={() => { onFilterChange(t); setOpen(false) }}
+                className="w-full text-left px-3 py-1.5 text-xs transition-colors hover:bg-white/5"
+                style={{ color: filter === t ? TIER_COLORS[t] : 'var(--text-muted)' }}
+              >
+                {filter === t && <span className="mr-1.5">✓</span>}
+                <span style={{ color: TIER_COLORS[t] }}>{t}</span>
+                <span className="ml-1.5 opacity-60">({count})</span>
+              </button>
+            )
+          })}
+        </div>
+      )}
+    </div>
+  )
+}
+
+function SearchBar({ value, onChange }: { value: string; onChange: (v: string) => void }) {
+  const [expanded, setExpanded] = useState(false)
+  const inputRef = useRef<HTMLInputElement>(null)
+
+  function expand() {
+    setExpanded(true)
+    setTimeout(() => inputRef.current?.focus(), 50)
+  }
+
+  function collapse() {
+    if (!value) setExpanded(false)
+  }
+
+  return (
+    <div
+      className="flex items-center transition-all duration-200 rounded-lg overflow-hidden"
+      style={{
+        width: expanded ? '180px' : '28px',
+        background: expanded ? 'var(--bg-card)' : 'transparent',
+        border: `1px solid ${expanded ? 'var(--border)' : 'transparent'}`,
+      }}
+    >
+      <button
+        onClick={expand}
+        className="shrink-0 w-7 h-7 flex items-center justify-center"
+        style={{ color: value ? '#a78bfa' : 'var(--text-muted)' }}
+      >
+        🔍
+      </button>
+      {expanded && (
+        <input
+          ref={inputRef}
+          value={value}
+          onChange={e => onChange(e.target.value)}
+          onBlur={collapse}
+          placeholder="Search..."
+          className="flex-1 bg-transparent text-xs text-white outline-none pr-2"
+          style={{ color: 'var(--text)', caretColor: '#a78bfa' }}
+        />
+      )}
+      {expanded && value && (
+        <button
+          onClick={() => { onChange(''); inputRef.current?.focus() }}
+          className="shrink-0 pr-2 text-xs"
+          style={{ color: 'var(--text-muted)' }}
+        >
+          ✕
+        </button>
+      )}
+    </div>
+  )
+}
+
+// skeleton cards while loading
 function SkeletonCard() {
   return (
     <div className="rounded-xl h-12 animate-pulse" style={{ background: 'var(--bg-card)', border: '1px solid var(--border)' }} />
   )
 }
 
+interface AccountListProps {
+  accounts: Account[]
+  filter: FilterTier
+  onFilterChange: (f: FilterTier) => void
+  onDelete: (id: string) => void
+  isLoading?: boolean
+  selectedIds?: Set<string>
+  onToggleSelect?: (id: string) => void
+  onToggleSelectAll?: (ids: string[]) => void
+}
+
 export default function AccountList({ accounts, filter, onFilterChange, onDelete, isLoading, selectedIds, onToggleSelect, onToggleSelectAll }: AccountListProps) {
-  const [sort, setSort] = useState<SortOption>('score_desc')
-  const filtered = sortAccounts(filter === 'all' ? accounts : accounts.filter(a => a.tier === filter), sort)
+  const [sort, setSort] = useState<SortOption>('recent')
+  const [search, setSearch] = useState('')
+
+  const filtered = sortAccounts(
+    (filter === 'all' ? accounts : accounts.filter(a => a.tier === filter))
+      .filter(a => !search || a.company_name.toLowerCase().includes(search.toLowerCase()) || a.domain?.toLowerCase().includes(search.toLowerCase())),
+    sort
+  )
   const filteredIds = filtered.map(a => a.id)
   const allSelected = filteredIds.length > 0 && filteredIds.every(id => selectedIds?.has(id))
 
   return (
     <div className="flex flex-col h-full min-h-0">
-      {/* Filters + select all */}
+      {/* Toolbar */}
       <div className="flex items-center gap-1.5 mb-4 shrink-0">
+        {/* Select all */}
         {onToggleSelectAll && filtered.length > 0 && (
           <button
             onClick={() => onToggleSelectAll(filteredIds)}
@@ -122,30 +237,31 @@ export default function AccountList({ accounts, filter, onFilterChange, onDelete
             {allSelected && <span className="text-violet-300 text-xs leading-none">✓</span>}
           </button>
         )}
-        {FILTER_OPTIONS.map(opt => {
-          const count = opt.value === 'all'
-            ? accounts.length
-            : accounts.filter(a => a.tier === opt.value).length
-          const active = filter === opt.value
-          return (
-            <button
-              key={opt.value}
-              onClick={() => onFilterChange(opt.value)}
-              className="px-3 py-1.5 rounded-lg text-xs font-medium transition-colors"
-              style={{
-                background: active ? `${TIER_COLORS[opt.value]}20` : 'var(--bg-card)',
-                border: `1px solid ${active ? TIER_COLORS[opt.value] + '50' : 'var(--border)'}`,
-                color: active ? TIER_COLORS[opt.value] : 'var(--text-muted)',
-              }}
-            >
-              {opt.label}
-              <span className="ml-1.5 opacity-70">{count}</span>
-            </button>
-          )
-        })}
+
+        {/* All button */}
+        <button
+          onClick={() => onFilterChange('all')}
+          className="px-3 py-1.5 rounded-lg text-xs font-medium transition-colors"
+          style={{
+            background: filter === 'all' ? 'rgba(124,58,237,0.15)' : 'var(--bg-card)',
+            border: `1px solid ${filter === 'all' ? 'rgba(124,58,237,0.4)' : 'var(--border)'}`,
+            color: filter === 'all' ? '#a78bfa' : 'var(--text-muted)',
+          }}
+        >
+          All <span className="ml-1 opacity-70">{accounts.length}</span>
+        </button>
+
+        {/* Tier filter dropdown */}
+        <FilterDropdown filter={filter} accounts={accounts} onFilterChange={onFilterChange} />
+
+        {/* Sort dropdown */}
         <SortDropdown sort={sort} onSort={setSort} />
+
+        {/* Search */}
+        <SearchBar value={search} onChange={setSearch} />
+
         {(selectedIds?.size ?? 0) > 0 && (
-          <span className="text-xs" style={{ color: '#a78bfa' }}>
+          <span className="text-xs ml-auto" style={{ color: '#a78bfa' }}>
             {selectedIds!.size} selected
           </span>
         )}
@@ -153,8 +269,6 @@ export default function AccountList({ accounts, filter, onFilterChange, onDelete
 
       {/* List */}
       <div className="flex-1 overflow-y-auto space-y-2 pr-1">
-
-        {/* Fix #4: show skeletons while loading */}
         {isLoading ? (
           <>
             <SkeletonCard />
@@ -162,7 +276,6 @@ export default function AccountList({ accounts, filter, onFilterChange, onDelete
             <SkeletonCard />
           </>
         ) : filtered.length === 0 ? (
-          // Fix #3: improved empty state
           <div className="flex flex-col items-center justify-center py-20 text-center">
             {accounts.length === 0 ? (
               <>
@@ -182,9 +295,11 @@ export default function AccountList({ accounts, filter, onFilterChange, onDelete
             ) : (
               <>
                 <div className="text-3xl mb-3">🔍</div>
-                <p className="text-sm font-medium text-white mb-1">No {filter} accounts</p>
+                <p className="text-sm font-medium text-white mb-1">
+                  {search ? `No results for "${search}"` : `No ${filter} accounts`}
+                </p>
                 <p className="text-xs" style={{ color: 'var(--text-muted)' }}>
-                  Try a different filter above
+                  {search ? 'Try a different search term' : 'Try a different filter'}
                 </p>
               </>
             )}
