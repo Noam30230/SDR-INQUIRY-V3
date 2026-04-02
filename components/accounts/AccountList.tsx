@@ -54,7 +54,7 @@ function SortDropdown({ sort, onSort }: { sort: SortOption; onSort: (s: SortOpti
         className="flex items-center gap-1.5 px-2.5 py-1 rounded-lg text-xs transition-colors"
         style={{ background: 'var(--bg-card)', border: '1px solid var(--border)', color: 'var(--text-muted)' }}
       >
-        ↕ {current.label} <span className="opacity-50">▾</span>
+        {current.label} <span className="opacity-50">▾</span>
       </button>
       {open && (
         <div
@@ -102,11 +102,14 @@ function SearchBar({ value, onChange }: { value: string; onChange: (v: string) =
     >
       <button
         onClick={expand}
-        className="shrink-0 w-7 h-7 flex items-center justify-center text-sm"
+        className="shrink-0 w-7 h-7 flex items-center justify-center"
         style={{ color: value ? '#a78bfa' : 'var(--text-muted)' }}
         title="Search"
       >
-        ⌕
+        <svg width="14" height="14" viewBox="0 0 14 14" fill="none" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round">
+          <circle cx="6" cy="6" r="4" />
+          <line x1="9.5" y1="9.5" x2="13" y2="13" />
+        </svg>
       </button>
       {expanded && (
         <input
