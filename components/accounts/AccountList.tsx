@@ -1,7 +1,26 @@
+import { useState } from 'react'
 import type { Account, Tier } from '@/types'
 import AccountCard from './AccountCard'
 
 type FilterTier = 'all' | Tier
+type SortOption = 'score_desc' | 'score_asc' | 'name' | 'recent'
+
+const SORT_OPTIONS: Array<{ value: SortOption; label: string }> = [
+  { value: 'score_desc', label: 'Score ↓' },
+  { value: 'score_asc', label: 'Score ↑' },
+  { value: 'name', label: 'Name' },
+  { value: 'recent', label: 'Recent' },
+]
+
+function sortAccounts(accounts: Account[], sort: SortOption): Account[] {
+  return [...accounts].sort((a, b) => {
+    if (sort === 'score_desc') return (b.score ?? 0) - (a.score ?? 0)
+    if (sort === 'score_asc') return (a.score ?? 0) - (b.score ?? 0)
+    if (sort === 'name') return a.company_name.localeCompare(b.company_name)
+    if (sort === 'recent') return new Date(b.created_at || 0).getTime() - new Date(a.created_at || 0).getTime()
+    return 0
+  })
+}
 
 interface AccountListProps {
   accounts: Account[]
@@ -34,7 +53,8 @@ function SkeletonCard() {
 }
 
 export default function AccountList({ accounts, filter, onFilterChange, onDelete, isLoading, selectedIds, onToggleSelect, onToggleSelectAll }: AccountListProps) {
-  const filtered = filter === 'all' ? accounts : accounts.filter(a => a.tier === filter)
+  const [sort, setSort] = useState<SortOption>('score_desc')
+  const filtered = sortAccounts(filter === 'all' ? accounts : accounts.filter(a => a.tier === filter), sort)
   const filteredIds = filtered.map(a => a.id)
   const allSelected = filteredIds.length > 0 && filteredIds.every(id => selectedIds?.has(id))
 
@@ -76,8 +96,24 @@ export default function AccountList({ accounts, filter, onFilterChange, onDelete
             </button>
           )
         })}
+        <div className="ml-auto flex items-center gap-1">
+          {SORT_OPTIONS.map(opt => (
+            <button
+              key={opt.value}
+              onClick={() => setSort(opt.value)}
+              className="px-2 py-1 rounded text-xs transition-colors"
+              style={{
+                background: sort === opt.value ? 'rgba(124,58,237,0.15)' : 'transparent',
+                color: sort === opt.value ? '#a78bfa' : 'var(--text-muted)',
+                border: `1px solid ${sort === opt.value ? 'rgba(124,58,237,0.3)' : 'transparent'}`,
+              }}
+            >
+              {opt.label}
+            </button>
+          ))}
+        </div>
         {(selectedIds?.size ?? 0) > 0 && (
-          <span className="ml-auto text-xs" style={{ color: '#a78bfa' }}>
+          <span className="text-xs" style={{ color: '#a78bfa' }}>
             {selectedIds!.size} selected
           </span>
         )}

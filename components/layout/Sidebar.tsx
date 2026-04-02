@@ -134,6 +134,21 @@ export default function Sidebar({ accounts, isScoring, userEmail, selectedIds, e
             <span>👤</span> {userEmail}
           </p>
         )}
+        {(() => {
+          const done = accounts.filter(a => a.status === 'done' && a.created_at)
+          if (!done.length) return null
+          const latest = done.reduce((a, b) => new Date(a.created_at!) > new Date(b.created_at!) ? a : b)
+          const diff = Date.now() - new Date(latest.created_at!).getTime()
+          const mins = Math.floor(diff / 60000)
+          const hours = Math.floor(diff / 3600000)
+          const days = Math.floor(diff / 86400000)
+          const ago = days > 0 ? `${days}d ago` : hours > 0 ? `${hours}h ago` : mins > 0 ? `${mins}m ago` : 'just now'
+          return (
+            <p className="text-xs mt-1 flex items-center gap-1.5" style={{ color: 'var(--text-muted)' }}>
+              <span>🕐</span> Last run {ago}
+            </p>
+          )
+        })()}
       </div>
 
       {/* Tier grid */}

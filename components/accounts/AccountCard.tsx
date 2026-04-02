@@ -14,6 +14,10 @@ function getTopTechs(stack: TechStack): string[] {
   return techs.slice(0, 3)
 }
 
+const TIER_LEFT_BORDER: Record<string, string> = {
+  T1: '#10b981', T2: '#f59e0b', T3: '#6b7280', DQ: '#ef4444',
+}
+
 function scoreColor(score: number): string {
   if (score >= 75) return '#10b981'
   if (score >= 50) return '#f59e0b'
@@ -63,7 +67,9 @@ export default function AccountCard({ account, onDelete, selected, onToggleSelec
   const isScoring = account.status === 'scoring' || account.status === 'pending'
   const isError = account.status === 'error'
   const isDone = account.status === 'done'
+  const isDQ = account.tier === 'DQ'
   const topTechs = account.tech_stack ? getTopTechs(account.tech_stack) : []
+  const leftBorderColor = account.tier ? TIER_LEFT_BORDER[account.tier] : 'var(--border)'
 
   return (
     <div
@@ -71,6 +77,8 @@ export default function AccountCard({ account, onDelete, selected, onToggleSelec
       style={{
         background: expanded ? 'var(--bg-hover)' : 'var(--bg-card)',
         border: `1px solid ${selected ? 'rgba(124,58,237,0.5)' : expanded ? 'rgba(124,58,237,0.35)' : 'var(--border)'}`,
+        borderLeft: `4px solid ${selected ? 'rgba(124,58,237,0.7)' : leftBorderColor}`,
+        opacity: isDQ ? 0.6 : 1,
       }}
     >
       {/* Banner row */}
