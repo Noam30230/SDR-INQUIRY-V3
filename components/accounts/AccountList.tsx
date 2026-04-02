@@ -20,6 +20,13 @@ const FILTER_OPTIONS: Array<{ value: FilterTier; label: string }> = [
   { value: 'DQ', label: 'DQ' },
 ]
 
+const TIER_FILTER_OPTIONS: Array<{ value: Tier; label: string }> = [
+  { value: 'T1', label: 'T1' },
+  { value: 'T2', label: 'T2' },
+  { value: 'T3', label: 'T3' },
+  { value: 'DQ', label: 'DQ' },
+]
+
 const TIER_COLORS: Record<string, string> = {
   T1: '#10b981', T2: '#f59e0b', T3: '#6b7280', DQ: '#ef4444', all: 'var(--primary)',
 }
@@ -67,8 +74,8 @@ function FilterDropdown({ filter, onFilter, accounts }: { filter: FilterTier; on
           className="absolute left-0 top-full mt-1 rounded-xl py-1 z-50 min-w-[140px]"
           style={{ background: 'var(--bg-card)', border: '1px solid var(--border)', boxShadow: '0 8px 24px rgba(0,0,0,0.4)' }}
         >
-          {FILTER_OPTIONS.map(opt => {
-            const count = opt.value === 'all' ? accounts.length : accounts.filter(a => a.tier === opt.value).length
+          {TIER_FILTER_OPTIONS.map(opt => {
+            const count = accounts.filter(a => a.tier === opt.value).length
             const color = TIER_COLORS[opt.value]
             return (
               <button
@@ -236,6 +243,20 @@ export default function AccountList({ accounts, filter, onFilterChange, onDelete
           </button>
         )}
 
+        {/* All button standalone */}
+        <button
+          onClick={() => onFilterChange('all')}
+          className="px-3 py-1.5 rounded-lg text-xs font-medium transition-colors"
+          style={{
+            background: filter === 'all' ? `${TIER_COLORS.all}20` : 'var(--bg-card)',
+            border: `1px solid ${filter === 'all' ? TIER_COLORS.all + '50' : 'var(--border)'}`,
+            color: filter === 'all' ? TIER_COLORS.all : 'var(--text-muted)',
+          }}
+        >
+          All <span className="ml-1 opacity-70">{accounts.length}</span>
+        </button>
+
+        {/* T1/T2/T3/DQ dropdown */}
         <FilterDropdown filter={filter} onFilter={onFilterChange} accounts={accounts} />
 
         <div className="ml-auto flex items-center gap-1.5">
