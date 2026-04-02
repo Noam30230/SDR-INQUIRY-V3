@@ -12,18 +12,24 @@ const SORT_OPTIONS: Array<{ value: SortOption; label: string }> = [
   { value: 'name', label: 'Name' },
 ]
 
+const FILTER_OPTIONS: Array<{ value: FilterTier; label: string }> = [
+  { value: 'all', label: 'All' },
+  { value: 'T1', label: 'T1' },
+  { value: 'T2', label: 'T2' },
+  { value: 'T3', label: 'T3' },
+  { value: 'DQ', label: 'DQ' },
+]
+
 const TIER_COLORS: Record<string, string> = {
   T1: '#10b981', T2: '#f59e0b', T3: '#6b7280', DQ: '#ef4444', all: 'var(--primary)',
 }
-
-const TIERS: Tier[] = ['T1', 'T2', 'T3', 'DQ']
 
 function sortAccounts(accounts: Account[], sort: SortOption): Account[] {
   return [...accounts].sort((a, b) => {
     if (sort === 'score_desc') return (b.score ?? 0) - (a.score ?? 0)
     if (sort === 'score_asc') return (a.score ?? 0) - (b.score ?? 0)
     if (sort === 'name') return a.company_name.localeCompare(b.company_name)
-    if (sort === 'recent') return new Date(b.created_at || 0).getTime() - new Date(a.created_at || 0).getTime()
+    if (sort === 'recent') return new Date(b.created_at ?? 0).getTime() - new Date(a.created_at ?? 0).getTime()
     return 0
   })
 }
@@ -71,71 +77,6 @@ function SortDropdown({ sort, onSort }: { sort: SortOption; onSort: (s: SortOpti
   )
 }
 
-function FilterDropdown({ filter, accounts, onFilterChange }: {
-  filter: FilterTier
-  accounts: Account[]
-  onFilterChange: (f: FilterTier) => void
-}) {
-  const [open, setOpen] = useState(false)
-  const ref = useRef<HTMLDivElement>(null)
-
-  useEffect(() => {
-    function handler(e: MouseEvent) {
-      if (ref.current && !ref.current.contains(e.target as Node)) setOpen(false)
-    }
-    document.addEventListener('mousedown', handler)
-    return () => document.removeEventListener('mousedown', handler)
-  }, [])
-
-  const isFiltered = filter !== 'all'
-
-  return (
-    <div className="relative" ref={ref}>
-      <button
-        onClick={() => setOpen(o => !o)}
-        className="flex items-center gap-1.5 px-2.5 py-1 rounded-lg text-xs transition-colors"
-        style={{
-          background: isFiltered ? `${TIER_COLORS[filter]}15` : 'var(--bg-card)',
-          border: `1px solid ${isFiltered ? TIER_COLORS[filter] + '50' : 'var(--border)'}`,
-          color: isFiltered ? TIER_COLORS[filter] : 'var(--text-muted)',
-        }}
-      >
-        {isFiltered ? filter : 'Filter'} <span className="opacity-50">▾</span>
-      </button>
-      {open && (
-        <div
-          className="absolute left-0 top-full mt-1 rounded-xl py-1 z-50 min-w-[120px]"
-          style={{ background: 'var(--bg-card)', border: '1px solid var(--border)', boxShadow: '0 8px 24px rgba(0,0,0,0.4)' }}
-        >
-          <button
-            onClick={() => { onFilterChange('all'); setOpen(false) }}
-            className="w-full text-left px-3 py-1.5 text-xs transition-colors hover:bg-white/5"
-            style={{ color: filter === 'all' ? '#a78bfa' : 'var(--text-muted)' }}
-          >
-            {filter === 'all' && <span className="mr-1.5">✓</span>}All ({accounts.length})
-          </button>
-          <div style={{ borderTop: '1px solid var(--border)', margin: '2px 0' }} />
-          {TIERS.map(t => {
-            const count = accounts.filter(a => a.tier === t).length
-            return (
-              <button
-                key={t}
-                onClick={() => { onFilterChange(t); setOpen(false) }}
-                className="w-full text-left px-3 py-1.5 text-xs transition-colors hover:bg-white/5"
-                style={{ color: filter === t ? TIER_COLORS[t] : 'var(--text-muted)' }}
-              >
-                {filter === t && <span className="mr-1.5">✓</span>}
-                <span style={{ color: TIER_COLORS[t] }}>{t}</span>
-                <span className="ml-1.5 opacity-60">({count})</span>
-              </button>
-            )
-          })}
-        </div>
-      )}
-    </div>
-  )
-}
-
 function SearchBar({ value, onChange }: { value: string; onChange: (v: string) => void }) {
   const [expanded, setExpanded] = useState(false)
   const inputRef = useRef<HTMLInputElement>(null)
@@ -151,19 +92,21 @@ function SearchBar({ value, onChange }: { value: string; onChange: (v: string) =
 
   return (
     <div
-      className="flex items-center transition-all duration-200 rounded-lg overflow-hidden"
+      className="flex items-center rounded-lg overflow-hidden"
       style={{
-        width: expanded ? '180px' : '28px',
+        width: expanded ? '160px' : '28px',
+        transition: 'width 0.2s ease',
         background: expanded ? 'var(--bg-card)' : 'transparent',
         border: `1px solid ${expanded ? 'var(--border)' : 'transparent'}`,
       }}
     >
       <button
         onClick={expand}
-        className="shrink-0 w-7 h-7 flex items-center justify-center"
+        className="shrink-0 w-7 h-7 flex items-center justify-center text-sm"
         style={{ color: value ? '#a78bfa' : 'var(--text-muted)' }}
+        title="Search"
       >
-        🔍
+        ⌕
       </button>
       {expanded && (
         <input
@@ -172,13 +115,13 @@ function SearchBar({ value, onChange }: { value: string; onChange: (v: string) =
           onChange={e => onChange(e.target.value)}
           onBlur={collapse}
           placeholder="Search..."
-          className="flex-1 bg-transparent text-xs text-white outline-none pr-2"
-          style={{ color: 'var(--text)', caretColor: '#a78bfa' }}
+          className="flex-1 bg-transparent text-xs outline-none"
+          style={{ color: 'var(--text)' }}
         />
       )}
       {expanded && value && (
         <button
-          onClick={() => { onChange(''); inputRef.current?.focus() }}
+          onMouseDown={e => { e.preventDefault(); onChange('') }}
           className="shrink-0 pr-2 text-xs"
           style={{ color: 'var(--text-muted)' }}
         >
@@ -189,7 +132,6 @@ function SearchBar({ value, onChange }: { value: string; onChange: (v: string) =
   )
 }
 
-// skeleton cards while loading
 function SkeletonCard() {
   return (
     <div className="rounded-xl h-12 animate-pulse" style={{ background: 'var(--bg-card)', border: '1px solid var(--border)' }} />
@@ -211,19 +153,18 @@ export default function AccountList({ accounts, filter, onFilterChange, onDelete
   const [sort, setSort] = useState<SortOption>('recent')
   const [search, setSearch] = useState('')
 
-  const filtered = sortAccounts(
-    (filter === 'all' ? accounts : accounts.filter(a => a.tier === filter))
-      .filter(a => !search || a.company_name.toLowerCase().includes(search.toLowerCase()) || a.domain?.toLowerCase().includes(search.toLowerCase())),
-    sort
-  )
+  const base = filter === 'all' ? accounts : accounts.filter(a => a.tier === filter)
+  const searched = search ? base.filter(a =>
+    a.company_name.toLowerCase().includes(search.toLowerCase()) ||
+    (a.domain ?? '').toLowerCase().includes(search.toLowerCase())
+  ) : base
+  const filtered = sortAccounts(searched, sort)
   const filteredIds = filtered.map(a => a.id)
   const allSelected = filteredIds.length > 0 && filteredIds.every(id => selectedIds?.has(id))
 
   return (
     <div className="flex flex-col h-full min-h-0">
-      {/* Toolbar */}
-      <div className="flex items-center gap-1.5 mb-4 shrink-0">
-        {/* Select all */}
+      <div className="flex items-center gap-1.5 mb-4 shrink-0 flex-wrap">
         {onToggleSelectAll && filtered.length > 0 && (
           <button
             onClick={() => onToggleSelectAll(filteredIds)}
@@ -238,43 +179,40 @@ export default function AccountList({ accounts, filter, onFilterChange, onDelete
           </button>
         )}
 
-        {/* All button */}
-        <button
-          onClick={() => onFilterChange('all')}
-          className="px-3 py-1.5 rounded-lg text-xs font-medium transition-colors"
-          style={{
-            background: filter === 'all' ? 'rgba(124,58,237,0.15)' : 'var(--bg-card)',
-            border: `1px solid ${filter === 'all' ? 'rgba(124,58,237,0.4)' : 'var(--border)'}`,
-            color: filter === 'all' ? '#a78bfa' : 'var(--text-muted)',
-          }}
-        >
-          All <span className="ml-1 opacity-70">{accounts.length}</span>
-        </button>
+        {FILTER_OPTIONS.map(opt => {
+          const count = opt.value === 'all' ? accounts.length : accounts.filter(a => a.tier === opt.value).length
+          const active = filter === opt.value
+          return (
+            <button
+              key={opt.value}
+              onClick={() => onFilterChange(opt.value)}
+              className="px-3 py-1.5 rounded-lg text-xs font-medium transition-colors"
+              style={{
+                background: active ? `${TIER_COLORS[opt.value]}20` : 'var(--bg-card)',
+                border: `1px solid ${active ? TIER_COLORS[opt.value] + '50' : 'var(--border)'}`,
+                color: active ? TIER_COLORS[opt.value] : 'var(--text-muted)',
+              }}
+            >
+              {opt.label} <span className="ml-1 opacity-70">{count}</span>
+            </button>
+          )
+        })}
 
-        {/* Tier filter dropdown */}
-        <FilterDropdown filter={filter} accounts={accounts} onFilterChange={onFilterChange} />
-
-        {/* Sort dropdown */}
-        <SortDropdown sort={sort} onSort={setSort} />
-
-        {/* Search */}
-        <SearchBar value={search} onChange={setSearch} />
+        <div className="ml-auto flex items-center gap-1.5">
+          <SearchBar value={search} onChange={setSearch} />
+          <SortDropdown sort={sort} onSort={setSort} />
+        </div>
 
         {(selectedIds?.size ?? 0) > 0 && (
-          <span className="text-xs ml-auto" style={{ color: '#a78bfa' }}>
+          <span className="text-xs" style={{ color: '#a78bfa' }}>
             {selectedIds!.size} selected
           </span>
         )}
       </div>
 
-      {/* List */}
       <div className="flex-1 overflow-y-auto space-y-2 pr-1">
         {isLoading ? (
-          <>
-            <SkeletonCard />
-            <SkeletonCard />
-            <SkeletonCard />
-          </>
+          <><SkeletonCard /><SkeletonCard /><SkeletonCard /></>
         ) : filtered.length === 0 ? (
           <div className="flex flex-col items-center justify-center py-20 text-center">
             {accounts.length === 0 ? (
