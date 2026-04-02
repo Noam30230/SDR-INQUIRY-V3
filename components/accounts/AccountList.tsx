@@ -1,4 +1,4 @@
-import { useState } from 'react'
+import { useState, useRef, useEffect } from 'react'
 import type { Account, Tier } from '@/types'
 import AccountCard from './AccountCard'
 
@@ -43,6 +43,53 @@ const FILTER_OPTIONS: Array<{ value: FilterTier; label: string }> = [
 
 const TIER_COLORS: Record<string, string> = {
   T1: '#10b981', T2: '#f59e0b', T3: '#6b7280', DQ: '#ef4444', all: 'var(--primary)',
+}
+
+function SortDropdown({ sort, onSort }: { sort: SortOption; onSort: (s: SortOption) => void }) {
+  const [open, setOpen] = useState(false)
+  const ref = useRef<HTMLDivElement>(null)
+  const current = SORT_OPTIONS.find(o => o.value === sort)!
+
+  useEffect(() => {
+    function handler(e: MouseEvent) {
+      if (ref.current && !ref.current.contains(e.target as Node)) setOpen(false)
+    }
+    document.addEventListener('mousedown', handler)
+    return () => document.removeEventListener('mousedown', handler)
+  }, [])
+
+  return (
+    <div className="relative ml-auto" ref={ref}>
+      <button
+        onClick={() => setOpen(o => !o)}
+        className="flex items-center gap-1.5 px-2.5 py-1 rounded-lg text-xs transition-colors"
+        style={{
+          background: 'var(--bg-card)',
+          border: '1px solid var(--border)',
+          color: 'var(--text-muted)',
+        }}
+      >
+        ↕ {current.label} <span className="opacity-50">▾</span>
+      </button>
+      {open && (
+        <div
+          className="absolute right-0 top-full mt-1 rounded-xl py-1 z-50 min-w-[120px]"
+          style={{ background: 'var(--bg-card)', border: '1px solid var(--border)', boxShadow: '0 8px 24px rgba(0,0,0,0.4)' }}
+        >
+          {SORT_OPTIONS.map(opt => (
+            <button
+              key={opt.value}
+              onClick={() => { onSort(opt.value); setOpen(false) }}
+              className="w-full text-left px-3 py-1.5 text-xs transition-colors hover:bg-white/5"
+              style={{ color: sort === opt.value ? '#a78bfa' : 'var(--text-muted)' }}
+            >
+              {sort === opt.value && <span className="mr-1.5">✓</span>}{opt.label}
+            </button>
+          ))}
+        </div>
+      )}
+    </div>
+  )
 }
 
 // Fix #4: skeleton cards while loading
@@ -96,22 +143,7 @@ export default function AccountList({ accounts, filter, onFilterChange, onDelete
             </button>
           )
         })}
-        <div className="ml-auto flex items-center gap-1">
-          {SORT_OPTIONS.map(opt => (
-            <button
-              key={opt.value}
-              onClick={() => setSort(opt.value)}
-              className="px-2 py-1 rounded text-xs transition-colors"
-              style={{
-                background: sort === opt.value ? 'rgba(124,58,237,0.15)' : 'transparent',
-                color: sort === opt.value ? '#a78bfa' : 'var(--text-muted)',
-                border: `1px solid ${sort === opt.value ? 'rgba(124,58,237,0.3)' : 'transparent'}`,
-              }}
-            >
-              {opt.label}
-            </button>
-          ))}
-        </div>
+        <SortDropdown sort={sort} onSort={setSort} />
         {(selectedIds?.size ?? 0) > 0 && (
           <span className="text-xs" style={{ color: '#a78bfa' }}>
             {selectedIds!.size} selected
