@@ -67,12 +67,10 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
       Promise.race([p, new Promise<null>(r => setTimeout(() => r(null), 5000))])
 
     // Try Pappers for all companies — it returns null gracefully if not found
-    const [github, wappalyzer, siteQuality, search, news, pappers] = await Promise.all([
+    const [github, wappalyzer, siteQuality, pappers] = await Promise.all([
       timeout(safeCollect(() => import('@/lib/collectors/github').then(m => m.collectGitHub(companyName, domain)))),
       timeout(safeCollect(() => domain ? import('@/lib/collectors/wappalyzer').then(m => m.collectWappalyzer(domain)) : Promise.resolve(null))),
       timeout(safeCollect(() => domain ? import('@/lib/collectors/site-quality').then(m => m.collectSiteQuality(domain)) : Promise.resolve(null))),
-      timeout(safeCollect(() => import('@/lib/collectors/brave').then(m => m.collectBrave(companyName, domain)))),
-      timeout(safeCollect(() => import('@/lib/collectors/newsapi').then(m => m.collectNews(companyName)))),
       timeout(safeCollect(() => import('@/lib/collectors/pappers').then(m => m.collectPappers(companyName, domain)))),
     ])
 
@@ -82,8 +80,6 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
       github: github ?? undefined,
       wappalyzer: wappalyzer ?? undefined,
       siteQuality: siteQuality ?? undefined,
-      brave: search ?? undefined,
-      news: news ?? undefined,
       pappers: pappers ?? undefined,
     }
 

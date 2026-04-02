@@ -7,13 +7,18 @@ const openai = new OpenAI({ apiKey: process.env.OPENAI_API_KEY })
 const SYSTEM_PROMPT = `You are a B2B account qualification expert for Datadog.
 
 Datadog is a cloud monitoring platform (APM, logs, infrastructure, security, synthetics).
-Your mission: analyze collected data about a company and assign an SDR priority tier.
+Your mission: search the web to find real signals about this company, then assign an SDR priority tier.
+
+SEARCH STRATEGY (do 2-3 targeted searches max):
+1. Search "[company name] tech stack cloud infrastructure" to find cloud/DevOps signals
+2. Search "[company name] hiring software engineer SRE" to find tech hiring signals
+3. Search "[company name] funding SaaS product" if business model is unclear
 
 TIERING CRITERIA:
-- T1 (high priority): SaaS or tech-forward company in any vertical (fintech, edtech, e-commerce, healthtech, legaltech...). Visible cloud stack (AWS/GCP/Azure), structured tech team, active DevOps/SRE/Platform/Backend hiring, modern website.
-- T2 (medium priority): partial tech presence, decent site, some positive signals (AI/cloud/API mentions), but less concrete evidence.
+- T1 (high priority): SaaS or tech-forward company. Visible cloud stack (AWS/GCP/Azure), structured tech team, active DevOps/SRE/Platform/Backend hiring, modern website.
+- T2 (medium priority): partial tech presence, some positive signals (AI/cloud/API mentions), less concrete evidence.
 - T3 (low priority): traditional sector, few tech signals, basic site or page builder.
-- DQ (disqualified): IT consulting firms, pure services companies (no SaaS product), public institutions, agencies without their own SaaS. DO NOT DQ based on sector alone — a legaltech SaaS, accounting SaaS, or HR SaaS are T1 or T2.
+- DQ (disqualified): IT consulting firms, pure services companies (no SaaS product), public institutions. Do NOT DQ based on sector — a legaltech SaaS, accounting SaaS, or HR SaaS are T1/T2.
 
 Key DQ question: "Does this company sell software, or only human time/consulting?"
 
@@ -24,84 +29,75 @@ SCORE (0-100):
 - 20-39: Few tech signals, traditional sector
 - 0-19: Clearly DQ or no tech signal
 
-Respond ONLY with valid JSON, no markdown, no surrounding text. All signals and reasoning must be in English.`
+After searching, respond ONLY with valid JSON, no markdown, no surrounding text. All signals and reasoning must be in English.`
 
-function buildUserPrompt(data: AggregatedData): string {
-  const lines: string[] = [`Entreprise : ${data.companyName}`, `Domaine : ${data.domain || 'inconnu'}`]
+function buildPrompt(data: AggregatedData): string {
+  const lines: string[] = [
+    `Company: ${data.companyName}`,
+    `Domain: ${data.domain || 'unknown'}`,
+    ``,
+    `Search the web for up-to-date signals about this company, then analyze ALL of the following pre-collected data too:`,
+  ]
 
   if (data.pappers) {
-    lines.push(`\n[DONNÉES LÉGALES (Pappers)]`)
-    lines.push(`Effectif : ${data.pappers.effectif || 'inconnu'}`)
-    lines.push(`CA : ${data.pappers.chiffre_affaires ? `${data.pappers.chiffre_affaires}€` : 'inconnu'}`)
-    lines.push(`Code NAF : ${data.pappers.naf} — ${data.pappers.nafLabel}`)
-    lines.push(`Forme juridique : ${data.pappers.formeJuridique}`)
-    if (data.pappers.isDQCandidate) lines.push(`⚠️ Code NAF suggère ESN/conseil — à confirmer`)
-    if (data.pappers.dirigeants.length) lines.push(`Dirigeants : ${data.pappers.dirigeants.join(', ')}`)
+    lines.push(`\n[LEGAL DATA (Pappers)]`)
+    lines.push(`Employees: ${data.pappers.effectif || 'unknown'}`)
+    lines.push(`Revenue: ${data.pappers.chiffre_affaires ? `${data.pappers.chiffre_affaires}€` : 'unknown'}`)
+    lines.push(`NAF code: ${data.pappers.naf} — ${data.pappers.nafLabel}`)
+    lines.push(`Legal form: ${data.pappers.formeJuridique}`)
+    if (data.pappers.isDQCandidate) lines.push(`⚠ NAF suggests ESN/consulting — verify via website and search`)
+    if (data.pappers.dirigeants.length) lines.push(`Directors: ${data.pappers.dirigeants.join(', ')}`)
   }
 
   if (data.github) {
     lines.push(`\n[GITHUB]`)
     if (data.github.orgFound) {
-      lines.push(`Org GitHub : ${data.github.orgName} (${data.github.repoCount} repos publics)`)
-      lines.push(`Langages : ${data.github.languages.join(', ')}`)
-      lines.push(`Activité récente : ${data.github.recentActivity ? 'oui' : 'non'}`)
+      lines.push(`Org: ${data.github.orgName} (${data.github.repoCount} public repos)`)
+      lines.push(`Languages: ${data.github.languages.join(', ')}`)
+      lines.push(`Recent activity: ${data.github.recentActivity ? 'yes' : 'no'}`)
+      if (data.github.techSignals?.length) lines.push(`Tech signals: ${data.github.techSignals.join(', ')}`)
     } else {
-      lines.push(`Aucune organisation GitHub trouvée`)
+      lines.push(`No GitHub org found`)
     }
   }
 
   if (data.wappalyzer?.technologies?.length) {
-    lines.push(`\n[STACK TECHNIQUE (site web)]`)
+    lines.push(`\n[TECH STACK (website)]`)
     lines.push(data.wappalyzer.technologies.map(t => `${t.name} (${t.categories.join('/')})`).join(', '))
   }
 
   if (data.siteQuality) {
     const sq = data.siteQuality
     lines.push(`\n[WEBSITE ANALYSIS]`)
-    lines.push(`Accessible: ${sq.loadable ? 'yes' : 'no'} | HTTPS: ${sq.hasHttps ? 'yes' : 'no'} | Responsive: ${sq.isResponsive ? 'yes' : 'no'}`)
+    lines.push(`HTTPS: ${sq.hasHttps ? 'yes' : 'no'} | Responsive: ${sq.isResponsive ? 'yes' : 'no'}`)
     lines.push(`Framework: ${sq.framework || 'unknown'} | Page builder: ${sq.isPageBuilder ? sq.pageBuilderName : 'no'}`)
     lines.push(`Cloud host (DNS/ASN): ${sq.hosting || 'unknown'}`)
-
-    // SaaS product signals
     const saasFlags = [
       sq.hasPricing && 'pricing page',
       sq.hasSignup && 'sign-up CTA',
       sq.hasDemo && 'demo CTA',
       sq.hasLogin && 'login portal',
-      sq.hasDocs && 'docs/API reference',
+      sq.hasDocs && 'docs/API',
       sq.hasApi && 'API page',
       sq.hasIntegrations && 'integrations page',
       sq.hasCareers && 'careers page',
-      sq.hasBlog && 'blog/changelog',
+      sq.hasBlog && 'blog',
     ].filter(Boolean)
-    if (saasFlags.length) lines.push(`SaaS product signals: ${saasFlags.join(', ')}`)
-    if (sq.saasKeywords.length) lines.push(`SaaS keywords in copy: ${sq.saasKeywords.join(', ')}`)
-
-    // Consulting/ESN signals
-    if (sq.consultingKeywords.length) lines.push(`⚠️ Consulting/agency signals: ${sq.consultingKeywords.join(', ')}`)
+    if (saasFlags.length) lines.push(`SaaS signals: ${saasFlags.join(', ')}`)
+    if (sq.saasKeywords.length) lines.push(`SaaS keywords: ${sq.saasKeywords.join(', ')}`)
+    if (sq.consultingKeywords.length) lines.push(`⚠ Consulting signals: ${sq.consultingKeywords.join(', ')}`)
   }
 
-  if (data.brave) {
-    lines.push(`\n[HIRING & FUNDING SIGNALS]`)
-    lines.push(`Actively hiring tech roles: ${data.brave.isTechHiring ? 'yes' : 'no'}`)
-    if (data.brave.techJobRoles.length) lines.push(`Tech roles found: ${data.brave.techJobRoles.join(', ')}`)
-    if (data.brave.fundingSignals.length) lines.push(`Funding signals: ${data.brave.fundingSignals.join(', ')}`)
-    if (data.brave.newsHeadlines.length) {
-      lines.push(`Recent news:`)
-      data.brave.newsHeadlines.forEach(h => lines.push(`  - ${h}`))
-    }
-  }
-
-  if (data.github?.techSignals?.length) {
-    lines.push(`\n[TECH TOOLS CONFIRMED VIA GITHUB REPOS]`)
-    lines.push(`(These are confirmed: found in repo names, topics or descriptions)`)
-    lines.push(data.github.techSignals.join(', '))
-  }
-
-  if (data.news?.articles?.length) {
-    lines.push(`\n[ARTICLES DE PRESSE]`)
-    data.news.articles.forEach(a => lines.push(`  - [${a.date}] ${a.title} (${a.source})`))
-  }
+  lines.push(`\nReturn ONLY this JSON (no markdown):`)
+  lines.push(`{`)
+  lines.push(`  "tier": "T1" | "T2" | "T3" | "DQ",`)
+  lines.push(`  "score": <0-100>,`)
+  lines.push(`  "signals": {`)
+  lines.push(`    "positive": ["signal 1", ...],`)
+  lines.push(`    "negative": ["signal 1", ...]`)
+  lines.push(`  },`)
+  lines.push(`  "reasoning": "2-3 sentences in English based on collected data AND what you found via search."`)
+  lines.push(`}`)
 
   return lines.join('\n')
 }
@@ -112,40 +108,27 @@ const EMPTY_TECH_STACK: TechStack = {
 
 export async function scoreAccount(data: AggregatedData): Promise<ScorerOutput> {
   const { techStack } = aggregate(data)
-  const userPrompt = buildUserPrompt(data)
+  const prompt = buildPrompt(data)
 
-  const completion = await openai.chat.completions.create({
-    model: 'gpt-4o-mini',
-    response_format: { type: 'json_object' },
-    temperature: 0.2,
-    max_tokens: 600,
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  const response = await (openai.chat.completions.create as any)({
+    model: 'gpt-4o-search-preview',
+    web_search_options: {},
+    max_tokens: 1500,
     messages: [
       { role: 'system', content: SYSTEM_PROMPT },
-      {
-        role: 'user', content: `${userPrompt}
-
-IMPORTANT: Do NOT use your prior knowledge about this company. Only use the data provided above.
-The tech stack has already been collected — do not add tools not mentioned in the data.
-
-Return exactly this JSON:
-{
-  "tier": "T1" | "T2" | "T3" | "DQ",
-  "score": <number between 0 and 100>,
-  "signals": {
-    "positive": ["signal 1", "signal 2", ...],
-    "negative": ["signal 1", ...]
-  },
-  "reasoning": "2-3 sentence explanation in English based strictly on the provided data."
-}`,
-      },
+      { role: 'user', content: prompt },
     ],
   })
 
+  const finalText: string = response.choices?.[0]?.message?.content || ''
+
   try {
-    const raw = completion.choices[0].message.content || '{}'
+    // Extract JSON from response (might be wrapped in text)
+    const jsonMatch = finalText.match(/\{[\s\S]*\}/)
+    const raw = jsonMatch ? jsonMatch[0] : '{}'
     const parsed = JSON.parse(raw)
 
-    // Tech stack comes exclusively from collectors — GPT does not modify it
     return {
       tier: parsed.tier || 'T3',
       score: typeof parsed.score === 'number' ? Math.max(0, Math.min(100, parsed.score)) : 50,
@@ -161,8 +144,8 @@ Return exactly this JSON:
       tier: 'T3',
       score: 0,
       tech_stack: EMPTY_TECH_STACK,
-      signals: { positive: [], negative: ['Erreur de parsing de la réponse GPT-4o'] },
-      reasoning: 'Erreur lors de l\'analyse.',
+      signals: { positive: [], negative: ['Failed to parse scoring response'] },
+      reasoning: 'Scoring error.',
     }
   }
 }

@@ -1,19 +1,16 @@
 import type { BraveSearchData } from '@/types'
 
-async function serperSearch(query: string, apiKey: string, num = 5): Promise<string[]> {
+async function googleSearch(query: string, apiKey: string, cseId: string, num = 5): Promise<string[]> {
   try {
-    const res = await fetch('https://google.serper.dev/search', {
-      method: 'POST',
-      headers: {
-        'X-API-KEY': apiKey,
-        'Content-Type': 'application/json',
-      },
-      body: JSON.stringify({ q: query, num }),
-      signal: AbortSignal.timeout(4000),
-    })
+    const url = new URL('https://www.googleapis.com/customsearch/v1')
+    url.searchParams.set('key', apiKey)
+    url.searchParams.set('cx', cseId)
+    url.searchParams.set('q', query)
+    url.searchParams.set('num', String(num))
+    const res = await fetch(url.toString(), { signal: AbortSignal.timeout(4000) })
     if (!res.ok) return []
     const data = await res.json()
-    return (data.organic || []).map((r: { title: string; snippet?: string }) =>
+    return (data.items || []).map((r: { title: string; snippet?: string }) =>
       `${r.title} — ${r.snippet || ''}`
     )
   } catch {
@@ -33,16 +30,17 @@ const FUNDING_KEYWORDS = [
 ]
 
 export async function collectBrave(companyName: string, domain?: string): Promise<BraveSearchData | null> {
-  const apiKey = process.env.SERPER_API_KEY
-  if (!apiKey) return null
+  const apiKey = process.env.GOOGLE_API_KEY
+  const cseId = process.env.GOOGLE_CSE_ID
+  if (!apiKey || !cseId) return null
 
   const name = `"${companyName}"`
 
   // Only two queries: hiring signals + funding signals
   // We do NOT use Serper for tech stack — too many false positives from generic snippets
   const [jobResults, fundingResults] = await Promise.all([
-    serperSearch(`${name} jobs hiring "software engineer" OR devops OR sre OR "data engineer" OR "platform engineer"`, apiKey),
-    serperSearch(`${name} funding OR "series" OR "raised" OR "levée de fonds" OR investment 2023 OR 2024 OR 2025`, apiKey),
+    googleSearch(`${name} jobs hiring "software engineer" OR devops OR sre OR "data engineer" OR "platform engineer"`, apiKey, cseId),
+    googleSearch(`${name} funding OR "series" OR "raised" OR "levée de fonds" OR investment 2023 OR 2024 OR 2025`, apiKey, cseId),
   ])
 
   const allJobText = jobResults.join(' ').toLowerCase()
