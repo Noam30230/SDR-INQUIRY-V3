@@ -34,6 +34,60 @@ function sortAccounts(accounts: Account[], sort: SortOption): Account[] {
   })
 }
 
+function FilterDropdown({ filter, onFilter, accounts }: { filter: FilterTier; onFilter: (f: FilterTier) => void; accounts: Account[] }) {
+  const [open, setOpen] = useState(false)
+  const ref = useRef<HTMLDivElement>(null)
+
+  useEffect(() => {
+    function handler(e: MouseEvent) {
+      if (ref.current && !ref.current.contains(e.target as Node)) setOpen(false)
+    }
+    document.addEventListener('mousedown', handler)
+    return () => document.removeEventListener('mousedown', handler)
+  }, [])
+
+  const current = FILTER_OPTIONS.find(o => o.value === filter)!
+  const activeColor = TIER_COLORS[filter]
+
+  return (
+    <div className="relative" ref={ref}>
+      <button
+        onClick={() => setOpen(o => !o)}
+        className="flex items-center gap-1.5 px-2.5 py-1 rounded-lg text-xs transition-colors"
+        style={{
+          background: filter !== 'all' ? `${activeColor}20` : 'var(--bg-card)',
+          border: `1px solid ${filter !== 'all' ? activeColor + '50' : 'var(--border)'}`,
+          color: filter !== 'all' ? activeColor : 'var(--text-muted)',
+        }}
+      >
+        Filter{filter !== 'all' ? `: ${current.label}` : ''} <span className="opacity-50">▾</span>
+      </button>
+      {open && (
+        <div
+          className="absolute left-0 top-full mt-1 rounded-xl py-1 z-50 min-w-[140px]"
+          style={{ background: 'var(--bg-card)', border: '1px solid var(--border)', boxShadow: '0 8px 24px rgba(0,0,0,0.4)' }}
+        >
+          {FILTER_OPTIONS.map(opt => {
+            const count = opt.value === 'all' ? accounts.length : accounts.filter(a => a.tier === opt.value).length
+            const color = TIER_COLORS[opt.value]
+            return (
+              <button
+                key={opt.value}
+                onClick={() => { onFilter(opt.value); setOpen(false) }}
+                className="w-full text-left px-3 py-1.5 text-xs transition-colors hover:bg-white/5 flex items-center justify-between"
+                style={{ color: filter === opt.value ? color : 'var(--text-muted)' }}
+              >
+                <span>{filter === opt.value && <span className="mr-1.5">✓</span>}{opt.label}</span>
+                <span className="opacity-50">{count}</span>
+              </button>
+            )
+          })}
+        </div>
+      )}
+    </div>
+  )
+}
+
 function SortDropdown({ sort, onSort }: { sort: SortOption; onSort: (s: SortOption) => void }) {
   const [open, setOpen] = useState(false)
   const ref = useRef<HTMLDivElement>(null)
@@ -182,24 +236,7 @@ export default function AccountList({ accounts, filter, onFilterChange, onDelete
           </button>
         )}
 
-        {FILTER_OPTIONS.map(opt => {
-          const count = opt.value === 'all' ? accounts.length : accounts.filter(a => a.tier === opt.value).length
-          const active = filter === opt.value
-          return (
-            <button
-              key={opt.value}
-              onClick={() => onFilterChange(opt.value)}
-              className="px-3 py-1.5 rounded-lg text-xs font-medium transition-colors"
-              style={{
-                background: active ? `${TIER_COLORS[opt.value]}20` : 'var(--bg-card)',
-                border: `1px solid ${active ? TIER_COLORS[opt.value] + '50' : 'var(--border)'}`,
-                color: active ? TIER_COLORS[opt.value] : 'var(--text-muted)',
-              }}
-            >
-              {opt.label} <span className="ml-1 opacity-70">{count}</span>
-            </button>
-          )
-        })}
+        <FilterDropdown filter={filter} onFilter={onFilterChange} accounts={accounts} />
 
         <div className="ml-auto flex items-center gap-1.5">
           <SearchBar value={search} onChange={setSearch} />
