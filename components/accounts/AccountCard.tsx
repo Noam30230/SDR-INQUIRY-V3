@@ -76,9 +76,7 @@ export default function AccountCard({ account, onDelete, selected, onToggleSelec
       className="rounded-xl overflow-hidden transition-all duration-200"
       style={{
         background: expanded ? 'var(--bg-hover)' : 'var(--bg-card)',
-        borderTop: `1px solid ${selected ? 'rgba(124,58,237,0.5)' : expanded ? 'rgba(124,58,237,0.35)' : 'var(--border)'}`,
-        borderRight: `1px solid ${selected ? 'rgba(124,58,237,0.5)' : expanded ? 'rgba(124,58,237,0.35)' : 'var(--border)'}`,
-        borderBottom: `1px solid ${selected ? 'rgba(124,58,237,0.5)' : expanded ? 'rgba(124,58,237,0.35)' : 'var(--border)'}`,
+        border: `1px solid ${selected ? 'rgba(124,58,237,0.5)' : expanded ? 'rgba(124,58,237,0.35)' : 'var(--border)'}`,
         borderLeft: `4px solid ${selected ? 'rgba(124,58,237,0.7)' : leftBorderColor}`,
         opacity: isDQ ? 0.6 : 1,
       }}
