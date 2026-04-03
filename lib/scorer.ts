@@ -124,7 +124,7 @@ export async function scoreAccount(data: AggregatedData): Promise<ScorerOutput> 
   const response = await (openai.chat.completions.create as any)({
     model: 'gpt-4o-search-preview',
     web_search_options: {},
-    max_tokens: 2500,
+    max_tokens: 1500,
     messages: [
       { role: 'system', content: SYSTEM_PROMPT },
       { role: 'user', content: prompt },
