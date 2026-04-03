@@ -12,7 +12,7 @@ Your mission: search the web to find real signals about this company, then assig
 SEARCH STRATEGY (do 3 targeted searches):
 1. Search "[company name] tech stack cloud infrastructure DevOps" to find cloud/infra signals
 2. Search "[company name] hiring engineer SRE DevOps" to find tech team signals
-3. Search "[company name] funding raised Series investment" to find funding stage
+3. Search "[company name] funding raised Series investment levée de fonds Bpifrance financement" to find funding stage — search in both English AND French
 
 TIERING CRITERIA:
 - T1 (high priority): SaaS or tech-forward company. Visible cloud stack (AWS/GCP/Azure), structured tech team, active DevOps/SRE/Platform/Backend hiring, modern website. Any confirmed funding round (seed or above) boosts to T1 if other signals are present.
@@ -124,7 +124,7 @@ export async function scoreAccount(data: AggregatedData): Promise<ScorerOutput> 
   const response = await (openai.chat.completions.create as any)({
     model: 'gpt-4o-search-preview',
     web_search_options: {},
-    max_tokens: 1500,
+    max_tokens: 2500,
     messages: [
       { role: 'system', content: SYSTEM_PROMPT },
       { role: 'user', content: prompt },
