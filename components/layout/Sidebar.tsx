@@ -221,7 +221,7 @@ export default function Sidebar({ accounts, isScoring, userEmail, selectedIds, e
           />
           {/* Fix #6: "CharID" → "Salesforce ID" */}
           <p className="text-xs" style={{ color: 'var(--text-muted)', opacity: 0.7 }}>
-            Format: Name, site.com, Salesforce ID — 1 per line
+            Format: Name, site.com — 1 per line
           </p>
         </div>
       )}
