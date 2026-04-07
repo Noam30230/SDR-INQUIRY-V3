@@ -129,9 +129,10 @@ export async function scoreAccount(data: AggregatedData): Promise<ScorerOutput> 
     messages: [{ role: 'user', content: prompt }],
   })
 
-  const finalText: string = response.content
-    .filter(block => block.type === 'text')
-    .map(block => (block as Anthropic.TextBlock).text)
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  const finalText: string = (response.content as any[])
+    .filter((block: any) => block.type === 'text')
+    .map((block: any) => block.text as string)
     .join('')
 
   try {
