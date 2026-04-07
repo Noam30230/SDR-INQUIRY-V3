@@ -120,10 +120,11 @@ export async function scoreAccount(data: AggregatedData): Promise<ScorerOutput> 
   const { techStack } = aggregate(data)
   const prompt = buildPrompt(data)
 
-  const response = await anthropic.messages.create({
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  const response = await (anthropic.messages.create as any)({
     model: 'claude-sonnet-4-6',
     max_tokens: 1500,
-    tools: [{ type: 'web_search_20250305' as const, name: 'web_search' }],
+    tools: [{ type: 'web_search_20250305', name: 'web_search' }],
     system: SYSTEM_PROMPT,
     messages: [{ role: 'user', content: prompt }],
   })
