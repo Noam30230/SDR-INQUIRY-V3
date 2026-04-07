@@ -1,8 +1,8 @@
-import OpenAI from 'openai'
+import Anthropic from '@anthropic-ai/sdk'
 import type { AggregatedData, ScorerOutput, TechStack } from '@/types'
 import { aggregate } from './aggregator'
 
-const openai = new OpenAI({ apiKey: process.env.OPENAI_API_KEY })
+const anthropic = new Anthropic({ apiKey: process.env.ANTHROPIC_API_KEY })
 
 const SYSTEM_PROMPT = `You are a B2B account qualification expert for Datadog.
 
@@ -120,18 +120,18 @@ export async function scoreAccount(data: AggregatedData): Promise<ScorerOutput> 
   const { techStack } = aggregate(data)
   const prompt = buildPrompt(data)
 
-  // eslint-disable-next-line @typescript-eslint/no-explicit-any
-  const response = await (openai.chat.completions.create as any)({
-    model: 'gpt-4o-search-preview',
-    web_search_options: {},
+  const response = await anthropic.messages.create({
+    model: 'claude-sonnet-4-6',
     max_tokens: 1500,
-    messages: [
-      { role: 'system', content: SYSTEM_PROMPT },
-      { role: 'user', content: prompt },
-    ],
+    tools: [{ type: 'web_search_20250305' as const, name: 'web_search' }],
+    system: SYSTEM_PROMPT,
+    messages: [{ role: 'user', content: prompt }],
   })
 
-  const finalText: string = response.choices?.[0]?.message?.content || ''
+  const finalText: string = response.content
+    .filter(block => block.type === 'text')
+    .map(block => (block as Anthropic.TextBlock).text)
+    .join('')
 
   try {
     // Extract JSON from response (might be wrapped in text)
