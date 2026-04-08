@@ -201,8 +201,8 @@ export default function LoginPage() {
             <button
               type="submit"
               disabled={loading || !email || !password}
-              className="w-full py-2.5 rounded-lg text-sm font-bold text-white transition-all disabled:opacity-50 hover:-translate-y-0.5 active:scale-[0.97] hover:shadow-[0_0_20px_rgba(124,58,237,0.5)]"
-              style={{ background: 'linear-gradient(135deg, #7c3aed, #6d28d9)' }}
+              className="w-full py-2.5 rounded-lg text-sm font-bold text-white transition-all disabled:opacity-50 hover:-translate-y-0.5 active:scale-[0.97]"
+              style={{ background: 'linear-gradient(135deg, #7c3aed, #6d28d9)', boxShadow: '0 0 20px rgba(124,58,237,0.5)' }}
             >
               {loading
                 ? (mode === 'signin' ? 'Signing in...' : 'Creating account...')

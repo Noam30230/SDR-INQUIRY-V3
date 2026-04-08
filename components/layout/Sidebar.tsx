@@ -305,8 +305,8 @@ export default function Sidebar({ accounts, isScoring, userEmail, selectedIds, e
         <button
           onClick={handleStart}
           disabled={queueCount === 0}
-          className="w-full py-2.5 text-sm font-semibold text-white rounded-lg mb-3 transition-all disabled:opacity-30 disabled:cursor-not-allowed hover:-translate-y-0.5 active:scale-[0.97] hover:shadow-[0_0_20px_rgba(124,58,237,0.45)]"
-          style={{ background: 'var(--primary)' }}
+          className="w-full py-2.5 text-sm font-semibold text-white rounded-lg mb-3 transition-all disabled:opacity-30 disabled:cursor-not-allowed hover:-translate-y-0.5 active:scale-[0.97]"
+          style={{ background: 'var(--primary)', boxShadow: '0 0 20px rgba(124,58,237,0.45)' }}
         >
           ▶ Start analysis · {queueCount} account{queueCount !== 1 ? 's' : ''}
         </button>
@@ -316,11 +316,12 @@ export default function Sidebar({ accounts, isScoring, userEmail, selectedIds, e
       <button
         onClick={onExport}
         disabled={doneAccounts.length === 0}
-        className="w-full py-2.5 text-sm font-medium rounded-lg transition-all disabled:opacity-30 mb-3 hover:-translate-y-0.5 active:scale-[0.97] hover:shadow-[0_0_16px_rgba(124,58,237,0.3)]"
+        className="w-full py-2.5 text-sm font-medium rounded-lg transition-all disabled:opacity-30 mb-3 hover:-translate-y-0.5 active:scale-[0.97]"
         style={{
           background: 'rgba(124,58,237,0.12)',
           border: '1px solid rgba(124,58,237,0.25)',
           color: '#a78bfa',
+          boxShadow: '0 0 16px rgba(124,58,237,0.3)',
         }}
       >
         ↓ {exportLabel || `Export all (${doneAccounts.length})`}
