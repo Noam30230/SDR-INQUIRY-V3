@@ -116,6 +116,7 @@ export default function Sidebar({ accounts, isScoring, userEmail, selectedIds, e
             </div>
             <div>
               <div className="text-sm font-bold text-white leading-tight">Account Scorer</div>
+              <span className="text-xs" style={{ color: 'var(--text-muted)' }}>by </span>
               <a
                 href="https://www.linkedin.com/in/noamramillon/"
                 target="_blank"
@@ -123,7 +124,7 @@ export default function Sidebar({ accounts, isScoring, userEmail, selectedIds, e
                 className="text-xs font-semibold transition-opacity hover:opacity-80"
                 style={{ color: '#7c3aed' }}
               >
-                by Noam Ramillon
+                Noam Ramillon
               </a>
             </div>
           </div>
