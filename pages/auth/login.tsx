@@ -73,9 +73,15 @@ export default function LoginPage() {
           </div>
           <div>
             <div className="text-sm font-bold text-white tracking-wide">Account Scorer</div>
-            <div className="text-xs font-semibold tracking-widest uppercase" style={{ color: '#7c3aed' }}>
+            <a
+              href="https://www.linkedin.com/in/noamramillon/"
+              target="_blank"
+              rel="noopener noreferrer"
+              className="text-xs font-semibold tracking-widest uppercase transition-opacity hover:opacity-80"
+              style={{ color: '#7c3aed' }}
+            >
               by Noam Ramillon
-            </div>
+            </a>
           </div>
         </div>
 
@@ -195,7 +201,7 @@ export default function LoginPage() {
             <button
               type="submit"
               disabled={loading || !email || !password}
-              className="w-full py-2.5 rounded-lg text-sm font-bold text-white transition-all disabled:opacity-50 hover:brightness-110"
+              className="w-full py-2.5 rounded-lg text-sm font-bold text-white transition-all disabled:opacity-50 hover:-translate-y-0.5 active:scale-[0.97] hover:shadow-[0_0_20px_rgba(124,58,237,0.5)]"
               style={{ background: 'linear-gradient(135deg, #7c3aed, #6d28d9)' }}
             >
               {loading
@@ -205,7 +211,7 @@ export default function LoginPage() {
           </form>
 
           <p className="text-center text-xs mt-6" style={{ color: 'var(--text-muted)' }}>
-            Built by <span className="font-semibold" style={{ color: '#7c3aed' }}>Noam Ramillon</span> · Datadog SDR 🐶
+            Built by <a href="https://www.linkedin.com/in/noamramillon/" target="_blank" rel="noopener noreferrer" className="font-semibold transition-opacity hover:opacity-80" style={{ color: '#7c3aed' }}>Noam Ramillon</a> · Datadog SDR 🐶
           </p>
         </div>
       </div>
