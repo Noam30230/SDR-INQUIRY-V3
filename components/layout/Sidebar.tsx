@@ -120,7 +120,7 @@ export default function Sidebar({ accounts, isScoring, userEmail, selectedIds, e
                 href="https://www.linkedin.com/in/noamramillon/"
                 target="_blank"
                 rel="noopener noreferrer"
-                className="text-xs font-semibold tracking-widest uppercase transition-opacity hover:opacity-80"
+                className="text-xs font-semibold transition-opacity hover:opacity-80"
                 style={{ color: '#7c3aed' }}
               >
                 by Noam Ramillon
