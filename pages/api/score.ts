@@ -46,6 +46,43 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
     if ((count ?? 0) > 0) return res.status(409).json({ error: 'already_scored' })
   }
 
+  // Cross-user cache — reuse result if same domain scored in last 30 days
+  if (domain) {
+    const thirtyDaysAgo = new Date(Date.now() - 30 * 24 * 60 * 60 * 1000).toISOString()
+    const { data: cached } = await supabaseAdmin
+      .from('accounts')
+      .select('*')
+      .eq('domain', domain)
+      .eq('status', 'done')
+      .gte('created_at', thirtyDaysAgo)
+      .order('created_at', { ascending: false })
+      .limit(1)
+      .single()
+
+    if (cached) {
+      const { data: newAccount } = await supabaseAdmin
+        .from('accounts')
+        .insert({
+          user_id: user.id,
+          company_name: companyName || cached.company_name,
+          domain: cached.domain,
+          salesforce_id: salesforceId || null,
+          tier: cached.tier,
+          score: cached.score,
+          signals: cached.signals,
+          tech_stack: cached.tech_stack,
+          web_quality: cached.web_quality,
+          press_signals: cached.press_signals,
+          reasoning: cached.reasoning,
+          raw_data: cached.raw_data,
+          status: 'done',
+        })
+        .select()
+        .single()
+      return res.status(200).json({ id: newAccount?.id, status: 'done', cached: true })
+    }
+  }
+
   // Crée le compte
   const { data: account, error: insertError } = await supabaseAdmin
     .from('accounts')

@@ -165,12 +165,12 @@ export default function ScoringPage() {
         body: JSON.stringify({ companyName: item.name, domain: item.domain, salesforceId: item.salesforceId }),
       })
       if (res.status === 409) {
-        // Fix #5: inform user instead of silently skipping
         const label = item.name || item.domain
         setToast(`"${label}" already scored`)
         setTimeout(() => setToast(''), 3500)
         continue
       }
+      await loadAccounts()
       await new Promise(r => setTimeout(r, 500))
     }
     setIsScoring(false)
