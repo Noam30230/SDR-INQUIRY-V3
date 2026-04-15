@@ -172,6 +172,16 @@ export default function ScoringPage() {
         setTimeout(() => setToast(''), 3500)
         continue
       }
+      if (res.ok) {
+        const result = await res.json()
+        // Immediately update tier + score in state for instant visual feedback
+        if (result.id && result.tier) {
+          setAccounts(prev => prev.map(a =>
+            a.id === result.id ? { ...a, tier: result.tier, score: result.score, status: 'done' } : a
+          ))
+        }
+      }
+      // Full refresh to get complete data (tech stack, signals, etc.)
       await new Promise(r => setTimeout(r, 800))
       await loadAccounts()
     }

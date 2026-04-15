@@ -210,7 +210,7 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
       })
       .eq('id', account.id)
 
-    return res.status(200).json({ id: account.id, status: 'done' })
+    return res.status(200).json({ id: account.id, status: 'done', tier: scored.tier, score: scored.score })
 
   } catch (err) {
     const msg = err instanceof Error ? err.message : 'Erreur inconnue'
