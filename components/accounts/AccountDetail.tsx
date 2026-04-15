@@ -162,7 +162,7 @@ export default function AccountDetail({ account }: AccountDetailProps) {
       {/* GPT reasoning */}
       {account.reasoning && (
         <div className="rounded-lg p-3" style={{ background: 'rgba(124,58,237,0.06)', border: '1px solid rgba(124,58,237,0.15)' }}>
-          <p className="text-xs font-semibold mb-1.5" style={{ color: '#a78bfa' }}>GPT-4o mini Analysis</p>
+          <p className="text-xs font-semibold mb-1.5" style={{ color: '#a78bfa' }}>AI Analysis</p>
           <p className="text-xs leading-relaxed" style={{ color: '#cbd5e1' }}>
             {account.reasoning}
           </p>
