@@ -145,10 +145,12 @@ export default function ScoringPage() {
       setUserEmail(data.session?.user?.email || '')
     })
 
+    let realtimeTimer: ReturnType<typeof setTimeout>
     const channel = supabaseBrowser
       .channel('accounts-realtime')
       .on('postgres_changes', { event: '*', schema: 'public', table: 'accounts' }, () => {
-        loadAccounts()
+        clearTimeout(realtimeTimer)
+        realtimeTimer = setTimeout(() => loadAccounts(), 800)
       })
       .subscribe()
 
@@ -170,8 +172,8 @@ export default function ScoringPage() {
         setTimeout(() => setToast(''), 3500)
         continue
       }
+      await new Promise(r => setTimeout(r, 800))
       await loadAccounts()
-      await new Promise(r => setTimeout(r, 500))
     }
     setIsScoring(false)
   }
