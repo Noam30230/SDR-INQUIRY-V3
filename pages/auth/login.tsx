@@ -247,6 +247,18 @@ export default function LoginPage() {
             background: linear-gradient(135deg, #7c3aed, #6d28d9);
             z-index: -1;
           }
+          @keyframes fade-up {
+            from { opacity: 0; transform: translateY(32px); }
+            to   { opacity: 1; transform: translateY(0); }
+          }
+          .reveal {
+            animation: fade-up 0.75s cubic-bezier(0.16, 1, 0.3, 1) both;
+          }
+          .reveal-d1 { animation-delay: 0.05s; }
+          .reveal-d2 { animation-delay: 0.18s; }
+          .reveal-d3 { animation-delay: 0.30s; }
+          .reveal-d4 { animation-delay: 0.42s; }
+          .reveal-d5 { animation-delay: 0.58s; }
         `}</style>
 
         {/* Top glow */}
@@ -257,7 +269,7 @@ export default function LoginPage() {
         }} />
 
         {/* Nav bar */}
-        <div className="w-full flex items-center justify-between mb-16 relative z-10" style={{ maxWidth: 960 }}>
+        <div className="reveal reveal-d1 w-full flex items-center justify-between mb-16 relative z-10" style={{ maxWidth: 960 }}>
           <div className="flex items-center gap-2.5">
             <div className="w-8 h-8 rounded-lg flex items-center justify-center overflow-hidden"
               style={{ background: 'rgba(124,58,237,0.15)', border: '1px solid rgba(124,58,237,0.4)' }}>
@@ -286,17 +298,17 @@ export default function LoginPage() {
 
         {/* Hero */}
         <div className="text-center relative z-10" style={{ maxWidth: 680 }}>
-          <h1 className="font-bold leading-tight mb-5" style={{ fontSize: 'clamp(2.4rem, 5vw, 3.5rem)' }}>
+          <h1 className="reveal reveal-d2 font-bold leading-tight mb-5" style={{ fontSize: 'clamp(2.4rem, 5vw, 3.5rem)' }}>
             <span className="text-white">Score your accounts.</span><br />
             <span style={{ color: '#7c3aed' }}>Call the right ones.</span>
           </h1>
-          <p className="text-lg mb-10" style={{ color: 'var(--text-muted)', lineHeight: 1.7 }}>
+          <p className="reveal reveal-d3 text-lg mb-10" style={{ color: 'var(--text-muted)', lineHeight: 1.7 }}>
             AI-powered ICP scoring for Datadog SDRs.<br />
             3 data sources · ~25s per account · T1/T2/T3/DQ tiering.
           </p>
 
           {/* CTAs */}
-          <div className="flex items-center justify-center gap-3">
+          <div className="reveal reveal-d4 flex items-center justify-center gap-3">
             <button
               onClick={() => openForm('signup')}
               className="shimmer-btn px-8 py-3 rounded-full text-sm font-bold text-white transition-all hover:-translate-y-0.5 active:scale-[0.97]"
@@ -315,7 +327,7 @@ export default function LoginPage() {
         </div>
 
         {/* Dashboard illustration — wide */}
-        <div className="w-full flex justify-center relative z-10" style={{ maxWidth: 960 }}>
+        <div className="reveal reveal-d5 w-full flex justify-center relative z-10" style={{ maxWidth: 960 }}>
           <DashboardIllustration />
         </div>
       </div>
