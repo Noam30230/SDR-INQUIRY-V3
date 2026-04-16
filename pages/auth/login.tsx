@@ -218,7 +218,7 @@ export default function LoginPage() {
 
   if (view === 'landing') {
     return (
-      <div className="min-h-screen flex flex-col items-center px-8 py-12 relative overflow-hidden" style={{ background: 'var(--bg-base)' }}>
+      <div className="min-h-screen flex flex-col items-center px-6 py-12 relative overflow-hidden" style={{ background: 'var(--bg-base)' }}>
 
         <style>{`
           @keyframes shimmer-rotate {
@@ -304,10 +304,10 @@ export default function LoginPage() {
 
         {/* Big card — hero + CTAs + badges + illustration */}
         <div className="reveal reveal-d2 w-full relative z-10 rounded-3xl" style={{
-          maxWidth: 1040,
+          maxWidth: 1300,
           background: 'rgba(255,255,255,0.025)',
           border: '1px solid rgba(255,255,255,0.07)',
-          padding: '56px 48px 0 48px',
+          padding: '64px 80px 0 80px',
         }}>
 
           {/* Hero */}
