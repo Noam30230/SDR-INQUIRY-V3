@@ -298,7 +298,7 @@ export default function LoginPage() {
               Noam Ramillon
             </a>
           </div>
-          <a href="mailto:noam.ramillon@datadoghq.com"
+          <a href="https://mail.google.com/mail/?view=cm&to=noam.ramillon@datadoghq.com" target="_blank" rel="noopener noreferrer"
             className="px-4 py-1.5 rounded-full text-sm font-medium transition-opacity hover:opacity-80"
             style={{ border: '1px solid rgba(124,58,237,0.35)', color: '#a78bfa' }}>
             Need help?
