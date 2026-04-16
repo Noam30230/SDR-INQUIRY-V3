@@ -306,12 +306,12 @@ export default function LoginPage() {
         </div>
 
         {/* Hero */}
-        <div className="text-center relative z-10" style={{ maxWidth: 680 }}>
-          <h1 className="reveal reveal-d2 font-bold leading-tight mb-5" style={{ fontSize: 'clamp(2.4rem, 5vw, 3.5rem)' }}>
+        <div className="text-center relative z-10" style={{ maxWidth: 760 }}>
+          <h1 className="reveal reveal-d2 font-bold mb-7" style={{ fontSize: 'clamp(3rem, 6vw, 4.5rem)', lineHeight: 1.1, letterSpacing: '-0.02em' }}>
             <span className="text-white">Score your accounts.</span><br />
             <span style={{ color: '#7c3aed' }}>Call the right ones.</span>
           </h1>
-          <p className="reveal reveal-d3 text-lg mb-10" style={{ color: 'var(--text-muted)', lineHeight: 1.7 }}>
+          <p className="reveal reveal-d3 mb-12" style={{ fontSize: '1.2rem', color: 'var(--text-muted)', lineHeight: 1.8 }}>
             AI-powered ICP scoring for Datadog SDRs.<br />
             ~25s per account · T1/T2/T3/DQ tiering.
           </p>
