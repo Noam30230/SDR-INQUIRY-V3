@@ -230,6 +230,29 @@ export default function Sidebar({ accounts, isScoring, userEmail, selectedIds, e
           <p className="text-xs" style={{ color: 'var(--text-muted)', opacity: 0.7 }}>
             Format: Name, site.com — 1 per line
           </p>
+          {/* Search depth chips */}
+          <div className="flex gap-2 pt-1">
+            <button
+              className="flex items-center gap-1.5 px-3 py-1.5 rounded-full text-xs font-medium transition-all"
+              style={{
+                background: 'rgba(124,58,237,0.15)',
+                border: '1px solid rgba(124,58,237,0.4)',
+                color: '#a78bfa',
+              }}
+            >
+              ⚡ Quick
+            </button>
+            <button
+              className="flex items-center gap-1.5 px-3 py-1.5 rounded-full text-xs font-medium transition-all"
+              style={{
+                background: 'transparent',
+                border: '1px solid var(--border)',
+                color: 'var(--text-muted)',
+              }}
+            >
+              🔍 Deep
+            </button>
+          </div>
         </div>
       )}
 
