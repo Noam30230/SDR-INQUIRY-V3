@@ -268,9 +268,6 @@ export default function LoginPage() {
           }
           .reveal-d1 { animation-delay: 0.7s; }
           .reveal-d2 { animation-delay: 0.82s; }
-          .reveal-d3 { animation-delay: 0.92s; }
-          .reveal-d4 { animation-delay: 1.02s; }
-          .reveal-d5 { animation-delay: 1.15s; }
         `}</style>
 
         {/* Curtain reveal */}
@@ -305,43 +302,43 @@ export default function LoginPage() {
           </a>
         </div>
 
-        {/* Hero */}
-        <div className="text-center relative z-10" style={{ maxWidth: 760 }}>
-          <h1 className="reveal reveal-d2 font-bold mb-7" style={{ fontSize: 'clamp(3rem, 6vw, 4.5rem)', lineHeight: 1.1, letterSpacing: '-0.02em' }}>
-            <span className="text-white">Score your accounts.</span><br />
-            <span style={{ color: '#7c3aed' }}>Call the right ones.</span>
-          </h1>
-          <p className="reveal reveal-d3 mb-12" style={{ fontSize: '1.2rem', color: 'var(--text-muted)', lineHeight: 1.8 }}>
-            AI-powered ICP scoring for Datadog SDRs.<br />
-            ~25s per account · T1/T2/T3/DQ tiering.
-          </p>
-
-          {/* CTAs */}
-          <div className="reveal reveal-d4 flex items-center justify-center gap-3">
-            <button
-              onClick={() => openForm('signup')}
-              className="shimmer-btn px-8 py-3 rounded-full text-sm font-bold text-white transition-all hover:-translate-y-0.5 active:scale-[0.97]"
-              style={{ boxShadow: '0 0 32px rgba(124,58,237,0.5)' }}
-            >
-              Sign up →
-            </button>
-            <button
-              onClick={() => openForm('signin')}
-              className="px-7 py-3 rounded-full text-sm font-semibold transition-all hover:-translate-y-0.5 active:scale-[0.97]"
-              style={{ background: 'transparent', border: '1px solid rgba(124,58,237,0.4)', color: '#a78bfa' }}
-            >
-              Log in
-            </button>
-          </div>
-        </div>
-
-        {/* Big card wrapping badges + illustration */}
-        <div className="reveal reveal-d5 w-full relative z-10 rounded-3xl mt-10" style={{
+        {/* Big card — hero + CTAs + badges + illustration */}
+        <div className="reveal reveal-d2 w-full relative z-10 rounded-3xl" style={{
           maxWidth: 1040,
           background: 'rgba(255,255,255,0.025)',
           border: '1px solid rgba(255,255,255,0.07)',
-          padding: '32px 32px 0 32px',
+          padding: '56px 48px 0 48px',
         }}>
+
+          {/* Hero */}
+          <div className="text-center mb-10">
+            <h1 className="font-bold mb-7" style={{ fontSize: 'clamp(3rem, 6vw, 4.5rem)', lineHeight: 1.1, letterSpacing: '-0.02em' }}>
+              <span className="text-white">Score your accounts.</span><br />
+              <span style={{ color: '#7c3aed' }}>Call the right ones.</span>
+            </h1>
+            <p className="mb-12" style={{ fontSize: '1.2rem', color: 'var(--text-muted)', lineHeight: 1.8 }}>
+              AI-powered ICP scoring for Datadog SDRs.<br />
+              ~25s per account · T1/T2/T3/DQ tiering.
+            </p>
+
+            {/* CTAs */}
+            <div className="flex items-center justify-center gap-3 mb-10">
+              <button
+                onClick={() => openForm('signup')}
+                className="shimmer-btn px-8 py-3 rounded-full text-sm font-bold text-white transition-all hover:-translate-y-0.5 active:scale-[0.97]"
+                style={{ boxShadow: '0 0 32px rgba(124,58,237,0.5)' }}
+              >
+                Sign up →
+              </button>
+              <button
+                onClick={() => openForm('signin')}
+                className="px-7 py-3 rounded-full text-sm font-semibold transition-all hover:-translate-y-0.5 active:scale-[0.97]"
+                style={{ background: 'transparent', border: '1px solid rgba(124,58,237,0.4)', color: '#a78bfa' }}
+              >
+                Log in
+              </button>
+            </div>
+          </div>
           {/* Source badges */}
           <div className="flex items-center gap-3 mb-8 flex-wrap justify-center">
             {[
