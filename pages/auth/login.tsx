@@ -298,17 +298,11 @@ export default function LoginPage() {
               Noam Ramillon
             </a>
           </div>
-          <div className="flex items-center gap-2">
-            <button onClick={() => openForm('signin')}
-              className="px-4 py-1.5 text-sm transition-opacity hover:opacity-80" style={{ color: 'var(--text-muted)' }}>
-              Log in
-            </button>
-            <button onClick={() => openForm('signup')}
-              className="shimmer-btn px-5 py-1.5 rounded-full text-sm font-bold text-white"
-              style={{ boxShadow: '0 0 20px rgba(124,58,237,0.4)' }}>
-              Sign up →
-            </button>
-          </div>
+          <a href="mailto:noam.ramillon@datadoghq.com"
+            className="px-4 py-1.5 rounded-full text-sm font-medium transition-opacity hover:opacity-80"
+            style={{ border: '1px solid rgba(124,58,237,0.35)', color: '#a78bfa' }}>
+            Need help?
+          </a>
         </div>
 
         {/* Hero */}
