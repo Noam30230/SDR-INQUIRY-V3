@@ -62,7 +62,7 @@ function MiniCardScoring({ company }: { company: string }) {
 
 function DashboardIllustration() {
   return (
-    <div className="relative w-full max-w-md mx-auto mt-10">
+    <div className="relative w-full max-w-2xl mx-auto mt-10">
       <div className="absolute pointer-events-none" style={{ inset: '-30px', background: 'radial-gradient(ellipse at 50% 60%, rgba(124,58,237,0.2) 0%, transparent 70%)', filter: 'blur(24px)' }} />
       <div className="relative rounded-2xl overflow-hidden" style={{ background: '#080e1f', border: '1px solid rgba(124,58,237,0.2)', boxShadow: '0 24px 64px rgba(0,0,0,0.5), 0 0 0 1px rgba(255,255,255,0.03)' }}>
         <div className="flex items-center gap-1.5 px-3 py-2.5" style={{ background: '#050a14', borderBottom: '1px solid rgba(255,255,255,0.05)' }}>
@@ -83,9 +83,9 @@ function DashboardIllustration() {
           </div>
         </div>
         <div className="p-2.5 space-y-1.5">
+          <MiniCardScoring company="Swile" />
           <MiniCard tier="T1" company="Pennylane" score={92} funding="Series B" tech="GCP" angle="Just raised Series B — perfect timing to pitch observability" />
           <MiniCard tier="T1" company="Qonto" score={88} funding="Series C+" tech="Azure" angle="Series C+ fintech scaling fast — strong infra gap to fill" />
-          <MiniCardScoring company="Swile" />
           <MiniCard tier="T2" company="Payfit" score={65} tech="AWS" />
           <MiniCard tier="DQ" company="Accenture" score={8} dimmed />
         </div>
@@ -166,7 +166,36 @@ export default function LoginPage() {
         </div>
 
         {/* Hero */}
-        <div className="text-center max-w-2xl relative z-10">
+        <style>{`
+          @keyframes shimmer-rotate {
+            0% { transform: rotate(0deg); }
+            100% { transform: rotate(360deg); }
+          }
+          .shimmer-btn {
+            position: relative;
+            z-index: 0;
+            overflow: hidden;
+          }
+          .shimmer-btn::before {
+            content: '';
+            position: absolute;
+            inset: -3px;
+            border-radius: 9999px;
+            background: conic-gradient(from 0deg, transparent 0deg, #a78bfa 60deg, #7c3aed 120deg, transparent 180deg, transparent 360deg);
+            animation: shimmer-rotate 2.5s linear infinite;
+            z-index: -1;
+          }
+          .shimmer-btn::after {
+            content: '';
+            position: absolute;
+            inset: 2px;
+            border-radius: 9999px;
+            background: linear-gradient(135deg, #7c3aed, #6d28d9);
+            z-index: -1;
+          }
+        `}</style>
+
+        <div className="text-center max-w-3xl relative z-10">
           <h1 className="text-5xl font-bold leading-tight mb-4">
             <span className="text-white">Score your accounts.</span><br />
             <span style={{ color: '#7c3aed' }}>Call the right ones.</span>
@@ -179,8 +208,8 @@ export default function LoginPage() {
           <div className="flex items-center justify-center gap-3 mb-4">
             <button
               onClick={() => openForm('signup')}
-              className="px-6 py-2.5 rounded-full text-sm font-bold text-white transition-all hover:-translate-y-0.5 active:scale-[0.97]"
-              style={{ background: 'linear-gradient(135deg, #7c3aed, #6d28d9)', boxShadow: '0 0 24px rgba(124,58,237,0.5)' }}
+              className="shimmer-btn px-7 py-2.5 rounded-full text-sm font-bold text-white transition-all hover:-translate-y-0.5 active:scale-[0.97]"
+              style={{ boxShadow: '0 0 32px rgba(124,58,237,0.5)' }}
             >
               Sign up →
             </button>
@@ -195,7 +224,7 @@ export default function LoginPage() {
         </div>
 
         {/* Illustration */}
-        <div className="w-full max-w-lg relative z-10">
+        <div className="w-full max-w-2xl relative z-10">
           <DashboardIllustration />
         </div>
       </div>
