@@ -332,7 +332,7 @@ export default function Sidebar({ accounts, isScoring, userEmail, selectedIds, e
 
       {/* Fix #10: "GPT-4o" → "GPT-4o mini" */}
       <p className="text-xs text-center pt-3" style={{ color: 'var(--text-muted)', opacity: 0.6, borderTop: '1px solid var(--border)' }}>
-        Sources: 🌐 Website · 🐙 GitHub · 🤖 GPT-4o mini
+        Sources: 🌐 Website · 🐙 GitHub · 🤖 Claude AI
       </p>
     </aside>
   )
