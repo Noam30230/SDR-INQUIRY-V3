@@ -247,19 +247,34 @@ export default function LoginPage() {
             background: linear-gradient(135deg, #7c3aed, #6d28d9);
             z-index: -1;
           }
+          @keyframes curtain-up {
+            0%   { transform: translateY(0); }
+            100% { transform: translateY(-100%); }
+          }
+          .curtain {
+            position: fixed;
+            inset: 0;
+            z-index: 50;
+            pointer-events: none;
+            background: #02050d;
+            animation: curtain-up 1s cubic-bezier(0.76, 0, 0.24, 1) 0.15s both;
+          }
           @keyframes fade-up {
-            from { opacity: 0; transform: translateY(32px); }
+            from { opacity: 0; transform: translateY(28px); }
             to   { opacity: 1; transform: translateY(0); }
           }
           .reveal {
-            animation: fade-up 0.75s cubic-bezier(0.16, 1, 0.3, 1) both;
+            animation: fade-up 0.8s cubic-bezier(0.16, 1, 0.3, 1) both;
           }
-          .reveal-d1 { animation-delay: 0.05s; }
-          .reveal-d2 { animation-delay: 0.18s; }
-          .reveal-d3 { animation-delay: 0.30s; }
-          .reveal-d4 { animation-delay: 0.42s; }
-          .reveal-d5 { animation-delay: 0.58s; }
+          .reveal-d1 { animation-delay: 0.7s; }
+          .reveal-d2 { animation-delay: 0.82s; }
+          .reveal-d3 { animation-delay: 0.92s; }
+          .reveal-d4 { animation-delay: 1.02s; }
+          .reveal-d5 { animation-delay: 1.15s; }
         `}</style>
+
+        {/* Curtain reveal */}
+        <div className="curtain" />
 
         {/* Top glow */}
         <div className="absolute top-0 left-1/2 -translate-x-1/2 pointer-events-none" style={{
