@@ -230,27 +230,31 @@ export default function Sidebar({ accounts, isScoring, userEmail, selectedIds, e
           <p className="text-xs" style={{ color: 'var(--text-muted)', opacity: 0.7 }}>
             Format: Name, site.com — 1 per line
           </p>
-          {/* Search depth chips */}
-          <div className="flex gap-2 pt-1">
+          {/* Search depth toolbar */}
+          <div className="flex items-center gap-1 pt-0.5">
             <button
-              className="flex items-center gap-1.5 px-3 py-1.5 rounded-full text-xs font-medium transition-all"
+              className="flex items-center gap-1 px-2 py-1 rounded-md text-xs font-medium transition-all"
               style={{
-                background: 'rgba(124,58,237,0.15)',
-                border: '1px solid rgba(124,58,237,0.4)',
+                background: 'rgba(124,58,237,0.12)',
                 color: '#a78bfa',
               }}
             >
-              ⚡ Quick
+              <svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
+                <circle cx="11" cy="11" r="8"/><path d="m21 21-4.35-4.35"/>
+              </svg>
+              Standard
             </button>
             <button
-              className="flex items-center gap-1.5 px-3 py-1.5 rounded-full text-xs font-medium transition-all"
+              className="flex items-center gap-1 px-2 py-1 rounded-md text-xs font-medium transition-all"
               style={{
                 background: 'transparent',
-                border: '1px solid var(--border)',
                 color: 'var(--text-muted)',
               }}
             >
-              🔍 Deep
+              <svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
+                <circle cx="11" cy="11" r="8"/><path d="m21 21-4.35-4.35"/><path d="M11 8v6M8 11h6"/>
+              </svg>
+              Deep search
             </button>
           </div>
         </div>
