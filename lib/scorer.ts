@@ -115,16 +115,28 @@ const EMPTY_TECH_STACK: TechStack = {
   Cloud: [], Monitoring: [], DevOps: [], Languages: [], Data: [], AI: [], Security: [], Other: [],
 }
 
-export async function scoreAccount(data: AggregatedData): Promise<ScorerOutput> {
+export async function scoreAccount(data: AggregatedData, searchDepth: 'standard' | 'deep' = 'standard'): Promise<ScorerOutput> {
   const { techStack } = aggregate(data)
   const prompt = buildPrompt(data)
+
+  const searchInstruction = searchDepth === 'deep'
+    ? `SEARCH STRATEGY (do exactly 2 targeted searches):
+1. Search "[company name] SaaS product tech stack cloud AWS GCP Azure funding" — combines product model + infra signals + funding in one query
+2. Search "[company name] software engineers team size Crunchbase LinkedIn" — find team signals and any additional funding/growth data`
+    : `SEARCH STRATEGY (do exactly 1 targeted search):
+1. Search "[company name] SaaS product tech stack cloud funding" — find product model, infra signals, and funding in one query`
+
+  const systemPrompt = SYSTEM_PROMPT.replace(
+    /SEARCH STRATEGY[\s\S]*?(?=\nTIERING CRITERIA)/,
+    searchInstruction + '\n\n'
+  )
 
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
   const response = await (anthropic.messages.create as any)({
     model: 'claude-sonnet-4-6',
     max_tokens: 1500,
     tools: [{ type: 'web_search_20250305', name: 'web_search' }],
-    system: SYSTEM_PROMPT,
+    system: systemPrompt,
     messages: [{ role: 'user', content: prompt }],
   })
 

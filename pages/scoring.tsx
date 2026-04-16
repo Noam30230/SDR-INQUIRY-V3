@@ -157,14 +157,14 @@ export default function ScoringPage() {
     return () => { supabaseBrowser.removeChannel(channel) }
   }, [loadAccounts])
 
-  async function scoreBatch(items: Array<{ name?: string; domain: string; salesforceId?: string }>) {
+  async function scoreBatch(items: Array<{ name?: string; domain: string; salesforceId?: string }>, searchDepth: 'standard' | 'deep' = 'standard') {
     stopRef.current = false
     setIsScoring(true)
     for (const item of items) {
       if (stopRef.current) break
       const res = await authFetch('/api/score', {
         method: 'POST',
-        body: JSON.stringify({ companyName: item.name, domain: item.domain, salesforceId: item.salesforceId }),
+        body: JSON.stringify({ companyName: item.name, domain: item.domain, salesforceId: item.salesforceId, searchDepth }),
       })
       if (res.status === 409) {
         const label = item.name || item.domain

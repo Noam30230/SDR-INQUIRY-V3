@@ -27,8 +27,8 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
   const { data: { user } } = await supabase.auth.getUser()
   if (!user) return res.status(401).json({ error: 'Non authentifié' })
 
-  const { companyName: inputName, domain: inputDomain, salesforceId } = req.body as {
-    companyName: string; domain?: string; salesforceId?: string
+  const { companyName: inputName, domain: inputDomain, salesforceId, searchDepth } = req.body as {
+    companyName: string; domain?: string; salesforceId?: string; searchDepth?: 'standard' | 'deep'
   }
   if (!inputName?.trim()) return res.status(400).json({ error: 'Company name required' })
 
@@ -167,7 +167,7 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
       aggregated.pappers = { ...pappers, isDQCandidate: false }
     }
 
-    const scored = await scoreAccount(aggregated)
+    const scored = await scoreAccount(aggregated, searchDepth ?? 'standard')
 
     const sq = aggregated.siteQuality
     const webQuality = sq ? {

@@ -10,7 +10,7 @@ interface SidebarProps {
   userEmail: string
   selectedIds?: Set<string>
   exportLabel?: string
-  onScoreBatch: (items: ParsedRow[]) => Promise<void>
+  onScoreBatch: (items: ParsedRow[], searchDepth: 'standard' | 'deep') => Promise<void>
   onStopBatch: () => void
   onExport: () => void
 }
@@ -40,6 +40,7 @@ function parseTextarea(raw: string): ParsedRow[] {
 
 export default function Sidebar({ accounts, isScoring, userEmail, selectedIds, exportLabel, onScoreBatch, onStopBatch, onExport }: SidebarProps) {
   const [tab, setTab] = useState<'manual' | 'csv'>('manual')
+  const [searchDepth, setSearchDepth] = useState<'standard' | 'deep'>('standard')
   const [text, setText] = useState('')
   const [csvPreview, setCsvPreview] = useState<ParsedRow[]>([])
   const [csvMapping, setCsvMapping] = useState<{ nameCol: string | null; domainCol: string | null; sfdcCol: string | null } | null>(null)
@@ -86,7 +87,7 @@ export default function Sidebar({ accounts, isScoring, userEmail, selectedIds, e
   async function handleStart() {
     const items = tab === 'manual' ? manualQueue : csvPreview
     if (items.length === 0) return
-    await onScoreBatch(items)
+    await onScoreBatch(items, searchDepth)
     setText('')
     setCsvPreview([])
     setCsvMapping(null)
@@ -232,30 +233,23 @@ export default function Sidebar({ accounts, isScoring, userEmail, selectedIds, e
           </p>
           {/* Search depth toolbar */}
           <div className="flex items-center gap-1 pt-0.5">
-            <button
-              className="flex items-center gap-1 px-2 py-1 rounded-md text-xs font-medium transition-all"
-              style={{
-                background: 'rgba(124,58,237,0.12)',
-                color: '#a78bfa',
-              }}
-            >
-              <svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
-                <circle cx="11" cy="11" r="8"/><path d="m21 21-4.35-4.35"/>
-              </svg>
-              Standard
-            </button>
-            <button
-              className="flex items-center gap-1 px-2 py-1 rounded-md text-xs font-medium transition-all"
-              style={{
-                background: 'transparent',
-                color: 'var(--text-muted)',
-              }}
-            >
-              <svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
-                <circle cx="11" cy="11" r="8"/><path d="m21 21-4.35-4.35"/><path d="M11 8v6M8 11h6"/>
-              </svg>
-              Deep search
-            </button>
+            {(['standard', 'deep'] as const).map(mode => (
+              <button
+                key={mode}
+                onClick={() => setSearchDepth(mode)}
+                className="flex items-center gap-1 px-2 py-1 rounded-md text-xs font-medium transition-all"
+                style={{
+                  background: searchDepth === mode ? 'rgba(124,58,237,0.12)' : 'transparent',
+                  color: searchDepth === mode ? '#a78bfa' : 'var(--text-muted)',
+                }}
+              >
+                <svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
+                  <circle cx="11" cy="11" r="8"/><path d="m21 21-4.35-4.35"/>
+                  {mode === 'deep' && <path d="M11 8v6M8 11h6"/>}
+                </svg>
+                {mode === 'standard' ? 'Standard' : 'Deep search'}
+              </button>
+            ))}
           </div>
         </div>
       )}
