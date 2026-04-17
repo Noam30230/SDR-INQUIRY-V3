@@ -192,7 +192,7 @@ const FEATURES = [
       </svg>
     ),
     title: 'Smart caching',
-    desc: 'If a teammate already scored a company, you get the result instantly — no duplicate AI cost, no wait.',
+    desc: 'If a teammate already scored a company, you get the result instantly — no wait, no delay.',
   },
 ]
 
@@ -359,9 +359,9 @@ export default function LoginPage() {
         {/* ── NAVBAR ── */}
         <nav className="fixed top-0 left-0 right-0 z-40 flex items-center justify-between px-8 h-16 transition-all duration-300"
           style={{
-            background: scrolled ? 'rgba(8,14,31,0.85)' : 'transparent',
-            backdropFilter: scrolled ? 'blur(12px)' : 'none',
-            borderBottom: scrolled ? '1px solid rgba(255,255,255,0.06)' : '1px solid transparent',
+            background: 'rgba(8,14,31,0.92)',
+            backdropFilter: 'blur(12px)',
+            borderBottom: '1px solid rgba(255,255,255,0.08)',
           }}>
           {/* Left: logo */}
           <div className="flex items-center gap-2.5">
@@ -381,19 +381,12 @@ export default function LoginPage() {
               </button>
             ))}
           </div>
-          {/* Right: CTAs */}
-          <div className="flex items-center gap-2">
-            <button onClick={() => openForm('signin')}
-              className="px-4 py-1.5 text-sm transition-opacity hover:opacity-80"
-              style={{ color: 'var(--text-muted)', background: 'none', border: 'none', cursor: 'pointer' }}>
-              Log in
-            </button>
-            <button onClick={() => openForm('signup')}
-              className="shimmer-btn px-5 py-1.5 rounded-full text-sm font-bold text-white"
-              style={{ boxShadow: '0 0 20px rgba(124,58,237,0.4)' }}>
-              Sign up →
-            </button>
-          </div>
+          {/* Right: Need help */}
+          <a href="https://mail.google.com/mail/?view=cm&to=noam.ramillon@datadoghq.com" target="_blank" rel="noopener noreferrer"
+            className="px-4 py-1.5 rounded-full text-sm font-medium transition-opacity hover:opacity-80"
+            style={{ border: '1px solid rgba(124,58,237,0.35)', color: '#a78bfa' }}>
+            Need help?
+          </a>
         </nav>
 
         {/* ── HERO ── */}
@@ -410,6 +403,7 @@ export default function LoginPage() {
             background: 'rgba(255,255,255,0.025)',
             border: '1px solid rgba(255,255,255,0.07)',
             padding: '64px 80px 0 80px',
+            overflow: 'hidden',
           }}>
             <div className="text-center mb-10">
               <h1 className="font-bold mb-7" style={{ fontSize: 'clamp(3rem, 6vw, 4.5rem)', lineHeight: 1.1, letterSpacing: '-0.02em' }}>
@@ -451,8 +445,8 @@ export default function LoginPage() {
               <span className="text-xs" style={{ color: 'rgba(255,255,255,0.25)' }}>Sources used for every scoring</span>
             </div>
 
-            {/* Illustration */}
-            <div className="relative">
+            {/* Illustration — stretched to card edges */}
+            <div className="relative -mx-20">
               <DashboardIllustration />
               <div className="absolute bottom-0 left-0 right-0 h-16 pointer-events-none" style={{ background: 'linear-gradient(to bottom, transparent, rgba(8,14,31,1))' }} />
             </div>
@@ -460,16 +454,25 @@ export default function LoginPage() {
         </section>
 
         {/* ── HOW IT WORKS ── */}
-        <section id="how-it-works" className="flex flex-col items-center px-6 py-24">
+        <section id="how-it-works" className="flex flex-col items-center px-6 py-24" style={{ background: 'linear-gradient(180deg, rgba(124,58,237,0.04) 0%, transparent 100%)' }}>
           <div className="w-full" style={{ maxWidth: 1100 }}>
             <div className="text-center mb-16">
               <p className="text-xs font-semibold tracking-widest uppercase mb-3" style={{ color: '#7c3aed' }}>How it works</p>
               <h2 className="text-3xl font-bold text-white" style={{ letterSpacing: '-0.02em' }}>From account list to call priority<br />in under 30 seconds.</h2>
             </div>
             <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
-              {STEPS.map((step) => (
-                <div key={step.number} className="relative rounded-2xl p-8" style={{ background: 'rgba(255,255,255,0.025)', border: '1px solid rgba(255,255,255,0.07)' }}>
-                  <div className="text-5xl font-black mb-6 leading-none" style={{ color: 'rgba(124,58,237,0.2)', letterSpacing: '-0.04em' }}>{step.number}</div>
+              {STEPS.map((step, i) => (
+                <div key={step.number} className="relative rounded-2xl p-8" style={{
+                  background: 'rgba(255,255,255,0.03)',
+                  border: '1px solid rgba(255,255,255,0.08)',
+                  borderTop: `3px solid ${['#7c3aed','#a78bfa','#6d28d9'][i]}`,
+                }}>
+                  <div className="text-5xl font-black mb-6 leading-none" style={{
+                    background: 'linear-gradient(135deg, #7c3aed, #a78bfa)',
+                    WebkitBackgroundClip: 'text',
+                    WebkitTextFillColor: 'transparent',
+                    letterSpacing: '-0.04em',
+                  }}>{step.number}</div>
                   <h3 className="text-lg font-bold text-white mb-3">{step.title}</h3>
                   <p className="text-sm leading-relaxed" style={{ color: 'var(--text-muted)' }}>{step.desc}</p>
                 </div>
@@ -479,7 +482,7 @@ export default function LoginPage() {
         </section>
 
         {/* ── FEATURES ── */}
-        <section id="features" className="flex flex-col items-center px-6 py-24" style={{ background: 'rgba(255,255,255,0.01)' }}>
+        <section id="features" className="flex flex-col items-center px-6 py-24" style={{ background: 'rgba(8,14,31,0.8)', borderTop: '1px solid rgba(255,255,255,0.05)', borderBottom: '1px solid rgba(255,255,255,0.05)' }}>
           <div className="w-full" style={{ maxWidth: 1100 }}>
             <div className="text-center mb-16">
               <p className="text-xs font-semibold tracking-widest uppercase mb-3" style={{ color: '#7c3aed' }}>Product</p>
@@ -487,12 +490,21 @@ export default function LoginPage() {
             </div>
             <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-5">
               {FEATURES.map((f) => (
-                <div key={f.title} className="rounded-2xl p-6" style={{ background: 'rgba(255,255,255,0.025)', border: '1px solid rgba(255,255,255,0.07)' }}>
-                  <div className="w-10 h-10 rounded-xl flex items-center justify-center mb-4" style={{ background: 'rgba(124,58,237,0.12)', border: '1px solid rgba(124,58,237,0.2)', color: '#a78bfa' }}>
+                <div key={f.title} className="rounded-2xl p-6 flex flex-col gap-4" style={{
+                  background: 'linear-gradient(145deg, rgba(124,58,237,0.07) 0%, rgba(255,255,255,0.02) 100%)',
+                  border: '1px solid rgba(124,58,237,0.15)',
+                }}>
+                  <div className="w-10 h-10 rounded-xl flex items-center justify-center" style={{
+                    background: 'linear-gradient(135deg, rgba(124,58,237,0.25), rgba(109,40,217,0.15))',
+                    border: '1px solid rgba(124,58,237,0.3)',
+                    color: '#c4b5fd',
+                  }}>
                     {f.icon}
                   </div>
-                  <h3 className="text-base font-bold text-white mb-2">{f.title}</h3>
-                  <p className="text-sm leading-relaxed" style={{ color: 'var(--text-muted)' }}>{f.desc}</p>
+                  <div>
+                    <h3 className="text-base font-bold text-white mb-1.5">{f.title}</h3>
+                    <p className="text-sm leading-relaxed" style={{ color: 'var(--text-muted)' }}>{f.desc}</p>
+                  </div>
                 </div>
               ))}
             </div>
@@ -505,7 +517,7 @@ export default function LoginPage() {
             <div className="text-center mb-16">
               <p className="text-xs font-semibold tracking-widest uppercase mb-3" style={{ color: '#7c3aed' }}>Pricing</p>
               <h2 className="text-3xl font-bold text-white" style={{ letterSpacing: '-0.02em' }}>Simple, transparent pricing.</h2>
-              <p className="mt-4 text-sm" style={{ color: 'var(--text-muted)' }}>All plans include a 14-day free trial. No credit card required.</p>
+              <p className="mt-4 text-sm" style={{ color: 'var(--text-muted)' }}>Start with 10 free analyses. No credit card required.</p>
             </div>
             <div className="grid grid-cols-1 md:grid-cols-3 gap-6 items-start">
               {PLANS.map((plan) => (
@@ -515,7 +527,7 @@ export default function LoginPage() {
                   position: 'relative',
                 }}>
                   {plan.recommended && (
-                    <div className="absolute -top-3.5 left-1/2 -translate-x-1/2 flex items-center gap-1.5 px-3 py-1 rounded-full text-xs font-bold" style={{ background: 'rgba(16,185,129,0.15)', border: '1px solid rgba(16,185,129,0.4)', color: '#6ee7b7' }}>
+                    <div className="absolute -top-3.5 left-1/2 -translate-x-1/2 flex items-center gap-1.5 px-3 py-1 rounded-full text-xs font-bold whitespace-nowrap" style={{ background: '#10b981', color: '#fff', boxShadow: '0 0 16px rgba(16,185,129,0.4)' }}>
                       ★ RECOMMENDED
                     </div>
                   )}
