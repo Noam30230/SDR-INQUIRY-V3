@@ -401,97 +401,8 @@ export default function LoginPage() {
             }} />
           </div>
 
-          {/* Hero wrapper — allows floating cards to overflow */}
-          <div className="reveal reveal-d1 w-full relative z-10" style={{ maxWidth: 1300 }}>
-
-          {/* Floating left cards */}
-          <div className="absolute pointer-events-none hidden xl:flex flex-col gap-3" style={{ left: -215, top: 60, width: 196 }}>
-            {/* Card: T1 account */}
-            <div style={{
-              background: 'rgba(12,20,40,0.92)', border: '1px solid rgba(124,58,237,0.25)',
-              borderLeft: '3px solid #10b981', borderRadius: 10,
-              boxShadow: '0 12px 40px rgba(0,0,0,0.5), 0 0 0 1px rgba(255,255,255,0.04)',
-              backdropFilter: 'blur(10px)', transform: 'rotate(-2.5deg)',
-              padding: '10px 12px',
-            }}>
-              <div className="flex items-center gap-2 mb-1.5">
-                <span className="text-[9px] font-bold px-1.5 py-0.5 rounded shrink-0" style={{ background: 'rgba(16,185,129,0.15)', color: '#10b981', border: '1px solid rgba(16,185,129,0.25)' }}>T1</span>
-                <span className="text-[11px] font-semibold text-white truncate">Stripe Inc.</span>
-                <div className="ml-auto shrink-0">
-                  <MiniRing score={92} color="#10b981" />
-                </div>
-              </div>
-              <div className="flex items-center gap-1 mb-1.5">
-                <span className="text-[8px] px-1.5 py-0.5 rounded font-medium" style={{ background: 'rgba(245,158,11,0.12)', color: '#fcd34d', border: '1px solid rgba(245,158,11,0.2)' }}>Series B</span>
-                <span className="text-[8px] px-1.5 py-0.5 rounded" style={{ background: 'rgba(124,58,237,0.1)', color: '#a78bfa', border: '1px solid rgba(124,58,237,0.2)' }}>AWS</span>
-              </div>
-              <div className="flex items-start gap-1">
-                <span className="text-[8px] shrink-0" style={{ color: 'rgba(167,139,250,0.5)' }}>📞</span>
-                <span className="text-[8px] italic leading-tight" style={{ color: '#a78bfa' }}>Just raised Series B — perfect timing for infra pitch</span>
-              </div>
-            </div>
-            {/* Card: Tech stack */}
-            <div style={{
-              background: 'rgba(12,20,40,0.88)', border: '1px solid rgba(124,58,237,0.2)',
-              borderRadius: 10,
-              boxShadow: '0 8px 24px rgba(0,0,0,0.4), 0 0 0 1px rgba(255,255,255,0.03)',
-              backdropFilter: 'blur(10px)', transform: 'rotate(-1.5deg)',
-              padding: '10px 12px',
-            }}>
-              <p className="text-[9px] font-semibold mb-2" style={{ color: 'rgba(167,139,250,0.7)' }}>Tech stack detected</p>
-              <div className="flex flex-wrap gap-1">
-                {['Kubernetes', 'Terraform', 'GCP', 'Python', 'Go'].map(t => (
-                  <span key={t} className="text-[8px] px-1.5 py-0.5 rounded" style={{ background: 'rgba(124,58,237,0.1)', color: '#c4b5fd', border: '1px solid rgba(124,58,237,0.18)' }}>{t}</span>
-                ))}
-              </div>
-            </div>
-          </div>
-
-          {/* Floating right cards */}
-          <div className="absolute pointer-events-none hidden xl:flex flex-col gap-3" style={{ right: -215, top: 60, width: 196 }}>
-            {/* Card: Funding signal */}
-            <div style={{
-              background: 'rgba(12,20,40,0.92)', border: '1px solid rgba(245,158,11,0.25)',
-              borderRadius: 10,
-              boxShadow: '0 12px 40px rgba(0,0,0,0.5), 0 0 0 1px rgba(255,255,255,0.04)',
-              backdropFilter: 'blur(10px)', transform: 'rotate(2.5deg)',
-              padding: '10px 12px',
-            }}>
-              <div className="flex items-center gap-2 mb-2">
-                <span className="text-sm">💰</span>
-                <span className="text-[10px] font-bold text-white">Series B detected</span>
-              </div>
-              <p className="text-[9px] font-semibold text-white mb-0.5">Pennylane</p>
-              <p className="text-[8px] mb-2" style={{ color: 'rgba(255,255,255,0.35)' }}>$50M · March 2024</p>
-              <div className="rounded-md px-2 py-1.5" style={{ background: 'rgba(245,158,11,0.07)', border: '1px solid rgba(245,158,11,0.2)' }}>
-                <p className="text-[8px] italic" style={{ color: '#fcd34d' }}>→ Perfect window to pitch observability</p>
-              </div>
-            </div>
-            {/* Card: Batch results */}
-            <div style={{
-              background: 'rgba(12,20,40,0.88)', border: '1px solid rgba(124,58,237,0.2)',
-              borderRadius: 10,
-              boxShadow: '0 8px 24px rgba(0,0,0,0.4), 0 0 0 1px rgba(255,255,255,0.03)',
-              backdropFilter: 'blur(10px)', transform: 'rotate(1.5deg)',
-              padding: '10px 12px',
-            }}>
-              <p className="text-[9px] font-semibold mb-2" style={{ color: 'rgba(167,139,250,0.7)' }}>Batch of 5 scored</p>
-              <div className="space-y-1.5">
-                {[['T1', '#10b981', '3 accounts'], ['T2', '#f59e0b', '1 account'], ['DQ', '#ef4444', '1 account']].map(([t,c,n]) => (
-                  <div key={t} className="flex items-center justify-between">
-                    <div className="flex items-center gap-1.5">
-                      <div className="w-1.5 h-1.5 rounded-full shrink-0" style={{ background: c }} />
-                      <span className="text-[8px] font-bold" style={{ color: c }}>{t}</span>
-                    </div>
-                    <span className="text-[8px]" style={{ color: 'rgba(255,255,255,0.4)' }}>{n}</span>
-                  </div>
-                ))}
-              </div>
-            </div>
-          </div>
-
           {/* Big card */}
-          <div className="rounded-3xl w-full" style={{
+          <div className="reveal reveal-d1 rounded-3xl w-full" style={{
             background: 'rgba(255,255,255,0.025)',
             border: '1px solid rgba(255,255,255,0.07)',
             padding: '64px 80px 0 80px',
@@ -543,8 +454,6 @@ export default function LoginPage() {
               <div className="absolute bottom-0 left-0 right-0 h-16 pointer-events-none" style={{ background: 'linear-gradient(to bottom, transparent, rgba(8,14,31,1))' }} />
             </div>
           </div>
-
-          </div>{/* end hero wrapper */}
         </section>
 
         {/* ── HOW IT WORKS ── */}
@@ -575,34 +484,236 @@ export default function LoginPage() {
           </div>
         </section>
 
-        {/* ── FEATURES ── */}
-        <section id="features" className="flex flex-col items-center px-6 py-24" style={{ background: 'rgba(8,14,31,0.8)', borderTop: '1px solid rgba(255,255,255,0.05)', borderBottom: '1px solid rgba(255,255,255,0.05)' }}>
-          <div className="w-full" style={{ maxWidth: 1100 }}>
-            <div className="text-center mb-16">
-              <p className="text-xs font-semibold tracking-widest uppercase mb-3" style={{ color: '#7c3aed' }}>Product</p>
-              <h2 className="text-3xl font-bold text-white" style={{ letterSpacing: '-0.02em' }}>Everything you need<br />to qualify smarter.</h2>
+        {/* ── FEATURES (alternating blocks) ── */}
+        <section id="features" style={{ borderTop: '1px solid rgba(255,255,255,0.05)', borderBottom: '1px solid rgba(255,255,255,0.05)' }}>
+
+          {/* Block 1 — Tier scoring */}
+          <div className="flex flex-col lg:flex-row items-center gap-12 px-8 py-20 mx-auto" style={{ maxWidth: 1100 }}>
+            {/* Text */}
+            <div className="flex-1 min-w-0">
+              <p className="text-xs font-semibold tracking-widest uppercase mb-4" style={{ color: '#7c3aed' }}>Product</p>
+              <h2 className="text-3xl font-bold text-white mb-5" style={{ letterSpacing: '-0.02em', lineHeight: 1.2 }}>Score every account<br />in under 30 seconds.</h2>
+              <p className="text-base leading-relaxed mb-8" style={{ color: 'var(--text-muted)' }}>
+                Paste a list of companies — the tool collects GitHub signals, website tech, and web search results, then Claude classifies each one as T1, T2, T3, or DQ with a score out of 100.
+              </p>
+              <ul className="space-y-3">
+                {['T1: cloud-native SaaS with active tech team', 'T2: partial signals, worth qualifying', 'T3: low fit, minimal tech stack', 'DQ: ESN, pure consulting, public institutions'].map(item => (
+                  <li key={item} className="flex items-start gap-2.5 text-sm" style={{ color: 'rgba(255,255,255,0.65)' }}>
+                    <span className="shrink-0 mt-0.5" style={{ color: '#a78bfa' }}>✓</span>
+                    {item}
+                  </li>
+                ))}
+              </ul>
             </div>
-            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-5">
-              {FEATURES.map((f) => (
-                <div key={f.title} className="rounded-2xl p-6 flex flex-col gap-4" style={{
-                  background: 'linear-gradient(145deg, rgba(124,58,237,0.07) 0%, rgba(255,255,255,0.02) 100%)',
-                  border: '1px solid rgba(124,58,237,0.15)',
-                }}>
-                  <div className="w-10 h-10 rounded-xl flex items-center justify-center" style={{
-                    background: 'linear-gradient(135deg, rgba(124,58,237,0.25), rgba(109,40,217,0.15))',
-                    border: '1px solid rgba(124,58,237,0.3)',
-                    color: '#c4b5fd',
-                  }}>
-                    {f.icon}
-                  </div>
-                  <div>
-                    <h3 className="text-base font-bold text-white mb-1.5">{f.title}</h3>
-                    <p className="text-sm leading-relaxed" style={{ color: 'var(--text-muted)' }}>{f.desc}</p>
+            {/* Illustration */}
+            <div className="flex-1 min-w-0 w-full">
+              <div className="rounded-2xl overflow-hidden" style={{
+                background: '#080e1f', border: '1px solid rgba(124,58,237,0.2)',
+                boxShadow: '0 24px 64px rgba(0,0,0,0.5), 0 0 0 1px rgba(255,255,255,0.03)',
+              }}>
+                {/* Browser bar */}
+                <div className="flex items-center gap-1.5 px-4 py-3" style={{ background: '#050a14', borderBottom: '1px solid rgba(255,255,255,0.05)' }}>
+                  <div className="w-2.5 h-2.5 rounded-full" style={{ background: '#ef4444' }} />
+                  <div className="w-2.5 h-2.5 rounded-full" style={{ background: '#f59e0b' }} />
+                  <div className="w-2.5 h-2.5 rounded-full" style={{ background: '#10b981' }} />
+                  <div className="flex-1 mx-4">
+                    <div className="mx-auto h-5 rounded flex items-center justify-center px-3" style={{ background: 'rgba(255,255,255,0.04)', maxWidth: 200 }}>
+                      <span className="text-[9px]" style={{ color: 'rgba(255,255,255,0.2)' }}>account-scorer.vercel.app/scoring</span>
+                    </div>
                   </div>
                 </div>
-              ))}
+                {/* Header */}
+                <div className="flex items-center justify-between px-5 py-3.5" style={{ borderBottom: '1px solid rgba(255,255,255,0.05)' }}>
+                  <div>
+                    <span className="text-sm font-bold text-white">Scored accounts</span>
+                    <span className="text-xs ml-2" style={{ color: 'rgba(255,255,255,0.3)' }}>5 accounts</span>
+                  </div>
+                  <div className="flex gap-1.5">
+                    {['All 5','T1','T2','T3','DQ'].map((f,i) => (
+                      <span key={f} className="text-[10px] px-2.5 py-1 rounded-full" style={{
+                        background: i===0 ? 'rgba(124,58,237,0.2)' : 'rgba(255,255,255,0.04)',
+                        color: i===0 ? '#a78bfa' : 'rgba(255,255,255,0.3)',
+                        border: i===0 ? '1px solid rgba(124,58,237,0.35)' : '1px solid rgba(255,255,255,0.07)',
+                      }}>{f}</span>
+                    ))}
+                  </div>
+                </div>
+                {/* Account rows */}
+                <div className="p-3 space-y-2">
+                  {[
+                    { tier: 'T1', color: '#10b981', name: 'Pennylane', score: 92, tag: 'Series B', tech: 'GCP' },
+                    { tier: 'T1', color: '#10b981', name: 'Qonto', score: 88, tag: 'Series C+', tech: 'Azure' },
+                    { tier: 'T2', color: '#f59e0b', name: 'Payfit', score: 65, tech: 'AWS' },
+                    { tier: 'T3', color: '#6b7280', name: 'Coface', score: 31 },
+                    { tier: 'DQ', color: '#ef4444', name: 'Accenture', score: 8, dimmed: true },
+                  ].map(({ tier, color, name, score, tag, tech, dimmed }) => (
+                    <div key={name} style={{
+                      opacity: dimmed ? 0.4 : 1,
+                      background: 'rgba(255,255,255,0.025)',
+                      borderLeft: `3px solid ${color}`,
+                      borderTop: '1px solid rgba(255,255,255,0.05)',
+                      borderRight: '1px solid rgba(255,255,255,0.05)',
+                      borderBottom: '1px solid rgba(255,255,255,0.05)',
+                      borderRadius: 8,
+                    }}>
+                      <div className="flex items-center gap-2.5 px-3 py-2">
+                        <span className="text-[9px] font-bold px-1.5 py-0.5 rounded shrink-0" style={{ background: `${color}22`, color, border: `1px solid ${color}44` }}>{tier}</span>
+                        <span className="text-xs font-semibold text-white flex-1">{name}</span>
+                        {tag && <span className="text-[9px] px-2 py-0.5 rounded shrink-0 font-medium" style={{ background: 'rgba(245,158,11,0.1)', color: '#fcd34d', border: '1px solid rgba(245,158,11,0.2)' }}>{tag}</span>}
+                        {tech && <span className="text-[9px] px-2 py-0.5 rounded shrink-0" style={{ background: 'rgba(124,58,237,0.1)', color: '#c4b5fd', border: '1px solid rgba(124,58,237,0.18)' }}>{tech}</span>}
+                        <MiniRing score={score} color={color} />
+                      </div>
+                    </div>
+                  ))}
+                </div>
+              </div>
             </div>
           </div>
+
+          <div style={{ height: 1, background: 'rgba(255,255,255,0.05)' }} />
+
+          {/* Block 2 — Call angle (reversed) */}
+          <div className="flex flex-col-reverse lg:flex-row items-center gap-12 px-8 py-20 mx-auto" style={{ maxWidth: 1100 }}>
+            {/* Illustration */}
+            <div className="flex-1 min-w-0 w-full">
+              <div className="rounded-2xl overflow-hidden" style={{
+                background: '#080e1f', border: '1px solid rgba(124,58,237,0.2)',
+                boxShadow: '0 24px 64px rgba(0,0,0,0.5), 0 0 0 1px rgba(255,255,255,0.03)',
+              }}>
+                <div className="flex items-center gap-1.5 px-4 py-3" style={{ background: '#050a14', borderBottom: '1px solid rgba(255,255,255,0.05)' }}>
+                  <div className="w-2.5 h-2.5 rounded-full" style={{ background: '#ef4444' }} />
+                  <div className="w-2.5 h-2.5 rounded-full" style={{ background: '#f59e0b' }} />
+                  <div className="w-2.5 h-2.5 rounded-full" style={{ background: '#10b981' }} />
+                  <span className="ml-4 text-[9px]" style={{ color: 'rgba(255,255,255,0.2)' }}>Account detail · Qonto</span>
+                </div>
+                <div className="p-5">
+                  {/* Account header */}
+                  <div className="flex items-center gap-3 mb-4">
+                    <span className="text-xs font-bold px-2 py-1 rounded" style={{ background: 'rgba(16,185,129,0.15)', color: '#10b981', border: '1px solid rgba(16,185,129,0.3)' }}>T1</span>
+                    <span className="text-base font-bold text-white">Qonto</span>
+                    <span className="text-xs px-2 py-0.5 rounded font-medium" style={{ background: 'rgba(245,158,11,0.1)', color: '#fcd34d', border: '1px solid rgba(245,158,11,0.2)' }}>Series C+</span>
+                    <div className="ml-auto"><MiniRing score={88} color="#10b981" /></div>
+                  </div>
+                  {/* Call angle */}
+                  <div className="rounded-xl px-4 py-3.5 mb-4" style={{ background: 'rgba(124,58,237,0.07)', border: '1px solid rgba(124,58,237,0.2)' }}>
+                    <div className="flex items-center gap-2 mb-2">
+                      <span className="text-sm">📞</span>
+                      <span className="text-xs font-semibold" style={{ color: '#a78bfa' }}>AI call angle</span>
+                    </div>
+                    <p className="text-sm italic leading-relaxed text-white">"Series C+ fintech scaling payments across Europe — strong infra gap, perfect timing to pitch observability."</p>
+                  </div>
+                  {/* Signals */}
+                  <div className="grid grid-cols-2 gap-2">
+                    <div className="rounded-lg p-3" style={{ background: 'rgba(16,185,129,0.05)', border: '1px solid rgba(16,185,129,0.15)' }}>
+                      <p className="text-[9px] font-semibold mb-2" style={{ color: '#6ee7b7' }}>Positive signals</p>
+                      <div className="space-y-1">
+                        {['SaaS cloud-native fintech','Azure + K8s confirmed','3 active SRE postings','Site built on Next.js'].map(s => (
+                          <div key={s} className="flex items-start gap-1.5">
+                            <span className="text-[8px] mt-0.5 shrink-0" style={{ color: '#6ee7b7' }}>✓</span>
+                            <span className="text-[9px]" style={{ color: 'rgba(255,255,255,0.55)' }}>{s}</span>
+                          </div>
+                        ))}
+                      </div>
+                    </div>
+                    <div className="rounded-lg p-3" style={{ background: 'rgba(239,68,68,0.05)', border: '1px solid rgba(239,68,68,0.15)' }}>
+                      <p className="text-[9px] font-semibold mb-2" style={{ color: '#fca5a5' }}>Negative signals</p>
+                      <div className="space-y-1">
+                        {['No public GitHub org','Monitoring not detected'].map(s => (
+                          <div key={s} className="flex items-start gap-1.5">
+                            <span className="text-[8px] mt-0.5 shrink-0" style={{ color: '#fca5a5' }}>✗</span>
+                            <span className="text-[9px]" style={{ color: 'rgba(255,255,255,0.55)' }}>{s}</span>
+                          </div>
+                        ))}
+                      </div>
+                    </div>
+                  </div>
+                </div>
+              </div>
+            </div>
+            {/* Text */}
+            <div className="flex-1 min-w-0">
+              <p className="text-xs font-semibold tracking-widest uppercase mb-4" style={{ color: '#7c3aed' }}>Product</p>
+              <h2 className="text-3xl font-bold text-white mb-5" style={{ letterSpacing: '-0.02em', lineHeight: 1.2 }}>A one-sentence pitch,<br />ready before you dial.</h2>
+              <p className="text-base leading-relaxed mb-6" style={{ color: 'var(--text-muted)' }}>
+                Claude reads each account's funding history, tech stack, and growth signals — then writes a call angle you can use directly. No prep, no research, no guessing.
+              </p>
+              <div className="space-y-4">
+                {[
+                  { icon: '💰', title: 'Funding detected automatically', desc: 'Seed, Series A through C+, IPO — recent rounds flag the best entry points.' },
+                  { icon: '✅', title: 'Positive & negative signals', desc: 'See what confirms the fit and what works against it, before you pick up the phone.' },
+                ].map(({ icon, title, desc }) => (
+                  <div key={title} className="flex gap-3">
+                    <span className="text-xl shrink-0 mt-0.5">{icon}</span>
+                    <div>
+                      <p className="text-sm font-semibold text-white mb-0.5">{title}</p>
+                      <p className="text-sm" style={{ color: 'var(--text-muted)' }}>{desc}</p>
+                    </div>
+                  </div>
+                ))}
+              </div>
+            </div>
+          </div>
+
+          <div style={{ height: 1, background: 'rgba(255,255,255,0.05)' }} />
+
+          {/* Block 3 — Tech stack */}
+          <div className="flex flex-col lg:flex-row items-center gap-12 px-8 py-20 mx-auto" style={{ maxWidth: 1100 }}>
+            {/* Text */}
+            <div className="flex-1 min-w-0">
+              <p className="text-xs font-semibold tracking-widest uppercase mb-4" style={{ color: '#7c3aed' }}>Product</p>
+              <h2 className="text-3xl font-bold text-white mb-5" style={{ letterSpacing: '-0.02em', lineHeight: 1.2 }}>Tech stack detection<br />across every source.</h2>
+              <p className="text-base leading-relaxed mb-8" style={{ color: 'var(--text-muted)' }}>
+                Cloud provider, DevOps tools, monitoring stack, programming languages — collected from the company's website, GitHub, and public job postings, then categorized and ranked.
+              </p>
+              <div className="grid grid-cols-2 gap-3">
+                {[
+                  { cat: 'Cloud', color: '#60a5fa', items: 'AWS, GCP, Azure, Vercel' },
+                  { cat: 'DevOps', color: '#a78bfa', items: 'Kubernetes, Terraform, Docker' },
+                  { cat: 'Languages', color: '#34d399', items: 'Python, Go, TypeScript' },
+                  { cat: 'Monitoring', color: '#f59e0b', items: 'Datadog, Grafana, Prometheus' },
+                ].map(({ cat, color, items }) => (
+                  <div key={cat} className="rounded-xl p-3" style={{ background: 'rgba(255,255,255,0.03)', border: '1px solid rgba(255,255,255,0.07)' }}>
+                    <p className="text-[10px] font-bold mb-1" style={{ color }}>{cat}</p>
+                    <p className="text-xs" style={{ color: 'rgba(255,255,255,0.45)' }}>{items}</p>
+                  </div>
+                ))}
+              </div>
+            </div>
+            {/* Illustration */}
+            <div className="flex-1 min-w-0 w-full">
+              <div className="rounded-2xl overflow-hidden" style={{
+                background: '#080e1f', border: '1px solid rgba(124,58,237,0.2)',
+                boxShadow: '0 24px 64px rgba(0,0,0,0.5), 0 0 0 1px rgba(255,255,255,0.03)',
+              }}>
+                <div className="flex items-center gap-1.5 px-4 py-3" style={{ background: '#050a14', borderBottom: '1px solid rgba(255,255,255,0.05)' }}>
+                  <div className="w-2.5 h-2.5 rounded-full" style={{ background: '#ef4444' }} />
+                  <div className="w-2.5 h-2.5 rounded-full" style={{ background: '#f59e0b' }} />
+                  <div className="w-2.5 h-2.5 rounded-full" style={{ background: '#10b981' }} />
+                  <span className="ml-4 text-[9px]" style={{ color: 'rgba(255,255,255,0.2)' }}>Tech stack · Pennylane</span>
+                </div>
+                <div className="p-5 space-y-4">
+                  {[
+                    { cat: 'Cloud', color: '#60a5fa', items: ['AWS', 'GCP'] },
+                    { cat: 'DevOps', color: '#a78bfa', items: ['Kubernetes', 'Terraform', 'Docker'] },
+                    { cat: 'Languages', color: '#34d399', items: ['Python', 'TypeScript', 'Go'] },
+                    { cat: 'Monitoring', color: '#f59e0b', items: ['Datadog', 'Grafana'] },
+                    { cat: 'Data', color: '#f472b6', items: ['Snowflake', 'dbt'] },
+                    { cat: 'AI', color: '#c4b5fd', items: ['OpenAI', 'LangChain'] },
+                  ].map(({ cat, color, items }) => (
+                    <div key={cat}>
+                      <p className="text-[10px] font-bold mb-2" style={{ color, opacity: 0.8 }}>{cat}</p>
+                      <div className="flex flex-wrap gap-1.5">
+                        {items.map(item => (
+                          <span key={item} className="text-xs px-2.5 py-1 rounded-lg font-medium" style={{ background: `${color}14`, color, border: `1px solid ${color}30` }}>{item}</span>
+                        ))}
+                      </div>
+                    </div>
+                  ))}
+                </div>
+              </div>
+            </div>
+          </div>
+
         </section>
 
         {/* ── PRICING ── */}
