@@ -162,10 +162,34 @@ export default function ScoringPage() {
     setIsScoring(true)
     for (const item of items) {
       if (stopRef.current) break
+      // Optimistic insert — show the card immediately in "scoring" state
+      const tempId = `temp-${Date.now()}-${item.domain}`
+      setAccounts(prev => [...prev, {
+        id: tempId,
+        user_id: '',
+        company_name: item.name || item.domain,
+        domain: item.domain || null,
+        country: null,
+        salesforce_id: item.salesforceId || null,
+        tier: null,
+        score: null,
+        signals: {} as any,
+        tech_stack: {} as any,
+        web_quality: null,
+        press_signals: {} as any,
+        reasoning: null,
+        raw_data: {},
+        status: 'scoring',
+        error_message: null,
+        created_at: new Date().toISOString(),
+        updated_at: new Date().toISOString(),
+      }])
       const res = await authFetch('/api/score', {
         method: 'POST',
         body: JSON.stringify({ companyName: item.name, domain: item.domain, salesforceId: item.salesforceId, searchDepth }),
       })
+      // Remove the optimistic entry once the real result is coming
+      setAccounts(prev => prev.filter(a => a.id !== tempId))
       if (res.status === 409) {
         const label = item.name || item.domain
         setToast(`"${label}" already scored`)
