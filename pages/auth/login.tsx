@@ -562,10 +562,12 @@ export default function LoginPage() {
                     }}>
                       <div className="flex items-center gap-2.5 px-3 py-2">
                         <span className="text-[9px] font-bold px-1.5 py-0.5 rounded shrink-0" style={{ background: `${color}22`, color, border: `1px solid ${color}44` }}>{tier}</span>
-                        <span className="text-xs font-semibold text-white flex-1">{name}</span>
+                        <span className="text-xs font-semibold text-white shrink-0">{name}</span>
+                        <MiniRing score={score} color={color} />
                         {tag && <span className="text-[9px] px-2 py-0.5 rounded shrink-0 font-medium" style={{ background: 'rgba(245,158,11,0.1)', color: '#fcd34d', border: '1px solid rgba(245,158,11,0.2)' }}>{tag}</span>}
                         {tech && <span className="text-[9px] px-2 py-0.5 rounded shrink-0" style={{ background: 'rgba(124,58,237,0.1)', color: '#c4b5fd', border: '1px solid rgba(124,58,237,0.18)' }}>{tech}</span>}
-                        <MiniRing score={score} color={color} />
+                        <div className="flex-1" />
+                        {!dimmed && <span className="text-[9px] px-2 py-0.5 rounded shrink-0 font-medium" style={{ background: 'rgba(124,58,237,0.1)', color: '#a78bfa', border: '1px solid rgba(124,58,237,0.22)' }}>▼ Details</span>}
                       </div>
                     </div>
                   ))}
