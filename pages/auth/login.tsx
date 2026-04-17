@@ -218,11 +218,10 @@ const PLANS = [
   {
     label: 'STARTER',
     name: 'Solo',
-    originalPrice: '$49',
-    price: '$42',
+    price: '$19',
     period: '/month',
-    analyses: '500 analyses / month',
-    subline: '~25 accounts/day · 1 user',
+    analyses: '250 analyses / month',
+    subline: '~12 accounts/day · 1 user',
     features: ['T1/T2/T3/DQ scoring', 'AI call angle per account', 'Tech stack & funding signals', 'Standard & Deep search', 'CSV export'],
     recommended: false,
     cta: 'Get started',
@@ -230,10 +229,9 @@ const PLANS = [
   {
     label: 'MOST POPULAR',
     name: 'Team',
-    originalPrice: '$149',
-    price: '$127',
+    price: '$49',
     period: '/month',
-    analyses: '2,000 analyses / month',
+    analyses: '750 analyses / month',
     subline: '3–5 SDRs · shared workspace',
     features: ['Everything in Solo', 'Up to 5 users', 'Shared workspace & results', 'Cross-team caching', 'Priority support'],
     recommended: true,
@@ -242,10 +240,9 @@ const PLANS = [
   {
     label: 'SCALE',
     name: 'Growth',
-    originalPrice: '$349',
-    price: '$297',
+    price: '$129',
     period: '/month',
-    analyses: '6,000 analyses / month',
+    analyses: '2,500 analyses / month',
     subline: '10+ SDRs · intensive use',
     features: ['Everything in Team', 'Unlimited users', 'Multi-team workspace', 'Dedicated onboarding', 'SLA guarantee'],
     recommended: false,
@@ -738,9 +735,6 @@ export default function LoginPage() {
                   )}
                   <p className="text-xs font-semibold tracking-widest uppercase mb-3" style={{ color: plan.recommended ? '#6ee7b7' : 'var(--text-muted)' }}>{plan.label}</p>
                   <p className="text-2xl font-black text-white mb-1">{plan.name}</p>
-                  <div className="flex items-baseline gap-1 mb-1">
-                    <span className="text-sm line-through" style={{ color: 'var(--text-muted)' }}>{plan.originalPrice}</span>
-                  </div>
                   <div className="flex items-baseline gap-1 mb-2">
                     <span className="text-4xl font-black text-white">{plan.price}</span>
                     <span className="text-sm" style={{ color: 'var(--text-muted)' }}>{plan.period}</span>
