@@ -369,7 +369,7 @@ export default function LoginPage() {
           }}>
           {/* Left: logo */}
           <div className="flex items-center gap-2.5 flex-1">
-            <img src="/logo.png" alt="Inquiry" className="w-8 h-8 object-contain" />
+            <img src="/logo.png" alt="Inquiry" className="w-12 h-12 object-contain" />
             <span className="text-sm font-bold text-white tracking-wide">Inquiry</span>
           </div>
           {/* Center: nav links */}
@@ -775,7 +775,7 @@ export default function LoginPage() {
         <footer className="flex flex-col items-center px-6 py-12" style={{ borderTop: '1px solid rgba(255,255,255,0.06)' }}>
           <div className="w-full flex flex-col md:flex-row items-center justify-between gap-6" style={{ maxWidth: 1100 }}>
             <div className="flex items-center gap-2.5">
-              <img src="/logo.png" alt="Inquiry" className="w-7 h-7 object-contain" />
+              <img src="/logo.png" alt="Inquiry" className="w-10 h-10 object-contain" />
               <span className="text-sm font-bold text-white">Inquiry</span>
               <span className="text-xs mx-1" style={{ color: 'var(--text-muted)' }}>·</span>
               <span className="text-xs" style={{ color: 'var(--text-muted)' }}>Built by </span>
@@ -816,7 +816,7 @@ export default function LoginPage() {
       </button>
 
       <div className="flex items-center gap-2.5 mb-8 relative z-10">
-        <img src="/logo.png" alt="Inquiry" className="w-8 h-8 object-contain" />
+        <img src="/logo.png" alt="Inquiry" className="w-12 h-12 object-contain" />
         <span className="text-sm font-bold text-white">Inquiry</span>
       </div>
 
