@@ -104,7 +104,7 @@ function DashboardIllustration() {
             <div className="mt-auto pt-2" style={{ borderTop: '1px solid rgba(255,255,255,0.05)' }}>
               <p className="text-[7px] font-semibold mb-1.5" style={{ color: 'rgba(255,255,255,0.3)' }}>Tier breakdown</p>
               <div className="grid grid-cols-2 gap-1">
-                {[['T1','#10b981','2'],['T2','#f59e0b','1'],['T3','#6b7280','0'],['DQ','#ef4444','1']].map(([t,c,n]) => (
+                {[['T1','#10b981','4'],['T2','#f59e0b','2'],['T3','#6b7280','1'],['DQ','#ef4444','2']].map(([t,c,n]) => (
                   <div key={t} className="flex items-center justify-between px-1.5 py-0.5 rounded" style={{ background: `${c}11`, border: `1px solid ${c}33` }}>
                     <span className="text-[7px] font-bold" style={{ color: c }}>{t}</span>
                     <span className="text-[7px] font-semibold text-white">{n}</span>
@@ -117,10 +117,10 @@ function DashboardIllustration() {
             <div className="flex items-center justify-between mb-2.5">
               <div>
                 <span className="text-[10px] font-bold text-white">Scored accounts</span>
-                <span className="text-[8px] ml-1.5" style={{ color: 'rgba(255,255,255,0.3)' }}>4 accounts</span>
+                <span className="text-[8px] ml-1.5" style={{ color: 'rgba(255,255,255,0.3)' }}>9 accounts</span>
               </div>
               <div className="flex gap-1.5">
-                <div className="text-[7px] px-2 py-0.5 rounded-full font-medium" style={{ background: 'rgba(124,58,237,0.15)', color: '#a78bfa', border: '1px solid rgba(124,58,237,0.3)' }}>All 4</div>
+                <div className="text-[7px] px-2 py-0.5 rounded-full font-medium" style={{ background: 'rgba(124,58,237,0.15)', color: '#a78bfa', border: '1px solid rgba(124,58,237,0.3)' }}>All 9</div>
                 <div className="text-[7px] px-2 py-0.5 rounded-full" style={{ background: 'rgba(255,255,255,0.04)', color: 'rgba(255,255,255,0.3)', border: '1px solid rgba(255,255,255,0.08)' }}>T1</div>
                 <div className="text-[7px] px-2 py-0.5 rounded-full" style={{ background: 'rgba(255,255,255,0.04)', color: 'rgba(255,255,255,0.3)', border: '1px solid rgba(255,255,255,0.08)' }}>Filter</div>
               </div>
@@ -129,8 +129,13 @@ function DashboardIllustration() {
               <MiniCardScoring company="Swile" />
               <MiniCard tier="T1" company="Pennylane" score={92} funding="Series B" tech="GCP" angle="Just raised Series B — perfect timing to pitch observability" />
               <MiniCard tier="T1" company="Qonto" score={88} funding="Series C+" tech="Azure" angle="Series C+ fintech scaling fast — strong infra gap to fill" />
+              <MiniCard tier="T1" company="Doctolib" score={84} funding="Series D" tech="AWS" angle="Scaling healthtech infra across EU — strong cloud monitoring need" />
+              <MiniCard tier="T1" company="Alan" score={79} funding="Series E" tech="GCP" angle="Series E insurtech on GCP — APM gap visible in job postings" />
               <MiniCard tier="T2" company="Payfit" score={65} tech="AWS" />
+              <MiniCard tier="T2" company="Contentsquare" score={58} tech="GCP" />
+              <MiniCard tier="T3" company="Coface" score={34} />
               <MiniCard tier="DQ" company="Accenture" score={8} dimmed />
+              <MiniCard tier="DQ" company="Capgemini" score={5} dimmed />
             </div>
           </div>
         </div>
