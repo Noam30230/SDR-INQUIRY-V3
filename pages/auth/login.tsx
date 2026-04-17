@@ -418,7 +418,7 @@ export default function LoginPage() {
                 <span style={{ color: '#7c3aed' }}>Call the right ones.</span>
               </h1>
               <p className="mb-12" style={{ fontSize: '1.2rem', color: 'var(--text-muted)', lineHeight: 1.8 }}>
-                AI-powered ICP scoring for Datadog SDRs.<br />
+                AI-powered ICP scoring for sales teams.<br />
                 ~25s per account · T1/T2/T3/DQ tiering.
               </p>
               <div className="flex items-center justify-center gap-3 mb-10">
