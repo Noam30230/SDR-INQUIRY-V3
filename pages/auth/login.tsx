@@ -83,7 +83,7 @@ function DashboardIllustration() {
             </div>
           </div>
         </div>
-        <div className="flex" style={{ minHeight: 320 }}>
+        <div className="flex" style={{ minHeight: 480 }}>
           <div className="shrink-0 flex flex-col px-3 py-3 gap-3" style={{ width: 200, background: '#060c18', borderRight: '1px solid rgba(255,255,255,0.05)' }}>
             <div className="flex items-center gap-1.5 mb-1">
               <div className="w-5 h-5 rounded flex items-center justify-center" style={{ background: 'rgba(124,58,237,0.2)', border: '1px solid rgba(124,58,237,0.4)' }}>
@@ -228,7 +228,7 @@ const PLANS = [
     cta: 'Get started',
   },
   {
-    label: 'RECOMMENDED',
+    label: 'MOST POPULAR',
     name: 'Team',
     originalPrice: '$149',
     price: '$127',
@@ -364,7 +364,7 @@ export default function LoginPage() {
             borderBottom: '1px solid rgba(255,255,255,0.08)',
           }}>
           {/* Left: logo */}
-          <div className="flex items-center gap-2.5">
+          <div className="flex items-center gap-2.5 flex-1">
             <div className="w-8 h-8 rounded-lg flex items-center justify-center overflow-hidden"
               style={{ background: 'rgba(124,58,237,0.15)', border: '1px solid rgba(124,58,237,0.4)' }}>
               <img src="/logo.png" alt="Account Scorer" className="w-5 h-5 object-contain" />
@@ -372,7 +372,7 @@ export default function LoginPage() {
             <span className="text-sm font-bold text-white tracking-wide">Account Scorer</span>
           </div>
           {/* Center: nav links */}
-          <div className="hidden md:flex items-center gap-8">
+          <div className="hidden md:flex items-center gap-8 flex-1 justify-center">
             {[['Product', 'features'], ['How it works', 'how-it-works'], ['Pricing', 'pricing']].map(([label, id]) => (
               <button key={id} onClick={() => scrollTo(id)}
                 className="text-sm transition-colors hover:text-white"
@@ -382,24 +382,116 @@ export default function LoginPage() {
             ))}
           </div>
           {/* Right: Need help */}
-          <a href="https://mail.google.com/mail/?view=cm&to=noam.ramillon@datadoghq.com" target="_blank" rel="noopener noreferrer"
-            className="px-4 py-1.5 rounded-full text-sm font-medium transition-opacity hover:opacity-80"
-            style={{ border: '1px solid rgba(124,58,237,0.35)', color: '#a78bfa' }}>
-            Need help?
-          </a>
+          <div className="flex-1 flex justify-end">
+            <a href="https://mail.google.com/mail/?view=cm&to=noam.ramillon@datadoghq.com" target="_blank" rel="noopener noreferrer"
+              className="px-4 py-1.5 rounded-full text-sm font-medium transition-opacity hover:opacity-80"
+              style={{ border: '1px solid rgba(124,58,237,0.35)', color: '#a78bfa' }}>
+              Need help?
+            </a>
+          </div>
         </nav>
 
         {/* ── HERO ── */}
-        <section id="hero" className="relative flex flex-col items-center px-6 pt-32 pb-20 overflow-hidden">
-          <div className="absolute top-0 left-1/2 -translate-x-1/2 pointer-events-none" style={{
-            width: 900, height: 500,
-            background: 'radial-gradient(ellipse at 50% 0%, rgba(124,58,237,0.25) 0%, transparent 65%)',
-            filter: 'blur(50px)',
-          }} />
+        <section id="hero" className="relative flex flex-col items-center px-6 pt-32 pb-20">
+          <div className="absolute inset-0 overflow-hidden pointer-events-none">
+            <div className="absolute top-0 left-1/2 -translate-x-1/2" style={{
+              width: 900, height: 500,
+              background: 'radial-gradient(ellipse at 50% 0%, rgba(124,58,237,0.25) 0%, transparent 65%)',
+              filter: 'blur(50px)',
+            }} />
+          </div>
+
+          {/* Hero wrapper — allows floating cards to overflow */}
+          <div className="reveal reveal-d1 w-full relative z-10" style={{ maxWidth: 1300 }}>
+
+          {/* Floating left cards */}
+          <div className="absolute pointer-events-none hidden xl:flex flex-col gap-3" style={{ left: -215, top: 60, width: 196 }}>
+            {/* Card: T1 account */}
+            <div style={{
+              background: 'rgba(12,20,40,0.92)', border: '1px solid rgba(124,58,237,0.25)',
+              borderLeft: '3px solid #10b981', borderRadius: 10,
+              boxShadow: '0 12px 40px rgba(0,0,0,0.5), 0 0 0 1px rgba(255,255,255,0.04)',
+              backdropFilter: 'blur(10px)', transform: 'rotate(-2.5deg)',
+              padding: '10px 12px',
+            }}>
+              <div className="flex items-center gap-2 mb-1.5">
+                <span className="text-[9px] font-bold px-1.5 py-0.5 rounded shrink-0" style={{ background: 'rgba(16,185,129,0.15)', color: '#10b981', border: '1px solid rgba(16,185,129,0.25)' }}>T1</span>
+                <span className="text-[11px] font-semibold text-white truncate">Stripe Inc.</span>
+                <div className="ml-auto shrink-0">
+                  <MiniRing score={92} color="#10b981" />
+                </div>
+              </div>
+              <div className="flex items-center gap-1 mb-1.5">
+                <span className="text-[8px] px-1.5 py-0.5 rounded font-medium" style={{ background: 'rgba(245,158,11,0.12)', color: '#fcd34d', border: '1px solid rgba(245,158,11,0.2)' }}>Series B</span>
+                <span className="text-[8px] px-1.5 py-0.5 rounded" style={{ background: 'rgba(124,58,237,0.1)', color: '#a78bfa', border: '1px solid rgba(124,58,237,0.2)' }}>AWS</span>
+              </div>
+              <div className="flex items-start gap-1">
+                <span className="text-[8px] shrink-0" style={{ color: 'rgba(167,139,250,0.5)' }}>📞</span>
+                <span className="text-[8px] italic leading-tight" style={{ color: '#a78bfa' }}>Just raised Series B — perfect timing for infra pitch</span>
+              </div>
+            </div>
+            {/* Card: Tech stack */}
+            <div style={{
+              background: 'rgba(12,20,40,0.88)', border: '1px solid rgba(124,58,237,0.2)',
+              borderRadius: 10,
+              boxShadow: '0 8px 24px rgba(0,0,0,0.4), 0 0 0 1px rgba(255,255,255,0.03)',
+              backdropFilter: 'blur(10px)', transform: 'rotate(-1.5deg)',
+              padding: '10px 12px',
+            }}>
+              <p className="text-[9px] font-semibold mb-2" style={{ color: 'rgba(167,139,250,0.7)' }}>Tech stack detected</p>
+              <div className="flex flex-wrap gap-1">
+                {['Kubernetes', 'Terraform', 'GCP', 'Python', 'Go'].map(t => (
+                  <span key={t} className="text-[8px] px-1.5 py-0.5 rounded" style={{ background: 'rgba(124,58,237,0.1)', color: '#c4b5fd', border: '1px solid rgba(124,58,237,0.18)' }}>{t}</span>
+                ))}
+              </div>
+            </div>
+          </div>
+
+          {/* Floating right cards */}
+          <div className="absolute pointer-events-none hidden xl:flex flex-col gap-3" style={{ right: -215, top: 60, width: 196 }}>
+            {/* Card: Funding signal */}
+            <div style={{
+              background: 'rgba(12,20,40,0.92)', border: '1px solid rgba(245,158,11,0.25)',
+              borderRadius: 10,
+              boxShadow: '0 12px 40px rgba(0,0,0,0.5), 0 0 0 1px rgba(255,255,255,0.04)',
+              backdropFilter: 'blur(10px)', transform: 'rotate(2.5deg)',
+              padding: '10px 12px',
+            }}>
+              <div className="flex items-center gap-2 mb-2">
+                <span className="text-sm">💰</span>
+                <span className="text-[10px] font-bold text-white">Series B detected</span>
+              </div>
+              <p className="text-[9px] font-semibold text-white mb-0.5">Pennylane</p>
+              <p className="text-[8px] mb-2" style={{ color: 'rgba(255,255,255,0.35)' }}>$50M · March 2024</p>
+              <div className="rounded-md px-2 py-1.5" style={{ background: 'rgba(245,158,11,0.07)', border: '1px solid rgba(245,158,11,0.2)' }}>
+                <p className="text-[8px] italic" style={{ color: '#fcd34d' }}>→ Perfect window to pitch observability</p>
+              </div>
+            </div>
+            {/* Card: Batch results */}
+            <div style={{
+              background: 'rgba(12,20,40,0.88)', border: '1px solid rgba(124,58,237,0.2)',
+              borderRadius: 10,
+              boxShadow: '0 8px 24px rgba(0,0,0,0.4), 0 0 0 1px rgba(255,255,255,0.03)',
+              backdropFilter: 'blur(10px)', transform: 'rotate(1.5deg)',
+              padding: '10px 12px',
+            }}>
+              <p className="text-[9px] font-semibold mb-2" style={{ color: 'rgba(167,139,250,0.7)' }}>Batch of 5 scored</p>
+              <div className="space-y-1.5">
+                {[['T1', '#10b981', '3 accounts'], ['T2', '#f59e0b', '1 account'], ['DQ', '#ef4444', '1 account']].map(([t,c,n]) => (
+                  <div key={t} className="flex items-center justify-between">
+                    <div className="flex items-center gap-1.5">
+                      <div className="w-1.5 h-1.5 rounded-full shrink-0" style={{ background: c }} />
+                      <span className="text-[8px] font-bold" style={{ color: c }}>{t}</span>
+                    </div>
+                    <span className="text-[8px]" style={{ color: 'rgba(255,255,255,0.4)' }}>{n}</span>
+                  </div>
+                ))}
+              </div>
+            </div>
+          </div>
 
           {/* Big card */}
-          <div className="reveal reveal-d1 w-full relative z-10 rounded-3xl" style={{
-            maxWidth: 1300,
+          <div className="rounded-3xl w-full" style={{
             background: 'rgba(255,255,255,0.025)',
             border: '1px solid rgba(255,255,255,0.07)',
             padding: '64px 80px 0 80px',
@@ -451,6 +543,8 @@ export default function LoginPage() {
               <div className="absolute bottom-0 left-0 right-0 h-16 pointer-events-none" style={{ background: 'linear-gradient(to bottom, transparent, rgba(8,14,31,1))' }} />
             </div>
           </div>
+
+          </div>{/* end hero wrapper */}
         </section>
 
         {/* ── HOW IT WORKS ── */}
