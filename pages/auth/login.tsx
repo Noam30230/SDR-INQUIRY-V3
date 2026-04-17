@@ -33,10 +33,12 @@ function MiniCard({ tier, company, score, funding, tech, angle, dimmed }: {
     <div style={{ opacity: dimmed ? 0.35 : 1, borderLeft: `3px solid ${color}`, background: 'rgba(255,255,255,0.025)', border: `1px solid rgba(255,255,255,0.06)`, borderLeftColor: color, borderRadius: 7 }}>
       <div className="flex items-center gap-2 px-2.5 py-1.5">
         <span className="text-[8px] font-bold px-1.5 py-0.5 rounded shrink-0" style={{ background: `${color}22`, color }}>{tier}</span>
-        <span className="text-[10px] font-semibold text-white flex-1 truncate">{company}</span>
-        {funding && <span className="text-[7px] px-1.5 py-0.5 rounded font-medium shrink-0" style={{ background: 'rgba(245,158,11,0.12)', color: '#fcd34d', border: '1px solid rgba(245,158,11,0.2)' }}>{funding}</span>}
+        <span className="text-[10px] font-semibold text-white shrink-0">{company}</span>
         <MiniRing score={score} color={color} />
+        {funding && <span className="text-[7px] px-1.5 py-0.5 rounded font-medium shrink-0" style={{ background: 'rgba(245,158,11,0.12)', color: '#fcd34d', border: '1px solid rgba(245,158,11,0.2)' }}>{funding}</span>}
         {tech && <span className="text-[7px] px-1.5 py-0.5 rounded shrink-0" style={{ background: 'rgba(124,58,237,0.12)', color: '#a78bfa', border: '1px solid rgba(124,58,237,0.2)' }}>{tech}</span>}
+        <div className="flex-1" />
+        {!dimmed && <span className="text-[7px] px-2 py-0.5 rounded shrink-0 font-medium" style={{ background: 'rgba(124,58,237,0.12)', color: '#a78bfa', border: '1px solid rgba(124,58,237,0.25)' }}>▼ Details</span>}
       </div>
       {angle && (
         <div className="px-2.5 pb-1.5 flex items-center gap-1">
