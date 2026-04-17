@@ -91,7 +91,7 @@ function DashboardIllustration() {
               <div className="w-5 h-5 rounded flex items-center justify-center" style={{ background: 'rgba(124,58,237,0.2)', border: '1px solid rgba(124,58,237,0.4)' }}>
                 <span className="text-[8px]">🐶</span>
               </div>
-              <span className="text-[9px] font-bold text-white">Account Scorer</span>
+              <span className="text-[9px] font-bold text-white">Inquiry</span>
             </div>
             <div className="rounded-md px-2 py-1.5" style={{ background: 'rgba(255,255,255,0.04)', border: '1px solid rgba(255,255,255,0.07)', minHeight: 56 }}>
               <p className="text-[7px] leading-relaxed" style={{ color: 'rgba(255,255,255,0.25)' }}>Pennylane, pennylane.com</p>
@@ -369,11 +369,8 @@ export default function LoginPage() {
           }}>
           {/* Left: logo */}
           <div className="flex items-center gap-2.5 flex-1">
-            <div className="w-8 h-8 rounded-lg flex items-center justify-center overflow-hidden"
-              style={{ background: 'rgba(124,58,237,0.15)', border: '1px solid rgba(124,58,237,0.4)' }}>
-              <img src="/logo.png" alt="Account Scorer" className="w-5 h-5 object-contain" />
-            </div>
-            <span className="text-sm font-bold text-white tracking-wide">Account Scorer</span>
+            <img src="/logo.png" alt="Inquiry" className="w-8 h-8 object-contain" />
+            <span className="text-sm font-bold text-white tracking-wide">Inquiry</span>
           </div>
           {/* Center: nav links */}
           <div className="hidden md:flex items-center gap-8 flex-1 justify-center">
@@ -778,11 +775,8 @@ export default function LoginPage() {
         <footer className="flex flex-col items-center px-6 py-12" style={{ borderTop: '1px solid rgba(255,255,255,0.06)' }}>
           <div className="w-full flex flex-col md:flex-row items-center justify-between gap-6" style={{ maxWidth: 1100 }}>
             <div className="flex items-center gap-2.5">
-              <div className="w-7 h-7 rounded-lg flex items-center justify-center overflow-hidden"
-                style={{ background: 'rgba(124,58,237,0.15)', border: '1px solid rgba(124,58,237,0.4)' }}>
-                <img src="/logo.png" alt="Account Scorer" className="w-4 h-4 object-contain" />
-              </div>
-              <span className="text-sm font-bold text-white">Account Scorer</span>
+              <img src="/logo.png" alt="Inquiry" className="w-7 h-7 object-contain" />
+              <span className="text-sm font-bold text-white">Inquiry</span>
               <span className="text-xs mx-1" style={{ color: 'var(--text-muted)' }}>·</span>
               <span className="text-xs" style={{ color: 'var(--text-muted)' }}>Built by </span>
               <a href="https://www.linkedin.com/in/noamramillon/" target="_blank" rel="noopener noreferrer"
@@ -803,7 +797,7 @@ export default function LoginPage() {
                 Contact
               </a>
             </div>
-            <p className="text-xs" style={{ color: 'rgba(255,255,255,0.15)' }}>© 2025 Account Scorer</p>
+            <p className="text-xs" style={{ color: 'rgba(255,255,255,0.15)' }}>© 2025 Inquiry</p>
           </div>
         </footer>
 
@@ -822,11 +816,8 @@ export default function LoginPage() {
       </button>
 
       <div className="flex items-center gap-2.5 mb-8 relative z-10">
-        <div className="w-8 h-8 rounded-lg flex items-center justify-center overflow-hidden"
-          style={{ background: 'rgba(124,58,237,0.15)', border: '1px solid rgba(124,58,237,0.4)' }}>
-          <img src="/logo.png" alt="Datadog" className="w-5 h-5 object-contain" />
-        </div>
-        <span className="text-sm font-bold text-white">Account Scorer</span>
+        <img src="/logo.png" alt="Inquiry" className="w-8 h-8 object-contain" />
+        <span className="text-sm font-bold text-white">Inquiry</span>
       </div>
 
       <div className="w-full max-w-sm relative z-10">
