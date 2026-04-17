@@ -7,7 +7,7 @@ export default function App({ Component, pageProps }: AppProps) {
     <>
       <Head>
         <link rel="icon" type="image/png" href="/logo.png" />
-        <title>Account Scorer</title>
+        <title>Inquiry</title>
       </Head>
       <Component {...pageProps} />
     </>
