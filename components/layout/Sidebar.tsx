@@ -10,6 +10,7 @@ interface SidebarProps {
   userEmail: string
   selectedIds?: Set<string>
   exportLabel?: string
+  remainingCount?: number
   onScoreBatch: (items: ParsedRow[], searchDepth: 'standard' | 'deep') => Promise<void>
   onStopBatch: () => void
   onExport: () => void
@@ -38,7 +39,7 @@ function parseTextarea(raw: string): ParsedRow[] {
     .filter(r => (r.name?.length ?? 0) > 0)
 }
 
-export default function Sidebar({ accounts, isScoring, userEmail, selectedIds, exportLabel, onScoreBatch, onStopBatch, onExport }: SidebarProps) {
+export default function Sidebar({ accounts, isScoring, remainingCount = 0, userEmail, selectedIds, exportLabel, onScoreBatch, onStopBatch, onExport }: SidebarProps) {
   const [tab, setTab] = useState<'manual' | 'csv'>('manual')
   const [searchDepth, setSearchDepth] = useState<'standard' | 'deep'>('standard')
   const [text, setText] = useState('')
@@ -336,13 +337,20 @@ export default function Sidebar({ accounts, isScoring, userEmail, selectedIds, e
 
       {/* Start / Stop */}
       {isScoring ? (
-        <button
-          onClick={onStopBatch}
-          className="w-full py-2.5 text-sm font-semibold rounded-lg mb-3"
-          style={{ background: 'rgba(239,68,68,0.15)', border: '1px solid rgba(239,68,68,0.3)', color: '#f87171' }}
-        >
-          ⏹ Stop
-        </button>
+        <div className="mb-3 space-y-1.5">
+          <button
+            onClick={onStopBatch}
+            className="w-full py-2.5 text-sm font-semibold rounded-lg"
+            style={{ background: 'rgba(239,68,68,0.15)', border: '1px solid rgba(239,68,68,0.3)', color: '#f87171' }}
+          >
+            ⏹ Stop
+          </button>
+          {remainingCount > 0 && (
+            <p className="text-center text-xs" style={{ color: 'var(--text-muted)' }}>
+              <span style={{ color: '#a78bfa', fontWeight: 600 }}>{remainingCount}</span> account{remainingCount !== 1 ? 's' : ''} remaining
+            </p>
+          )}
+        </div>
       ) : (
         <button
           onClick={handleStart}

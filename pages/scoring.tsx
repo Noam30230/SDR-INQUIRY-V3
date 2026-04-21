@@ -123,6 +123,7 @@ export default function ScoringPage() {
   const [accounts, setAccounts] = useState<Account[]>([])
   const [filter, setFilter] = useState<FilterTier>('all')
   const [isScoring, setIsScoring] = useState(false)
+  const [remainingCount, setRemainingCount] = useState(0)
   const [isLoading, setIsLoading] = useState(true)
   const [toast, setToast] = useState('')
   const [userEmail, setUserEmail] = useState('')
@@ -160,7 +161,10 @@ export default function ScoringPage() {
   async function scoreBatch(items: Array<{ name?: string; domain: string; salesforceId?: string }>, searchDepth: 'standard' | 'deep' = 'standard') {
     stopRef.current = false
     setIsScoring(true)
-    for (const item of items) {
+    setRemainingCount(items.length)
+    for (let i = 0; i < items.length; i++) {
+      const item = items[i]
+      setRemainingCount(items.length - i)
       if (stopRef.current) break
       // Optimistic insert — show the card immediately in "scoring" state
       const tempId = `temp-${Date.now()}-${item.domain}`
@@ -210,11 +214,13 @@ export default function ScoringPage() {
       await loadAccounts()
     }
     setIsScoring(false)
+    setRemainingCount(0)
   }
 
   function stopBatch() {
     stopRef.current = true
     setIsScoring(false)
+    setRemainingCount(0)
   }
 
   async function deleteAccount(id: string) {
@@ -289,6 +295,7 @@ export default function ScoringPage() {
               ? `Export ${filter} (${accounts.filter(a => a.tier === filter).length})`
               : undefined
           }
+          remainingCount={remainingCount}
           onScoreBatch={scoreBatch}
           onStopBatch={stopBatch}
           onExport={handleExport}
