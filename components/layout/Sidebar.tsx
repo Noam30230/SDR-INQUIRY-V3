@@ -45,7 +45,17 @@ export default function Sidebar({ accounts, isScoring, remainingCount = 0, userE
   const [text, setText] = useState('')
   const [csvPreview, setCsvPreview] = useState<ParsedRow[]>([])
   const [csvMapping, setCsvMapping] = useState<{ nameCol: string | null; domainCol: string | null; sfdcCol: string | null } | null>(null)
+  const [menuOpen, setMenuOpen] = useState(false)
   const fileRef = useRef<HTMLInputElement>(null)
+  const menuRef = useRef<HTMLDivElement>(null)
+
+  useEffect(() => {
+    function handleClick(e: MouseEvent) {
+      if (menuRef.current && !menuRef.current.contains(e.target as Node)) setMenuOpen(false)
+    }
+    document.addEventListener('mousedown', handleClick)
+    return () => document.removeEventListener('mousedown', handleClick)
+  }, [])
 
   // Fix #9: elapsed time counter while scoring
   const [elapsed, setElapsed] = useState(0)
@@ -110,39 +120,56 @@ export default function Sidebar({ accounts, isScoring, remainingCount = 0, userE
     >
       {/* Header */}
       <div className="mb-5">
-        <div className="flex items-start justify-between gap-2 mb-1">
+        <div className="flex items-center justify-between gap-2 mb-1">
           <div className="flex items-center gap-2.5">
-            <div className="w-9 h-9 rounded-lg flex items-center justify-center shrink-0 overflow-hidden"
-              style={{ background: 'rgba(124,58,237,0.15)', border: '1px solid rgba(124,58,237,0.3)' }}>
-              <img src="/logo.png" alt="Datadog" className="w-6 h-6 object-contain" />
-            </div>
-            <div>
-              <div className="text-sm font-bold text-white leading-tight">Account Scorer</div>
-              <span className="text-xs" style={{ color: 'var(--text-muted)' }}>by </span>
-              <a
-                href="https://www.linkedin.com/in/noamramillon/"
-                target="_blank"
-                rel="noopener noreferrer"
-                className="text-xs font-semibold transition-opacity hover:opacity-80"
-                style={{ color: '#7c3aed' }}
-              >
-                Noam Ramillon
-              </a>
+            <img src="/logo.png" alt="Inquiry" className="w-8 h-8 object-contain shrink-0" />
+            <div className="leading-none">
+              <div className="text-sm font-bold text-white leading-tight">Inquiry</div>
+              <div className="flex items-center gap-1 mt-0.5">
+                <span className="text-xs" style={{ color: 'var(--text-muted)' }}>by </span>
+                <a
+                  href="https://www.linkedin.com/in/noamramillon/"
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  className="text-xs font-semibold transition-opacity hover:opacity-80"
+                  style={{ color: '#7c3aed' }}
+                >
+                  Noam Ramillon
+                </a>
+              </div>
             </div>
           </div>
-          <button
-            onClick={() => supabaseBrowser.auth.signOut()}
-            className="text-xs px-2.5 py-1.5 rounded-lg shrink-0 transition-colors hover:text-white"
-            style={{ color: 'var(--text-muted)', border: '1px solid var(--border)', background: 'var(--bg-hover)' }}
-          >
-            Log out
-          </button>
+          {/* Context menu */}
+          <div className="relative" ref={menuRef}>
+            <button
+              onClick={() => setMenuOpen(o => !o)}
+              className="flex flex-col items-center justify-center gap-[4px] w-7 h-7 rounded-md transition-colors hover:bg-white/5"
+            >
+              {[0,1,2].map(i => (
+                <span key={i} className="block w-[14px] h-[1.5px] rounded-full" style={{ background: 'var(--text-muted)' }} />
+              ))}
+            </button>
+            {menuOpen && (
+              <div
+                className="absolute right-0 top-full mt-1 rounded-xl py-1.5 z-50 min-w-[180px]"
+                style={{ background: 'var(--bg-card)', border: '1px solid var(--border)', boxShadow: '0 8px 24px rgba(0,0,0,0.4)' }}
+              >
+                {userEmail && (
+                  <div className="px-3 py-2 border-b" style={{ borderColor: 'var(--border)' }}>
+                    <p className="text-xs font-medium truncate" style={{ color: 'var(--text-muted)' }}>{userEmail}</p>
+                  </div>
+                )}
+                <button
+                  onClick={() => { supabaseBrowser.auth.signOut(); setMenuOpen(false) }}
+                  className="w-full text-left px-3 py-2 text-xs transition-colors hover:bg-white/5"
+                  style={{ color: '#f87171' }}
+                >
+                  🚪 Log out
+                </button>
+              </div>
+            )}
+          </div>
         </div>
-        {userEmail && (
-          <p className="text-xs mt-2 flex items-center gap-1.5" style={{ color: 'var(--text-muted)' }}>
-            <span>👤</span> {userEmail}
-          </p>
-        )}
         {(() => {
           const done = accounts.filter(a => a.status === 'done' && a.created_at)
           if (!done.length) return null
