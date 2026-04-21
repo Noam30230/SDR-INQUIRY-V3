@@ -4,6 +4,10 @@ import TierBadge from '@/components/ui/TierBadge'
 import SignalChip from '@/components/ui/SignalChip'
 import AccountDetail from './AccountDetail'
 
+function toTitleCase(name: string): string {
+  return name.replace(/\S+/g, w => w.charAt(0).toUpperCase() + w.slice(1).toLowerCase())
+}
+
 function getTopTechs(stack: TechStack): string[] {
   const priority: Array<keyof TechStack> = ['Cloud', 'DevOps', 'Monitoring', 'Languages', 'AI', 'Data']
   const techs: string[] = []
@@ -103,27 +107,24 @@ export default function AccountCard({ account, onDelete, selected, onToggleSelec
         {/* Tier badge */}
         {account.tier && <TierBadge tier={account.tier} size="sm" />}
 
-        {/* Company name — Fix #7: truncate long names to prevent banner wrapping */}
+        {/* Company name */}
         <span
-          className="font-semibold text-sm text-white shrink-0 truncate"
-          style={{ maxWidth: '180px' }}
+          className="text-sm text-white shrink-0 truncate"
+          style={{ maxWidth: '180px', fontWeight: 500 }}
           title={account.company_name}
         >
-          {account.company_name}
+          {toTitleCase(account.company_name)}
         </span>
 
-        {/* Funding badge */}
+        {/* Funding badge — outlined pill */}
         {isDone && (account.raw_data?.funding as string) && (account.raw_data.funding as string) !== 'unknown' && (
-          <span className="text-xs px-1.5 py-0.5 rounded shrink-0 font-medium"
-            style={{ background: 'rgba(245,158,11,0.1)', color: '#fcd34d', border: '1px solid rgba(245,158,11,0.2)' }}>
-            {account.raw_data.funding as string}
-          </span>
+          <SignalChip label={account.raw_data.funding as string} variant="funding" />
         )}
 
         {/* SF ID */}
         {account.salesforce_id && (
-          <span className="text-xs font-mono px-1.5 py-0.5 rounded shrink-0"
-            style={{ background: 'rgba(245,158,11,0.1)', color: '#fcd34d', border: '1px solid rgba(245,158,11,0.2)' }}>
+          <span className="text-xs font-mono px-2 py-0.5 rounded-full shrink-0"
+            style={{ background: 'rgba(148,163,184,0.1)', color: '#94a3b8' }}>
             {account.salesforce_id}
           </span>
         )}

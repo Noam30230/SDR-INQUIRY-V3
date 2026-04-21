@@ -7,16 +7,24 @@ const CATEGORY_ICONS: Record<keyof TechStack, string> = {
   Security: '🔒', Other: '🔧',
 }
 
+type TechVariant = 'tech' | 'tech-cloud' | 'tech-other'
+
+function categoryVariant(cat: keyof TechStack): TechVariant {
+  if (cat === 'Cloud') return 'tech-cloud'
+  if (cat === 'Other') return 'tech-other'
+  return 'tech'
+}
+
 function TechGroup({ category, items }: { category: keyof TechStack; items: string[] }) {
   if (!items.length) return null
+  const variant = categoryVariant(category)
   return (
     <div className="flex items-start gap-2">
-      {/* Fix #8: w-14 was too narrow for "Languages" — w-20 fits all category names */}
       <span className="text-xs shrink-0 mt-0.5 w-20 text-right" style={{ color: 'var(--text-muted)' }}>
         {CATEGORY_ICONS[category]} {category}
       </span>
       <div className="flex flex-wrap gap-1">
-        {items.map(item => <SignalChip key={item} label={item} variant="tech" />)}
+        {items.map(item => <SignalChip key={item} label={item} variant={variant} />)}
       </div>
     </div>
   )
@@ -40,26 +48,26 @@ export default function AccountDetail({ account }: AccountDetailProps) {
 
       {/* Signals */}
       {(positiveSignals.length > 0 || negativeSignals.length > 0) && (
-        <div className={positiveSignals.length > 0 && negativeSignals.length > 0 ? 'grid grid-cols-2 gap-3' : ''}>
+        <div className={positiveSignals.length > 0 && negativeSignals.length > 0 ? 'grid grid-cols-2 gap-3 items-stretch' : ''}>
           {positiveSignals.length > 0 && (
-            <div className="rounded-lg p-3" style={{ background: 'rgba(16,185,129,0.05)', border: '1px solid rgba(16,185,129,0.15)' }}>
-              <p className="text-xs font-semibold mb-2" style={{ color: '#34d399' }}>Positive signals</p>
+            <div className="rounded-lg p-3" style={{ background: 'rgba(16,185,129,0.05)', border: '1px solid rgba(16,185,129,0.12)' }}>
+              <p className="text-xs font-semibold uppercase tracking-wider mb-2" style={{ color: 'rgba(74,222,128,0.65)', letterSpacing: '0.07em', fontSize: 10 }}>Positive signals</p>
               <ul className="space-y-1">
                 {positiveSignals.map((s, i) => (
                   <li key={i} className="text-xs flex items-start gap-1.5" style={{ color: '#e2e8f0' }}>
-                    <span className="text-green-400 shrink-0 mt-0.5">+</span>{s}
+                    <span style={{ color: 'rgba(74,222,128,0.65)' }} className="shrink-0 mt-0.5">+</span>{s}
                   </li>
                 ))}
               </ul>
             </div>
           )}
           {negativeSignals.length > 0 && (
-            <div className="rounded-lg p-3" style={{ background: 'rgba(239,68,68,0.05)', border: '1px solid rgba(239,68,68,0.15)' }}>
-              <p className="text-xs font-semibold mb-2" style={{ color: '#f87171' }}>Negative signals</p>
+            <div className="rounded-lg p-3" style={{ background: 'rgba(239,68,68,0.05)', border: '1px solid rgba(239,68,68,0.12)' }}>
+              <p className="text-xs font-semibold uppercase tracking-wider mb-2" style={{ color: 'rgba(248,113,113,0.65)', letterSpacing: '0.07em', fontSize: 10 }}>Negative signals</p>
               <ul className="space-y-1">
                 {negativeSignals.map((s, i) => (
                   <li key={i} className="text-xs flex items-start gap-1.5" style={{ color: '#e2e8f0' }}>
-                    <span className="text-red-400 shrink-0 mt-0.5">−</span>{s}
+                    <span style={{ color: 'rgba(248,113,113,0.65)' }} className="shrink-0 mt-0.5">−</span>{s}
                   </li>
                 ))}
               </ul>
