@@ -311,6 +311,26 @@ export default function Sidebar({ accounts, isScoring, userEmail, selectedIds, e
               )}
             </div>
           )}
+          {/* Search depth toolbar */}
+          <div className="flex items-center gap-1 pt-0.5">
+            {(['standard', 'deep'] as const).map(mode => (
+              <button
+                key={mode}
+                onClick={() => setSearchDepth(mode)}
+                className="flex items-center gap-1 px-2 py-1 rounded-md text-xs font-medium transition-all"
+                style={{
+                  background: searchDepth === mode ? 'rgba(124,58,237,0.12)' : 'transparent',
+                  color: searchDepth === mode ? '#a78bfa' : 'var(--text-muted)',
+                }}
+              >
+                <svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
+                  <circle cx="11" cy="11" r="8"/><path d="m21 21-4.35-4.35"/>
+                  {mode === 'deep' && <path d="M11 8v6M8 11h6"/>}
+                </svg>
+                {mode === 'standard' ? 'Standard' : 'Deep search'}
+              </button>
+            ))}
+          </div>
         </div>
       )}
 
