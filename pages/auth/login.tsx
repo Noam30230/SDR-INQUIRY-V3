@@ -335,7 +335,10 @@ export default function LoginPage() {
           {/* Left: logo */}
           <div className="flex items-center gap-2.5 flex-1">
             <img src="/logo.png" alt="Inquiry" className="w-12 h-12 object-contain" />
-            <span className="text-sm font-bold text-white tracking-wide">Inquiry</span>
+            <div className="flex flex-col leading-tight">
+              <span className="text-sm font-bold text-white tracking-wide">Inquiry</span>
+              <a href="https://www.linkedin.com/in/noam-ramillon" target="_blank" rel="noopener noreferrer" className="text-xs hover:text-white transition-colors" style={{ color: 'var(--text-muted)' }}>by Noam Ramillon</a>
+            </div>
           </div>
           {/* Center: nav links */}
           <div className="hidden md:flex items-center gap-8 flex-1 justify-center">
