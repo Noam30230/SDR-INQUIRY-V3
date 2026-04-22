@@ -337,7 +337,7 @@ export default function LoginPage() {
             <img src="/logo.png" alt="Inquiry" className="w-12 h-12 object-contain" />
             <div className="flex flex-col leading-tight">
               <span className="text-sm font-bold text-white tracking-wide">Inquiry</span>
-              <a href="https://www.linkedin.com/in/noam-ramillon" target="_blank" rel="noopener noreferrer" className="text-xs hover:text-white transition-colors" style={{ color: 'var(--text-muted)' }}>by Noam Ramillon</a>
+              <a href="https://www.linkedin.com/in/noam-ramillon" target="_blank" rel="noopener noreferrer" className="text-xs hover:text-white transition-colors" style={{ color: '#7c3aed' }}>by Noam Ramillon</a>
             </div>
           </div>
           {/* Center: nav links */}
