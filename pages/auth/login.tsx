@@ -2,6 +2,13 @@ import { useState, useEffect } from 'react'
 import { useRouter } from 'next/router'
 import { supabaseBrowser } from '@/lib/supabase'
 
+const InquiryLogo = ({ size = 40 }: { size?: number }) => (
+  <svg width={size} height={size} viewBox="0 0 64 64" fill="none" xmlns="http://www.w3.org/2000/svg">
+    <rect x="10" y="28" width="36" height="8" rx="3.6" fill="#7c3aed" />
+    <circle cx="52" cy="32" r="4.2" fill="#7c3aed" />
+  </svg>
+)
+
 type Mode = 'signin' | 'signup'
 type View = 'landing' | 'form'
 
@@ -334,7 +341,7 @@ export default function LoginPage() {
           }}>
           {/* Left: logo */}
           <div className="flex items-center gap-2.5 flex-1">
-            <img src="/logo.png" alt="Inquiry" className="w-12 h-12 object-contain" />
+            <InquiryLogo size={36} />
             <div className="flex flex-col leading-tight">
               <span className="text-sm font-bold text-white tracking-wide">Inquiry</span>
               <a href="https://www.linkedin.com/in/noam-ramillon" target="_blank" rel="noopener noreferrer" className="text-xs hover:text-white transition-colors" style={{ color: '#7c3aed' }}>by Noam Ramillon</a>
@@ -691,7 +698,7 @@ export default function LoginPage() {
         <footer className="flex flex-col items-center px-6 py-12" style={{ borderTop: '1px solid rgba(255,255,255,0.06)' }}>
           <div className="w-full flex flex-col md:flex-row items-center justify-between gap-6" style={{ maxWidth: 1100 }}>
             <div className="flex items-center gap-2.5">
-              <img src="/logo.png" alt="Inquiry" className="w-10 h-10 object-contain" />
+              <InquiryLogo size={32} />
               <span className="text-sm font-bold text-white">Inquiry</span>
               <span className="text-xs mx-1" style={{ color: 'var(--text-muted)' }}>·</span>
               <span className="text-xs" style={{ color: 'var(--text-muted)' }}>Built by </span>
@@ -732,7 +739,7 @@ export default function LoginPage() {
       </button>
 
       <div className="flex items-center gap-2.5 mb-8 relative z-10">
-        <img src="/logo.png" alt="Inquiry" className="w-12 h-12 object-contain" />
+        <InquiryLogo size={36} />
         <span className="text-sm font-bold text-white">Inquiry</span>
       </div>
 

@@ -1,4 +1,11 @@
 import { useState, useRef, useEffect } from 'react'
+
+const InquiryLogo = ({ size = 32 }: { size?: number }) => (
+  <svg width={size} height={size} viewBox="0 0 64 64" fill="none" xmlns="http://www.w3.org/2000/svg">
+    <rect x="10" y="28" width="36" height="8" rx="3.6" fill="#7c3aed" />
+    <circle cx="52" cy="32" r="4.2" fill="#7c3aed" />
+  </svg>
+)
 import Papa from 'papaparse'
 import type { Account, Tier } from '@/types'
 import { supabaseBrowser } from '@/lib/supabase'
@@ -122,7 +129,7 @@ export default function Sidebar({ accounts, isScoring, remainingCount = 0, userE
       <div className="mb-5">
         <div className="flex items-center justify-between gap-2 mb-1">
           <div className="flex items-center gap-2.5">
-            <img src="/logo.png" alt="Inquiry" className="w-8 h-8 object-contain shrink-0" />
+            <InquiryLogo size={32} />
             <div className="leading-none">
               <div className="text-sm font-bold text-white leading-tight">Inquiry</div>
               <div className="flex items-center gap-1 mt-0.5">
