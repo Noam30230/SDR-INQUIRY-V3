@@ -36,35 +36,35 @@ function CodeBlock({ children }: { children: React.ReactNode }) {
 
 const STEPS: StepDef[] = [
   {
-    title: 'Bienvenue sur Inquiry 👋',
+    title: 'Welcome to Inquiry 👋',
     body: (
       <div style={{ color: 'rgba(255,255,255,0.6)', fontSize: 14, lineHeight: 1.7 }}>
         <p>
-          Inquiry analyse vos comptes B2B en <strong style={{ color: 'white' }}>~25 secondes</strong> et les classe
-          automatiquement en{' '}
+          Inquiry analyzes your B2B accounts in <strong style={{ color: 'white' }}>~25 seconds</strong> and automatically
+          classifies them as{' '}
           <span style={{ color: '#10b981', fontWeight: 600 }}>T1</span>,{' '}
           <span style={{ color: '#f59e0b', fontWeight: 600 }}>T2</span>,{' '}
-          <span style={{ color: '#6b7280', fontWeight: 600 }}>T3</span> ou{' '}
+          <span style={{ color: '#6b7280', fontWeight: 600 }}>T3</span> or{' '}
           <span style={{ color: '#ef4444', fontWeight: 600 }}>DQ</span>.
         </p>
         <p style={{ marginTop: 10 }}>
-          En 2 minutes, vous saurez exactement <strong style={{ color: 'white' }}>qui appeler</strong>,{' '}
-          <strong style={{ color: 'white' }}>pourquoi</strong>, et <strong style={{ color: 'white' }}>quoi dire</strong>.
+          In minutes, you'll know exactly <strong style={{ color: 'white' }}>who to call</strong>,{' '}
+          <strong style={{ color: 'white' }}>why</strong>, and <strong style={{ color: 'white' }}>what to say</strong>.
         </p>
-        <p style={{ marginTop: 10 }}>On vous fait faire le tour en 4 étapes rapides.</p>
+        <p style={{ marginTop: 10 }}>Here's a quick 4-step tour to get you started.</p>
       </div>
     ),
-    cta: 'Commencer →',
+    cta: 'Get started →',
   },
   {
     spotlight: '#onboarding-manual-area',
-    title: '✏️ Saisir un compte',
+    title: '✏️ Score an account',
     body: (
       <div style={{ color: 'rgba(255,255,255,0.6)', fontSize: 13, lineHeight: 1.7 }}>
         <p>
-          Entrez le <strong style={{ color: 'white' }}>nom</strong> et le{' '}
-          <strong style={{ color: 'white' }}>domaine</strong> de l'entreprise, séparés par une virgule.
-          Une ligne par compte.
+          Enter the company <strong style={{ color: 'white' }}>name</strong> and{' '}
+          <strong style={{ color: 'white' }}>domain</strong>, separated by a comma.
+          One account per line.
         </p>
         <CodeBlock>
           Pennylane, pennylane.com<br />
@@ -72,56 +72,56 @@ const STEPS: StepDef[] = [
           Alan, alan.com
         </CodeBlock>
         <p>
-          Le <strong style={{ color: 'white' }}>nom</strong> aide l'IA à cibler ses recherches web.
-          Le <strong style={{ color: 'white' }}>domaine</strong> est indispensable pour analyser le site et la stack technique.
-          Les deux ensemble donnent des résultats bien plus précis.
+          The <strong style={{ color: 'white' }}>name</strong> helps the AI target its web searches.
+          The <strong style={{ color: 'white' }}>domain</strong> is required to analyze the website and tech stack.
+          Both together give much more accurate results.
         </p>
       </div>
     ),
-    cta: 'Suivant →',
+    cta: 'Next →',
   },
   {
     spotlight: '#onboarding-tabs',
-    title: '📂 Importer une liste CSV',
+    title: '📂 Import a CSV list',
     body: (
       <div style={{ color: 'rgba(255,255,255,0.6)', fontSize: 13, lineHeight: 1.7 }}>
         <p>
-          Pour scorer une liste entière, cliquez sur l'onglet{' '}
-          <strong style={{ color: 'white' }}>📂 CSV</strong> ci-contre.
+          To score an entire list, switch to the{' '}
+          <strong style={{ color: 'white' }}>📂 CSV</strong> tab.
         </p>
         <p style={{ marginTop: 10 }}>
-          Glissez votre fichier directement dans la zone — Inquiry détecte automatiquement
-          les colonnes <strong style={{ color: 'white' }}>nom</strong> et{' '}
-          <strong style={{ color: 'white' }}>domaine</strong>, même si elles ont des noms différents.
+          Drag and drop your file directly into the zone — Inquiry automatically detects
+          the <strong style={{ color: 'white' }}>name</strong> and{' '}
+          <strong style={{ color: 'white' }}>domain</strong> columns, even if they have different headers.
         </p>
         <p style={{ marginTop: 10 }}>
-          Votre CSV peut aussi contenir un{' '}
-          <strong style={{ color: 'white' }}>Salesforce ID</strong> par ligne — il sera conservé dans l'export.
+          Your CSV can also include a <strong style={{ color: 'white' }}>Salesforce ID</strong> column —
+          it will be preserved in the export.
         </p>
       </div>
     ),
-    cta: 'Suivant →',
+    cta: 'Next →',
   },
   {
-    title: '📊 Lire les résultats',
+    title: '📊 Reading the results',
     body: (
       <div style={{ color: 'rgba(255,255,255,0.6)', fontSize: 13, lineHeight: 1.7 }}>
-        <p style={{ marginBottom: 12 }}>Chaque compte est classé automatiquement :</p>
+        <p style={{ marginBottom: 12 }}>Every account is automatically classified:</p>
         <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 8, marginBottom: 14 }}>
-          <TierBadge tier="T1" color="#10b981" desc="SaaS confirmé — priorité haute" />
-          <TierBadge tier="T2" color="#f59e0b" desc="Signaux tech — à qualifier" />
-          <TierBadge tier="T3" color="#6b7280" desc="Peu de signaux — faible priorité" />
-          <TierBadge tier="DQ" color="#ef4444" desc="Consulting / services — disqualifié" />
+          <TierBadge tier="T1" color="#10b981" desc="Confirmed SaaS — high priority" />
+          <TierBadge tier="T2" color="#f59e0b" desc="Tech signals — needs qualifying" />
+          <TierBadge tier="T3" color="#6b7280" desc="Few signals — low priority" />
+          <TierBadge tier="DQ" color="#ef4444" desc="Consulting / services — disqualified" />
         </div>
         <p>
-          Vous verrez aussi le <strong style={{ color: 'white' }}>score 0–100</strong>,
-          les <strong style={{ color: 'white' }}>signaux positifs/négatifs</strong>,
-          la <strong style={{ color: 'white' }}>stack technique</strong> détectée,
-          et un <strong style={{ color: 'white' }}>angle d'appel</strong> suggéré par l'IA.
+          You'll also see a <strong style={{ color: 'white' }}>score 0–100</strong>,{' '}
+          <strong style={{ color: 'white' }}>positive/negative signals</strong>,
+          the detected <strong style={{ color: 'white' }}>tech stack</strong>,
+          and an AI-suggested <strong style={{ color: 'white' }}>call angle</strong>.
         </p>
       </div>
     ),
-    cta: "C'est parti ! 🚀",
+    cta: "Let's go! 🚀",
   },
 ]
 
@@ -194,7 +194,7 @@ export default function OnboardingModal({ onDone }: { onDone: () => void }) {
             style={{ color: 'rgba(255,255,255,0.25)', fontSize: 12, background: 'none', border: 'none', cursor: 'pointer', whiteSpace: 'nowrap', flexShrink: 0, paddingTop: 2 }}
             className="hover:text-white transition-colors"
           >
-            Passer
+            Skip
           </button>
         </div>
         <div>{current.body}</div>

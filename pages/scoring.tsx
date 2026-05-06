@@ -142,14 +142,18 @@ export default function ScoringPage() {
   }, [])
 
   useEffect(() => {
-    if (typeof window !== 'undefined' && !localStorage.getItem('inquiry_onboarded')) {
-      setShowOnboarding(true)
-    }
-
     loadAccounts()
 
     supabaseBrowser.auth.getSession().then(({ data }) => {
       setUserEmail(data.session?.user?.email || '')
+      // Show onboarding only for brand-new accounts (signed up < 2 min ago)
+      const createdAt = data.session?.user?.created_at
+      const isNewUser = createdAt
+        ? Date.now() - new Date(createdAt).getTime() < 2 * 60 * 1000
+        : false
+      if (isNewUser && !localStorage.getItem('inquiry_onboarded')) {
+        setShowOnboarding(true)
+      }
     })
 
     let realtimeTimer: ReturnType<typeof setTimeout>
