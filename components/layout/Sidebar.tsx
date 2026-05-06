@@ -53,6 +53,7 @@ export default function Sidebar({ accounts, isScoring, remainingCount = 0, userE
   const [csvPreview, setCsvPreview] = useState<ParsedRow[]>([])
   const [csvMapping, setCsvMapping] = useState<{ nameCol: string | null; domainCol: string | null; sfdcCol: string | null } | null>(null)
   const [menuOpen, setMenuOpen] = useState(false)
+  const [isDragOver, setIsDragOver] = useState(false)
   const fileRef = useRef<HTMLInputElement>(null)
   const menuRef = useRef<HTMLDivElement>(null)
 
@@ -292,17 +293,41 @@ export default function Sidebar({ accounts, isScoring, remainingCount = 0, userE
       {/* CSV input */}
       {tab === 'csv' && (
         <div className="space-y-2 mb-4">
+          <div
+            onClick={() => fileRef.current?.click()}
+            onDragOver={e => { e.preventDefault(); setIsDragOver(true) }}
+            onDragLeave={() => setIsDragOver(false)}
+            onDrop={e => {
+              e.preventDefault()
+              setIsDragOver(false)
+              const file = e.dataTransfer.files?.[0]
+              if (file) {
+                const fakeEvent = { target: { files: [file] } } as unknown as React.ChangeEvent<HTMLInputElement>
+                handleCsvUpload(fakeEvent)
+              }
+            }}
+            className="w-full flex flex-col items-center justify-center gap-1 rounded-lg cursor-pointer transition-all"
+            style={{
+              border: `1.5px dashed ${isDragOver ? '#7c3aed' : 'var(--border)'}`,
+              background: isDragOver ? 'rgba(124,58,237,0.08)' : 'var(--bg-hover)',
+              padding: '12px 8px',
+            }}
+          >
+            <span className="text-lg">📂</span>
+            <span className="text-xs font-medium" style={{ color: isDragOver ? '#a78bfa' : 'var(--text-muted)' }}>
+              {csvPreview.length > 0 ? `${csvPreview.length} rows loaded` : 'Drop CSV or click to browse'}
+            </span>
+            <span className="text-xs" style={{ color: 'var(--text-muted)', opacity: 0.6 }}>
+              company · domain · org_id (optional)
+            </span>
+          </div>
           <input
             ref={fileRef}
             type="file"
             accept=".csv"
             onChange={handleCsvUpload}
-            className="w-full text-xs file:mr-2 file:py-1 file:px-2 file:rounded file:border-0 file:text-xs file:font-medium cursor-pointer"
-            style={{ color: 'var(--text-muted)' }}
+            className="hidden"
           />
-          <p className="text-xs" style={{ color: 'var(--text-muted)', opacity: 0.7 }}>
-            Columns: <code className="text-purple-300">company</code>, <code className="text-purple-300">domain</code>
-          </p>
 
           {csvMapping && (
             <div className="rounded-lg p-2 text-xs space-y-1.5" style={{ background: 'var(--bg-hover)', border: '1px solid var(--border)' }}>
