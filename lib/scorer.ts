@@ -36,6 +36,12 @@ CALL ANGLE: Write ONE short sentence in English (max 15 words) for the SDR's ope
 - "K8s stack with no monitoring detected — clear gap to fill"
 - "Prometheus user with fast-growing engineering team — strong displacement opportunity"
 
+STRICT RULE — NO HALLUCINATION ON TECH STACK:
+- For signals and reasoning, ONLY reference technologies that appear explicitly in the pre-collected data above (TECH STACK / GITHUB sections).
+- If no cloud provider was detected in the pre-collected data, do NOT mention any cloud provider (not AWS, not GCP, not Azure).
+- If a technology was not found by the collectors, do NOT assume or infer it based on the company sector, size, or any other signal.
+- When in doubt about a technology, omit it entirely. Silence is better than a wrong tech signal.
+
 After searching, respond ONLY with valid JSON, no markdown, no surrounding text. All signals and reasoning must be in English.`
 
 function buildPrompt(data: AggregatedData): string {

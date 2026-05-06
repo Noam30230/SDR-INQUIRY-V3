@@ -12,9 +12,10 @@ const HEADER_HOSTING_PATTERNS: Array<{ pattern: RegExp; name: string }> = [
   { pattern: /vercel/i, name: 'Vercel' },
   { pattern: /netlify/i, name: 'Netlify' },
   { pattern: /cloudflare/i, name: 'Cloudflare' },
-  { pattern: /awselb|amazon/i, name: 'AWS' },
+  { pattern: /awselb|aws|amazon/i, name: 'AWS' },
   { pattern: /microsoft|azure/i, name: 'Azure' },
-  { pattern: /google/i, name: 'GCP' },
+  // Only match actual GCP server headers, not generic "google" (would match Google Analytics)
+  { pattern: /google frontend|gws|gfe|google cloud/i, name: 'GCP' },
   { pattern: /ovh/i, name: 'OVH' },
 ]
 

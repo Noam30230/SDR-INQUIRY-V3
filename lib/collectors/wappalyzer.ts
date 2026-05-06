@@ -24,10 +24,13 @@ const SIGNATURES: Array<{ name: string; categories: string[]; patterns: RegExp[]
   { name: 'Mixpanel', categories: ['Analytics'], patterns: [/mixpanel/i] },
   { name: 'Amplitude', categories: ['Analytics'], patterns: [/amplitude/i] },
 
-  // Cloud providers — detected from HTML content (deterministic)
-  { name: 'Azure', categories: ['Cloud'], patterns: [/azurefd\.net|azurewebsites\.net|azureedge\.net|blob\.core\.windows\.net|login\.microsoftonline\.com|js\.monitor\.azure\.com|appinsights|azure-api\.net/i] },
-  { name: 'AWS', categories: ['Cloud'], patterns: [/amazonaws\.com|cloudfront\.net|execute-api\.[a-z0-9-]+\.amazonaws|s3\.[a-z0-9-]+\.amazonaws/i] },
-  { name: 'GCP', categories: ['Cloud'], patterns: [/storage\.googleapis\.com|firebaseapp\.com|firebase\.com|appspot\.com|\.googleapis\.com/i] },
+  // Cloud providers — detected from HTML content (deterministic, strict patterns only)
+  // Azure: only actual Azure service URLs, not just Microsoft login
+  { name: 'Azure', categories: ['Cloud'], patterns: [/azurefd\.net|azurewebsites\.net|azureedge\.net|blob\.core\.windows\.net|js\.monitor\.azure\.com|azure-api\.net/i] },
+  // AWS: only actual AWS infrastructure URLs — NOT cloudfront.net alone (CDN ≠ cloud provider)
+  { name: 'AWS', categories: ['Cloud'], patterns: [/execute-api\.[a-z0-9-]+\.amazonaws\.com|s3\.[a-z0-9-]+\.amazonaws\.com|\.elb\.amazonaws\.com|ec2\.[a-z0-9-]+\.amazonaws\.com/i] },
+  // GCP: only actual GCP hosting — NOT .googleapis.com (that's just Google Maps/Fonts/Analytics)
+  { name: 'GCP', categories: ['Cloud'], patterns: [/storage\.googleapis\.com|firebaseapp\.com|appspot\.com|run\.app|\.a\.run\.app/i] },
 
   // Monitoring
   { name: 'Datadog', categories: ['Application performance monitoring'], patterns: [/datadoghq\.com|dd-rum/i] },
