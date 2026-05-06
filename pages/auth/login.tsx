@@ -239,6 +239,7 @@ export default function LoginPage() {
   const [error, setError] = useState('')
   const [success, setSuccess] = useState('')
   const [scrolled, setScrolled] = useState(false)
+  const [openFaq, setOpenFaq] = useState<number | null>(null)
 
   useEffect(() => {
     const onScroll = () => setScrolled(window.scrollY > 40)
@@ -289,9 +290,17 @@ export default function LoginPage() {
     setLoading(false)
   }
 
+  const FAQ_ITEMS = [
+    { q: 'What is Inquiry?', a: 'Inquiry is an AI-powered account scoring tool for sales teams. It analyzes companies in ~25 seconds and returns a tier (T1/T2/T3/DQ), a score out of 100, a tech stack breakdown, and a one-sentence call angle ready to use.' },
+    { q: 'What sources does it use?', a: 'Inquiry cross-references the company website (tech stack, SaaS signals), GitHub (dev activity, tools used), DNS/ASN data (real cloud provider), Pappers (French company data), and Claude AI web search (funding rounds, growth signals).' },
+    { q: "What's the difference between Standard and Deep search?", a: 'Standard runs 1 AI search (~15s) — ideal for batch scoring 50+ accounts. Deep runs 2 searches (~30s) and delivers more thorough signal detection. Use Deep for your highest-priority accounts.' },
+    { q: 'What does T1 / T2 / T3 / DQ mean?', a: 'T1 = top priority (confirmed SaaS, strong tech signals), T2 = medium priority (likely SaaS, partial signals), T3 = low priority (few tech signals, traditional sector), DQ = disqualified (IT consulting, services companies, public institutions).' },
+    { q: 'Can I import a CSV?', a: 'Yes. Inquiry accepts CSV files with company name, domain, and optionally a Salesforce org ID. Columns are auto-detected regardless of their names — drag and drop your export directly.' },
+  ]
+
   if (view === 'landing') {
     return (
-      <div style={{ background: 'var(--bg-base)', minHeight: '100vh' }}>
+      <div style={{ background: '#020817', minHeight: '100vh', color: 'white' }}>
 
         <style>{`
           @keyframes shimmer-rotate {
@@ -316,30 +325,44 @@ export default function LoginPage() {
           }
           .curtain {
             position: fixed; inset: 0; z-index: 100; pointer-events: none;
-            background: #02050d;
+            background: #020817;
             animation: curtain-up 1s cubic-bezier(0.76, 0, 0.24, 1) 0.15s both;
           }
           @keyframes fade-up {
-            from { opacity: 0; transform: translateY(28px); }
+            from { opacity: 0; transform: translateY(24px); }
             to   { opacity: 1; transform: translateY(0); }
           }
-          .reveal { animation: fade-up 0.8s cubic-bezier(0.16, 1, 0.3, 1) both; }
-          .reveal-d1 { animation-delay: 0.7s; }
-          .reveal-d2 { animation-delay: 0.82s; }
-          .reveal-d3 { animation-delay: 0.94s; }
+          .reveal  { animation: fade-up 0.7s cubic-bezier(0.16,1,0.3,1) both; }
+          .reveal-d1 { animation-delay: 0.6s; }
+          .reveal-d2 { animation-delay: 0.72s; }
+          .reveal-d3 { animation-delay: 0.84s; }
+          .reveal-d4 { animation-delay: 0.96s; }
+          @keyframes marquee-scroll {
+            from { transform: translateX(0); }
+            to   { transform: translateX(-50%); }
+          }
+          .marquee-track { animation: marquee-scroll 22s linear infinite; display: flex; gap: 32px; width: max-content; }
+          .marquee-wrap { overflow: hidden; position: relative; }
+          .marquee-wrap::before, .marquee-wrap::after {
+            content: ''; position: absolute; top: 0; bottom: 0; width: 80px; z-index: 2; pointer-events: none;
+          }
+          .marquee-wrap::before { left: 0; background: linear-gradient(to right, #020817, transparent); }
+          .marquee-wrap::after  { right: 0; background: linear-gradient(to left, #020817, transparent); }
+          @keyframes border-beam {
+            0%   { offset-distance: 0%; }
+            100% { offset-distance: 100%; }
+          }
+          .faq-chevron { transition: transform 0.25s ease; }
+          .faq-chevron.open { transform: rotate(180deg); }
+          .faq-body { overflow: hidden; transition: max-height 0.3s ease, opacity 0.25s ease; }
         `}</style>
 
         {/* Curtain */}
         <div className="curtain" />
 
         {/* ── NAVBAR ── */}
-        <nav className="fixed top-0 left-0 right-0 z-40 flex items-center justify-between px-8 h-16 transition-all duration-300"
-          style={{
-            background: 'rgba(8,14,31,0.92)',
-            backdropFilter: 'blur(12px)',
-            borderBottom: '1px solid rgba(255,255,255,0.08)',
-          }}>
-          {/* Left: logo */}
+        <nav className="fixed top-0 left-0 right-0 z-40 flex items-center justify-between px-8 h-16"
+          style={{ background: 'rgba(2,8,23,0.85)', backdropFilter: 'blur(16px)', borderBottom: '1px solid rgba(255,255,255,0.07)' }}>
           <div className="flex items-center gap-2.5 flex-1">
             <InquiryLogo size={36} />
             <div className="flex flex-col leading-tight">
@@ -347,113 +370,184 @@ export default function LoginPage() {
               <a href="https://www.linkedin.com/in/noam-ramillon" target="_blank" rel="noopener noreferrer" className="text-xs hover:text-white transition-colors" style={{ color: '#7c3aed' }}>by Noam Ramillon</a>
             </div>
           </div>
-          {/* Center: nav links */}
           <div className="hidden md:flex items-center gap-8 flex-1 justify-center">
-            {[['Product', 'features'], ['How it works', 'how-it-works']].map(([label, id]) => (
+            {[['Product', 'features'], ['How it works', 'how-it-works'], ['FAQ', 'faq']].map(([label, id]) => (
               <button key={id} onClick={() => scrollTo(id)}
                 className="text-sm transition-colors hover:text-white"
-                style={{ color: 'var(--text-muted)', background: 'none', border: 'none', cursor: 'pointer' }}>
+                style={{ color: 'rgba(255,255,255,0.55)', background: 'none', border: 'none', cursor: 'pointer' }}>
                 {label}
               </button>
             ))}
           </div>
-          {/* Right: Need help */}
-          <div className="flex-1 flex justify-end">
+          <div className="flex-1 flex justify-end items-center gap-3">
             <a href="https://mail.google.com/mail/?view=cm&to=noam.ramillon@datadoghq.com" target="_blank" rel="noopener noreferrer"
-              className="px-4 py-1.5 rounded-full text-sm font-medium transition-opacity hover:opacity-80"
-              style={{ border: '1px solid rgba(124,58,237,0.35)', color: '#a78bfa' }}>
-              Need help?
+              className="text-sm transition-colors hover:text-white" style={{ color: 'rgba(255,255,255,0.45)' }}>
+              Contact
             </a>
+            <button onClick={() => openForm('signin')}
+              className="px-4 py-1.5 rounded-full text-sm font-medium transition-all hover:opacity-80"
+              style={{ border: '1px solid rgba(255,255,255,0.15)', color: 'rgba(255,255,255,0.7)', background: 'none' }}>
+              Log in
+            </button>
+            <button onClick={() => openForm('signup')}
+              className="px-4 py-1.5 rounded-full text-sm font-bold text-white transition-all hover:-translate-y-0.5"
+              style={{ background: 'linear-gradient(135deg,#7c3aed,#6d28d9)', boxShadow: '0 0 16px rgba(124,58,237,0.4)' }}>
+              Get started
+            </button>
           </div>
         </nav>
 
         {/* ── HERO ── */}
-        <section id="hero" className="relative flex flex-col items-center px-6 pt-32 pb-20">
-          <div className="absolute inset-0 overflow-hidden pointer-events-none">
-            <div className="absolute top-0 left-1/2 -translate-x-1/2" style={{
-              width: 900, height: 500,
-              background: 'radial-gradient(ellipse at 50% 0%, rgba(124,58,237,0.25) 0%, transparent 65%)',
-              filter: 'blur(50px)',
-            }} />
+        <section className="relative flex flex-col items-center text-center px-6 pt-40 pb-24 overflow-hidden">
+          {/* Background glow */}
+          <div className="absolute inset-0 pointer-events-none" style={{
+            background: 'radial-gradient(ellipse 80% 50% at 50% -10%, rgba(124,58,237,0.3) 0%, transparent 60%)',
+          }} />
+          {/* Grid pattern */}
+          <div className="absolute inset-0 pointer-events-none opacity-[0.03]" style={{
+            backgroundImage: 'linear-gradient(rgba(255,255,255,0.5) 1px, transparent 1px), linear-gradient(90deg, rgba(255,255,255,0.5) 1px, transparent 1px)',
+            backgroundSize: '48px 48px',
+          }} />
+
+          <div className="relative z-10 max-w-4xl mx-auto">
+            {/* Badge */}
+            <div className="reveal reveal-d1 inline-flex items-center gap-2 px-4 py-1.5 rounded-full mb-8 text-xs font-medium"
+              style={{ background: 'rgba(124,58,237,0.12)', border: '1px solid rgba(124,58,237,0.3)', color: '#a78bfa' }}>
+              <span style={{ width: 6, height: 6, borderRadius: '50%', background: '#a78bfa', display: 'inline-block', boxShadow: '0 0 8px #a78bfa' }} />
+              AI-powered · ~25s per account · T1/T2/T3/DQ
+            </div>
+
+            {/* Headline */}
+            <h1 className="reveal reveal-d2 font-bold mb-6" style={{ fontSize: 'clamp(2.8rem, 6vw, 5rem)', lineHeight: 1.08, letterSpacing: '-0.03em' }}>
+              Score your accounts.<br />
+              <span style={{ background: 'linear-gradient(135deg, #7c3aed 0%, #a78bfa 50%, #7c3aed 100%)', WebkitBackgroundClip: 'text', WebkitTextFillColor: 'transparent', backgroundSize: '200% auto' }}>
+                Call the right ones.
+              </span>
+            </h1>
+
+            {/* Subheadline */}
+            <p className="reveal reveal-d3 mb-10 mx-auto" style={{ fontSize: '1.15rem', color: 'rgba(255,255,255,0.5)', lineHeight: 1.75, maxWidth: 560 }}>
+              Inquiry analyzes companies in ~25 seconds and tells you who to call first — with tier ranking, tech stack detection, and an AI-generated call angle.
+            </p>
+
+            {/* CTAs */}
+            <div className="reveal reveal-d4 flex items-center justify-center gap-4 mb-6">
+              <button onClick={() => openForm('signup')}
+                className="shimmer-btn px-8 py-3.5 rounded-full text-sm font-bold text-white transition-all hover:-translate-y-0.5 active:scale-[0.97]"
+                style={{ boxShadow: '0 0 32px rgba(124,58,237,0.5)' }}>
+                Get started free →
+              </button>
+              <button onClick={() => openForm('signin')}
+                className="px-7 py-3.5 rounded-full text-sm font-semibold transition-all hover:-translate-y-0.5 active:scale-[0.97]"
+                style={{ background: 'rgba(255,255,255,0.05)', border: '1px solid rgba(255,255,255,0.12)', color: 'rgba(255,255,255,0.7)' }}>
+                Log in
+              </button>
+            </div>
+            <p className="text-xs mb-16" style={{ color: 'rgba(255,255,255,0.25)' }}>No credit card required · 10 free analyses to start</p>
           </div>
 
-          {/* Big card */}
-          <div className="reveal reveal-d1 rounded-3xl w-full" style={{
-            background: 'rgba(255,255,255,0.025)',
-            border: '1px solid rgba(255,255,255,0.07)',
-            padding: '64px 80px 0 80px',
-            overflow: 'hidden',
-          }}>
-            <div className="text-center mb-10">
-              <h1 className="font-bold mb-7" style={{ fontSize: 'clamp(3rem, 6vw, 4.5rem)', lineHeight: 1.1, letterSpacing: '-0.02em' }}>
-                <span className="text-white">Score your accounts.</span><br />
-                <span style={{ color: '#7c3aed' }}>Call the right ones.</span>
-              </h1>
-              <p className="mb-12" style={{ fontSize: '1.2rem', color: 'var(--text-muted)', lineHeight: 1.8 }}>
-                AI-powered ICP scoring for sales teams.<br />
-                ~25s per account · T1/T2/T3/DQ tiering.
-              </p>
-              <div className="flex items-center justify-center gap-3 mb-10">
-                <button onClick={() => openForm('signup')}
-                  className="shimmer-btn px-8 py-3 rounded-full text-sm font-bold text-white transition-all hover:-translate-y-0.5 active:scale-[0.97]"
-                  style={{ boxShadow: '0 0 32px rgba(124,58,237,0.5)' }}>
-                  Sign up →
-                </button>
-                <button onClick={() => openForm('signin')}
-                  className="px-7 py-3 rounded-full text-sm font-semibold transition-all hover:-translate-y-0.5 active:scale-[0.97]"
-                  style={{ background: 'transparent', border: '1px solid rgba(124,58,237,0.4)', color: '#a78bfa' }}>
-                  Log in
-                </button>
+          {/* Dashboard screenshot */}
+          <div className="reveal reveal-d4 relative w-full max-w-5xl mx-auto">
+            <div className="absolute -inset-px rounded-2xl pointer-events-none" style={{ background: 'linear-gradient(180deg, rgba(124,58,237,0.3) 0%, transparent 60%)', borderRadius: 18 }} />
+            <div className="rounded-2xl overflow-hidden" style={{
+              border: '1px solid rgba(124,58,237,0.25)',
+              boxShadow: '0 40px 100px rgba(0,0,0,0.7), 0 0 0 1px rgba(255,255,255,0.03), inset 0 1px 0 rgba(255,255,255,0.06)',
+            }}>
+              <div className="flex items-center gap-1.5 px-4 py-3" style={{ background: '#050a14', borderBottom: '1px solid rgba(255,255,255,0.05)' }}>
+                <div className="w-3 h-3 rounded-full" style={{ background: '#ef4444' }} />
+                <div className="w-3 h-3 rounded-full" style={{ background: '#f59e0b' }} />
+                <div className="w-3 h-3 rounded-full" style={{ background: '#10b981' }} />
+                <div className="flex-1 mx-4">
+                  <div className="mx-auto h-5 rounded flex items-center justify-center px-3" style={{ background: 'rgba(255,255,255,0.04)', maxWidth: 220 }}>
+                    <span className="text-[9px]" style={{ color: 'rgba(255,255,255,0.2)' }}>inquiry.vercel.app/scoring</span>
+                  </div>
+                </div>
               </div>
+              <DashboardIllustration />
             </div>
+            {/* Bottom fade */}
+            <div className="absolute bottom-0 left-0 right-0 h-20 pointer-events-none rounded-b-2xl" style={{ background: 'linear-gradient(to bottom, transparent, #020817)' }} />
+          </div>
+        </section>
 
-            {/* Source badges */}
-            <div className="flex items-center gap-3 mb-8 flex-wrap justify-center">
-              {[
-                { label: 'Website', icon: <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round"><circle cx="12" cy="12" r="10"/><path d="M2 12h20M12 2a15.3 15.3 0 0 1 4 10 15.3 15.3 0 0 1-4 10 15.3 15.3 0 0 1-4-10 15.3 15.3 0 0 1 4-10z"/></svg> },
-                { label: 'GitHub', icon: <svg width="13" height="13" viewBox="0 0 24 24" fill="currentColor"><path d="M12 2C6.477 2 2 6.484 2 12.017c0 4.425 2.865 8.18 6.839 9.504.5.092.682-.217.682-.483 0-.237-.008-.868-.013-1.703-2.782.605-3.369-1.343-3.369-1.343-.454-1.158-1.11-1.466-1.11-1.466-.908-.62.069-.608.069-.608 1.003.07 1.531 1.032 1.531 1.032.892 1.53 2.341 1.088 2.91.832.092-.647.35-1.088.636-1.338-2.22-.253-4.555-1.113-4.555-4.951 0-1.093.39-1.988 1.029-2.688-.103-.253-.446-1.272.098-2.65 0 0 .84-.27 2.75 1.026A9.564 9.564 0 0 1 12 6.844a9.59 9.59 0 0 1 2.504.337c1.909-1.296 2.747-1.027 2.747-1.027.546 1.379.202 2.398.1 2.651.64.7 1.028 1.595 1.028 2.688 0 3.848-2.339 4.695-4.566 4.943.359.309.678.92.678 1.855 0 1.338-.012 2.419-.012 2.747 0 .268.18.58.688.482A10.02 10.02 0 0 0 22 12.017C22 6.484 17.522 2 12 2z"/></svg> },
-                { label: 'Claude AI', icon: <svg width="13" height="13" viewBox="0 0 24 24" fill="currentColor"><path d="M12 2L9.5 9.5 2 12l7.5 2.5L12 22l2.5-7.5L22 12l-7.5-2.5z"/></svg> },
-              ].map(({ label, icon }) => (
-                <div key={label} className="flex items-center gap-2 px-4 py-2 rounded-full"
-                  style={{ background: 'rgba(255,255,255,0.05)', border: '1px solid rgba(255,255,255,0.09)', color: 'rgba(255,255,255,0.5)' }}>
-                  <span style={{ color: 'rgba(255,255,255,0.4)' }}>{icon}</span>
-                  <span className="text-xs font-medium">{label}</span>
+        {/* ── MARQUEE — sources ── */}
+        <section className="py-14" style={{ borderTop: '1px solid rgba(255,255,255,0.06)', borderBottom: '1px solid rgba(255,255,255,0.06)' }}>
+          <p className="text-center text-xs font-semibold tracking-widest uppercase mb-8" style={{ color: 'rgba(255,255,255,0.25)' }}>Real data sources — no hallucination</p>
+          <div className="marquee-wrap">
+            <div className="marquee-track">
+              {[...Array(2)].flatMap(() => [
+                { icon: '🌐', label: 'Website scraping' },
+                { icon: '🐙', label: 'GitHub analysis' },
+                { icon: '✦', label: 'Claude AI search' },
+                { icon: '🔗', label: 'DNS / ASN lookup' },
+                { icon: '📋', label: 'Pappers (FR)' },
+                { icon: '⚡', label: '~25s per account' },
+                { icon: '💰', label: 'Funding detection' },
+                { icon: '🛡️', label: 'Tech stack detection' },
+                { icon: '📊', label: 'T1/T2/T3/DQ scoring' },
+                { icon: '📞', label: 'AI call angle' },
+              ]).map((item, i) => (
+                <div key={i} className="flex items-center gap-2.5 px-5 py-2.5 rounded-full shrink-0"
+                  style={{ background: 'rgba(255,255,255,0.04)', border: '1px solid rgba(255,255,255,0.07)' }}>
+                  <span className="text-sm">{item.icon}</span>
+                  <span className="text-sm font-medium whitespace-nowrap" style={{ color: 'rgba(255,255,255,0.45)' }}>{item.label}</span>
                 </div>
               ))}
-              <div className="w-px h-4 mx-1" style={{ background: 'rgba(255,255,255,0.08)' }} />
-              <span className="text-xs" style={{ color: 'rgba(255,255,255,0.25)' }}>Sources used for every scoring</span>
             </div>
+          </div>
+        </section>
 
-            {/* Illustration — stretched to card edges */}
-            <div className="relative -mx-20">
-              <DashboardIllustration />
-              <div className="absolute bottom-0 left-0 right-0 h-16 pointer-events-none" style={{ background: 'linear-gradient(to bottom, transparent, rgba(8,14,31,1))' }} />
+        {/* ── PROBLEM ── */}
+        <section className="flex flex-col items-center px-6 py-28">
+          <div className="w-full" style={{ maxWidth: 1100 }}>
+            <div className="text-center mb-16">
+              <p className="text-xs font-semibold tracking-widest uppercase mb-4" style={{ color: '#7c3aed' }}>The problem</p>
+              <h2 className="text-4xl font-bold text-white mb-4" style={{ letterSpacing: '-0.025em', lineHeight: 1.15 }}>
+                Still scoring accounts<br />by hand?
+              </h2>
+              <p className="text-lg" style={{ color: 'rgba(255,255,255,0.45)' }}>Here's why that's costing you calls.</p>
+            </div>
+            <div className="grid grid-cols-1 md:grid-cols-3 gap-5">
+              {[
+                { icon: '📋', title: 'Hours wasted on research', desc: 'Manually checking LinkedIn, websites, and Crunchbase for 150+ accounts eats directly into your best prospecting hours. You end up spending your morning on admin, not selling.' },
+                { icon: '📞', title: 'Calling the wrong companies', desc: 'Without prioritization, you spend your best hours on T3 accounts that will never convert. Meanwhile, your top T1s are being called by a competitor who scored them first.' },
+                { icon: '🔍', title: 'Missing the right moment', desc: 'The company that just raised Series B, migrated to Kubernetes, or hired 20 engineers — you found out three weeks too late, or not at all. Timing is everything in outbound.' },
+              ].map(({ icon, title, desc }) => (
+                <div key={title} className="rounded-2xl p-7 flex flex-col gap-4" style={{
+                  background: 'rgba(255,255,255,0.02)',
+                  border: '1px solid rgba(255,255,255,0.07)',
+                }}>
+                  <div className="w-12 h-12 rounded-xl flex items-center justify-center text-2xl" style={{ background: 'rgba(255,255,255,0.05)', border: '1px solid rgba(255,255,255,0.08)' }}>
+                    {icon}
+                  </div>
+                  <h3 className="text-lg font-bold text-white" style={{ letterSpacing: '-0.01em' }}>{title}</h3>
+                  <p className="text-sm leading-relaxed" style={{ color: 'rgba(255,255,255,0.45)' }}>{desc}</p>
+                </div>
+              ))}
             </div>
           </div>
         </section>
 
         {/* ── HOW IT WORKS ── */}
-        <section id="how-it-works" className="flex flex-col items-center px-6 py-24" style={{ background: 'linear-gradient(180deg, rgba(124,58,237,0.04) 0%, transparent 100%)' }}>
+        <section id="how-it-works" className="flex flex-col items-center px-6 py-24" style={{ background: 'rgba(124,58,237,0.04)', borderTop: '1px solid rgba(255,255,255,0.05)', borderBottom: '1px solid rgba(255,255,255,0.05)' }}>
           <div className="w-full" style={{ maxWidth: 1100 }}>
             <div className="text-center mb-16">
-              <p className="text-xs font-semibold tracking-widest uppercase mb-3" style={{ color: '#7c3aed' }}>How it works</p>
-              <h2 className="text-3xl font-bold text-white" style={{ letterSpacing: '-0.02em' }}>From account list to call priority<br />in under 30 seconds.</h2>
+              <p className="text-xs font-semibold tracking-widest uppercase mb-4" style={{ color: '#7c3aed' }}>How it works</p>
+              <h2 className="text-4xl font-bold text-white" style={{ letterSpacing: '-0.025em', lineHeight: 1.15 }}>From account list to call priority<br />in under 30 seconds.</h2>
             </div>
             <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
               {STEPS.map((step, i) => (
                 <div key={step.number} className="relative rounded-2xl p-8" style={{
                   background: 'rgba(255,255,255,0.03)',
                   border: '1px solid rgba(255,255,255,0.08)',
-                  borderTop: `3px solid ${['#7c3aed','#a78bfa','#6d28d9'][i]}`,
                 }}>
-                  <div className="text-5xl font-black mb-6 leading-none" style={{
-                    background: 'linear-gradient(135deg, #7c3aed, #a78bfa)',
-                    WebkitBackgroundClip: 'text',
-                    WebkitTextFillColor: 'transparent',
-                    letterSpacing: '-0.04em',
-                  }}>{step.number}</div>
+                  <div className="w-10 h-10 rounded-xl flex items-center justify-center mb-6 text-sm font-black" style={{
+                    background: 'linear-gradient(135deg, rgba(124,58,237,0.3), rgba(109,40,217,0.15))',
+                    border: '1px solid rgba(124,58,237,0.4)',
+                    color: '#a78bfa',
+                  }}>{['01','02','03'][i]}</div>
                   <h3 className="text-lg font-bold text-white mb-3">{step.title}</h3>
-                  <p className="text-sm leading-relaxed" style={{ color: 'var(--text-muted)' }}>{step.desc}</p>
+                  <p className="text-sm leading-relaxed" style={{ color: 'rgba(255,255,255,0.45)' }}>{step.desc}</p>
                 </div>
               ))}
             </div>
@@ -461,266 +555,222 @@ export default function LoginPage() {
         </section>
 
         {/* ── FEATURES (alternating blocks) ── */}
-        <section id="features" style={{ borderTop: '1px solid rgba(255,255,255,0.05)', borderBottom: '1px solid rgba(255,255,255,0.05)' }}>
-
-          {/* Block 1 — Tier scoring */}
-          <div className="flex flex-col lg:flex-row items-center gap-12 px-8 py-20 mx-auto" style={{ maxWidth: 1100 }}>
-            {/* Text */}
-            <div className="flex-1 min-w-0">
+        <section id="features" className="flex flex-col items-center px-6 py-24">
+          <div className="w-full" style={{ maxWidth: 1100 }}>
+            <div className="text-center mb-20">
               <p className="text-xs font-semibold tracking-widest uppercase mb-4" style={{ color: '#7c3aed' }}>Product</p>
-              <h2 className="text-3xl font-bold text-white mb-5" style={{ letterSpacing: '-0.02em', lineHeight: 1.2 }}>Score every account<br />in under 30 seconds.</h2>
-              <p className="text-base leading-relaxed mb-8" style={{ color: 'var(--text-muted)' }}>
-                Paste a list of companies — the tool collects GitHub signals, website tech, and web search results, then Claude classifies each one as T1, T2, T3, or DQ with a score out of 100.
-              </p>
-              <ul className="space-y-3">
-                {['T1: cloud-native SaaS with active tech team', 'T2: partial signals, worth qualifying', 'T3: low fit, minimal tech stack', 'DQ: ESN, pure consulting, public institutions'].map(item => (
-                  <li key={item} className="flex items-start gap-2.5 text-sm" style={{ color: 'rgba(255,255,255,0.65)' }}>
-                    <span className="shrink-0 mt-0.5" style={{ color: '#a78bfa' }}>✓</span>
-                    {item}
-                  </li>
-                ))}
-              </ul>
+              <h2 className="text-4xl font-bold text-white" style={{ letterSpacing: '-0.025em', lineHeight: 1.15 }}>Everything you need to<br />prioritize your territory.</h2>
             </div>
-            {/* Illustration */}
-            <div className="flex-1 min-w-0 w-full">
-              <div className="rounded-2xl overflow-hidden" style={{
-                background: '#080e1f', border: '1px solid rgba(124,58,237,0.2)',
-                boxShadow: '0 24px 64px rgba(0,0,0,0.5), 0 0 0 1px rgba(255,255,255,0.03)',
-              }}>
-                {/* Browser bar */}
-                <div className="flex items-center gap-1.5 px-4 py-3" style={{ background: '#050a14', borderBottom: '1px solid rgba(255,255,255,0.05)' }}>
-                  <div className="w-2.5 h-2.5 rounded-full" style={{ background: '#ef4444' }} />
-                  <div className="w-2.5 h-2.5 rounded-full" style={{ background: '#f59e0b' }} />
-                  <div className="w-2.5 h-2.5 rounded-full" style={{ background: '#10b981' }} />
-                  <div className="flex-1 mx-4">
-                    <div className="mx-auto h-5 rounded flex items-center justify-center px-3" style={{ background: 'rgba(255,255,255,0.04)', maxWidth: 200 }}>
-                      <span className="text-[9px]" style={{ color: 'rgba(255,255,255,0.2)' }}>account-scorer.vercel.app/scoring</span>
-                    </div>
+
+            {/* Feature cards grid */}
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-5 mb-12">
+              {[
+                { icon: '⭐', title: 'Tier classification', desc: 'Every account is scored T1, T2, T3, or DQ in seconds — no manual research required. Score out of 100 with full reasoning.', color: '#f59e0b' },
+                { icon: '📞', title: 'AI call angle', desc: 'Claude writes a one-sentence pitch per account based on funding, tech stack, and growth signals. Ready to use before you dial.', color: '#a78bfa' },
+                { icon: '🛠️', title: 'Tech stack detection', desc: 'Cloud provider, DevOps tools, monitoring stack — collected from website, GitHub, and DNS. Only real signals, no inference.', color: '#60a5fa' },
+                { icon: '💰', title: 'Funding signals', desc: 'Detects Seed, Series A through C+ automatically. Recent rounds flag the best entry points and add context to your call angle.', color: '#34d399' },
+                { icon: '🔍', title: 'Standard & Deep search', desc: 'Standard is fast (~15s, 1 AI search). Deep is thorough (~30s, 2 searches). Choose based on how much signal you need.', color: '#f472b6' },
+                { icon: '⚡', title: 'Smart caching', desc: 'If a teammate already scored a company, you get the result instantly — no AI cost, no wait time. Shared across your team.', color: '#fb923c' },
+              ].map(({ icon, title, desc, color }) => (
+                <div key={title} className="rounded-2xl p-7 flex gap-5" style={{
+                  background: 'rgba(255,255,255,0.02)',
+                  border: '1px solid rgba(255,255,255,0.07)',
+                  transition: 'border-color 0.2s',
+                }}>
+                  <div className="w-11 h-11 rounded-xl flex items-center justify-center text-xl shrink-0" style={{ background: `${color}14`, border: `1px solid ${color}30` }}>
+                    {icon}
                   </div>
-                </div>
-                {/* Header */}
-                <div className="flex items-center justify-between px-5 py-3.5" style={{ borderBottom: '1px solid rgba(255,255,255,0.05)' }}>
                   <div>
-                    <span className="text-sm font-bold text-white">Scored accounts</span>
-                    <span className="text-xs ml-2" style={{ color: 'rgba(255,255,255,0.3)' }}>5 accounts</span>
-                  </div>
-                  <div className="flex gap-1.5">
-                    {['All 5','T1','T2','T3','DQ'].map((f,i) => (
-                      <span key={f} className="text-[10px] px-2.5 py-1 rounded-full" style={{
-                        background: i===0 ? 'rgba(124,58,237,0.2)' : 'rgba(255,255,255,0.04)',
-                        color: i===0 ? '#a78bfa' : 'rgba(255,255,255,0.3)',
-                        border: i===0 ? '1px solid rgba(124,58,237,0.35)' : '1px solid rgba(255,255,255,0.07)',
-                      }}>{f}</span>
-                    ))}
+                    <h3 className="text-base font-bold text-white mb-2">{title}</h3>
+                    <p className="text-sm leading-relaxed" style={{ color: 'rgba(255,255,255,0.45)' }}>{desc}</p>
                   </div>
                 </div>
-                {/* Account rows */}
-                <div className="p-3 space-y-2">
-                  {[
-                    { tier: 'T1', color: '#10b981', name: 'Pennylane', score: 92, tag: 'Series B', tech: 'GCP' },
-                    { tier: 'T1', color: '#10b981', name: 'Qonto', score: 88, tag: 'Series C+', tech: 'Azure' },
-                    { tier: 'T2', color: '#f59e0b', name: 'Payfit', score: 65, tech: 'AWS' },
-                    { tier: 'T3', color: '#6b7280', name: 'Coface', score: 31 },
-                    { tier: 'DQ', color: '#ef4444', name: 'Accenture', score: 8, dimmed: true },
-                  ].map(({ tier, color, name, score, tag, tech, dimmed }) => (
-                    <div key={name} style={{
-                      opacity: dimmed ? 0.4 : 1,
-                      background: 'rgba(255,255,255,0.025)',
-                      borderLeft: `3px solid ${color}`,
-                      borderTop: '1px solid rgba(255,255,255,0.05)',
-                      borderRight: '1px solid rgba(255,255,255,0.05)',
-                      borderBottom: '1px solid rgba(255,255,255,0.05)',
-                      borderRadius: 8,
-                    }}>
-                      <div className="flex items-center gap-2.5 px-3 py-2">
-                        <span className="text-[9px] font-bold px-1.5 py-0.5 rounded shrink-0" style={{ background: `${color}22`, color, border: `1px solid ${color}44` }}>{tier}</span>
-                        <span className="text-xs font-semibold text-white shrink-0">{name}</span>
-                        <MiniRing score={score} color={color} />
-                        {tag && <span className="text-[9px] px-2 py-0.5 rounded shrink-0 font-medium" style={{ background: 'rgba(245,158,11,0.1)', color: '#fcd34d', border: '1px solid rgba(245,158,11,0.2)' }}>{tag}</span>}
-                        {tech && <span className="text-[9px] px-2 py-0.5 rounded shrink-0" style={{ background: 'rgba(124,58,237,0.1)', color: '#c4b5fd', border: '1px solid rgba(124,58,237,0.18)' }}>{tech}</span>}
-                        <div className="flex-1" />
-                        {!dimmed && <span className="text-[9px] px-2 py-0.5 rounded shrink-0 font-medium" style={{ background: 'rgba(124,58,237,0.1)', color: '#a78bfa', border: '1px solid rgba(124,58,237,0.22)' }}>▼ Details</span>}
-                      </div>
-                    </div>
+              ))}
+            </div>
+
+            {/* Big feature illustration — account list */}
+            <div className="rounded-2xl overflow-hidden" style={{
+              background: '#060c18',
+              border: '1px solid rgba(124,58,237,0.2)',
+              boxShadow: '0 32px 80px rgba(0,0,0,0.5)',
+            }}>
+              <div className="flex items-center gap-1.5 px-5 py-3.5" style={{ background: '#040810', borderBottom: '1px solid rgba(255,255,255,0.05)' }}>
+                <div className="w-3 h-3 rounded-full" style={{ background: '#ef4444' }} />
+                <div className="w-3 h-3 rounded-full" style={{ background: '#f59e0b' }} />
+                <div className="w-3 h-3 rounded-full" style={{ background: '#10b981' }} />
+                <div className="flex-1 mx-4">
+                  <div className="mx-auto h-5 rounded flex items-center justify-center px-3" style={{ background: 'rgba(255,255,255,0.04)', maxWidth: 220 }}>
+                    <span className="text-[9px]" style={{ color: 'rgba(255,255,255,0.2)' }}>inquiry.vercel.app/scoring</span>
+                  </div>
+                </div>
+              </div>
+              <div className="flex items-center justify-between px-6 py-4" style={{ borderBottom: '1px solid rgba(255,255,255,0.05)' }}>
+                <div>
+                  <span className="text-sm font-bold text-white">Scored accounts</span>
+                  <span className="text-xs ml-2" style={{ color: 'rgba(255,255,255,0.3)' }}>5 accounts</span>
+                </div>
+                <div className="flex gap-2">
+                  {['All 5','T1','T2','T3','DQ'].map((f,i) => (
+                    <span key={f} className="text-xs px-3 py-1 rounded-full" style={{
+                      background: i===0 ? 'rgba(124,58,237,0.2)' : 'rgba(255,255,255,0.04)',
+                      color: i===0 ? '#a78bfa' : 'rgba(255,255,255,0.35)',
+                      border: i===0 ? '1px solid rgba(124,58,237,0.35)' : '1px solid rgba(255,255,255,0.07)',
+                    }}>{f}</span>
                   ))}
                 </div>
               </div>
-            </div>
-          </div>
-
-          <div style={{ height: 1, background: 'rgba(255,255,255,0.05)' }} />
-
-          {/* Block 2 — Call angle (reversed) */}
-          <div className="flex flex-col-reverse lg:flex-row items-center gap-12 px-8 py-20 mx-auto" style={{ maxWidth: 1100 }}>
-            {/* Illustration */}
-            <div className="flex-1 min-w-0 w-full">
-              <div className="rounded-2xl overflow-hidden" style={{
-                background: '#080e1f', border: '1px solid rgba(124,58,237,0.2)',
-                boxShadow: '0 24px 64px rgba(0,0,0,0.5), 0 0 0 1px rgba(255,255,255,0.03)',
-              }}>
-                <div className="flex items-center gap-1.5 px-4 py-3" style={{ background: '#050a14', borderBottom: '1px solid rgba(255,255,255,0.05)' }}>
-                  <div className="w-2.5 h-2.5 rounded-full" style={{ background: '#ef4444' }} />
-                  <div className="w-2.5 h-2.5 rounded-full" style={{ background: '#f59e0b' }} />
-                  <div className="w-2.5 h-2.5 rounded-full" style={{ background: '#10b981' }} />
-                  <span className="ml-4 text-[9px]" style={{ color: 'rgba(255,255,255,0.2)' }}>Account detail · Qonto</span>
-                </div>
-                <div className="p-5">
-                  {/* Account header */}
-                  <div className="flex items-center gap-3 mb-4">
-                    <span className="text-xs font-bold px-2 py-1 rounded" style={{ background: 'rgba(16,185,129,0.15)', color: '#10b981', border: '1px solid rgba(16,185,129,0.3)' }}>T1</span>
-                    <span className="text-base font-bold text-white">Qonto</span>
-                    <span className="text-xs px-2 py-0.5 rounded font-medium" style={{ background: 'rgba(245,158,11,0.1)', color: '#fcd34d', border: '1px solid rgba(245,158,11,0.2)' }}>Series C+</span>
-                    <div className="ml-auto"><MiniRing score={88} color="#10b981" /></div>
-                  </div>
-                  {/* Call angle */}
-                  <div className="rounded-xl px-4 py-3.5 mb-4" style={{ background: 'rgba(124,58,237,0.07)', border: '1px solid rgba(124,58,237,0.2)' }}>
-                    <div className="flex items-center gap-2 mb-2">
-                      <span className="text-sm">📞</span>
-                      <span className="text-xs font-semibold" style={{ color: '#a78bfa' }}>AI call angle</span>
-                    </div>
-                    <p className="text-sm italic leading-relaxed text-white">"Series C+ fintech scaling payments across Europe — strong infra gap, perfect timing to pitch observability."</p>
-                  </div>
-                  {/* Signals */}
-                  <div className="grid grid-cols-2 gap-2">
-                    <div className="rounded-lg p-3" style={{ background: 'rgba(16,185,129,0.05)', border: '1px solid rgba(16,185,129,0.15)' }}>
-                      <p className="text-[9px] font-semibold mb-2" style={{ color: '#6ee7b7' }}>Positive signals</p>
-                      <div className="space-y-1">
-                        {['SaaS cloud-native fintech','Azure + K8s confirmed','3 active SRE postings','Site built on Next.js'].map(s => (
-                          <div key={s} className="flex items-start gap-1.5">
-                            <span className="text-[8px] mt-0.5 shrink-0" style={{ color: '#6ee7b7' }}>✓</span>
-                            <span className="text-[9px]" style={{ color: 'rgba(255,255,255,0.55)' }}>{s}</span>
-                          </div>
-                        ))}
-                      </div>
-                    </div>
-                    <div className="rounded-lg p-3" style={{ background: 'rgba(239,68,68,0.05)', border: '1px solid rgba(239,68,68,0.15)' }}>
-                      <p className="text-[9px] font-semibold mb-2" style={{ color: '#fca5a5' }}>Negative signals</p>
-                      <div className="space-y-1">
-                        {['No public GitHub org','Monitoring not detected'].map(s => (
-                          <div key={s} className="flex items-start gap-1.5">
-                            <span className="text-[8px] mt-0.5 shrink-0" style={{ color: '#fca5a5' }}>✗</span>
-                            <span className="text-[9px]" style={{ color: 'rgba(255,255,255,0.55)' }}>{s}</span>
-                          </div>
-                        ))}
-                      </div>
-                    </div>
-                  </div>
-                </div>
-              </div>
-            </div>
-            {/* Text */}
-            <div className="flex-1 min-w-0">
-              <p className="text-xs font-semibold tracking-widest uppercase mb-4" style={{ color: '#7c3aed' }}>Product</p>
-              <h2 className="text-3xl font-bold text-white mb-5" style={{ letterSpacing: '-0.02em', lineHeight: 1.2 }}>A one-sentence pitch,<br />ready before you dial.</h2>
-              <p className="text-base leading-relaxed mb-6" style={{ color: 'var(--text-muted)' }}>
-                Claude reads each account's funding history, tech stack, and growth signals — then writes a call angle you can use directly. No prep, no research, no guessing.
-              </p>
-              <div className="space-y-4">
+              <div className="p-4 space-y-2.5">
                 {[
-                  { icon: '💰', title: 'Funding detected automatically', desc: 'Seed, Series A through C+, IPO — recent rounds flag the best entry points.' },
-                  { icon: '✅', title: 'Positive & negative signals', desc: 'See what confirms the fit and what works against it, before you pick up the phone.' },
-                ].map(({ icon, title, desc }) => (
-                  <div key={title} className="flex gap-3">
-                    <span className="text-xl shrink-0 mt-0.5">{icon}</span>
-                    <div>
-                      <p className="text-sm font-semibold text-white mb-0.5">{title}</p>
-                      <p className="text-sm" style={{ color: 'var(--text-muted)' }}>{desc}</p>
+                  { tier: 'T1', color: '#10b981', name: 'Pennylane', score: 92, tag: 'Series B', tech: 'GCP', angle: 'Just raised Series B — perfect timing to pitch observability as they scale infra.' },
+                  { tier: 'T1', color: '#10b981', name: 'Qonto', score: 88, tag: 'Series C+', tech: 'Azure', angle: 'Series C+ fintech scaling EU payments — strong infra gap, ideal moment.' },
+                  { tier: 'T2', color: '#f59e0b', name: 'Payfit', score: 65, tech: 'AWS', angle: 'Fast-growing HR SaaS on AWS — monitoring signals worth exploring.' },
+                  { tier: 'T3', color: '#6b7280', name: 'Coface', score: 31 },
+                  { tier: 'DQ', color: '#ef4444', name: 'Accenture', score: 8, dimmed: true },
+                ].map(({ tier, color, name, score, tag, tech, angle, dimmed }) => (
+                  <div key={name} style={{
+                    opacity: dimmed ? 0.35 : 1,
+                    background: 'rgba(255,255,255,0.02)',
+                    borderLeft: `3px solid ${color}`,
+                    borderTop: '1px solid rgba(255,255,255,0.05)',
+                    borderRight: '1px solid rgba(255,255,255,0.05)',
+                    borderBottom: '1px solid rgba(255,255,255,0.05)',
+                    borderRadius: 10,
+                  }}>
+                    <div className="flex items-center gap-3 px-4 py-2.5">
+                      <span className="text-xs font-bold px-2 py-0.5 rounded shrink-0" style={{ background: `${color}22`, color, border: `1px solid ${color}44` }}>{tier}</span>
+                      <span className="text-sm font-semibold text-white shrink-0">{name}</span>
+                      <MiniRing score={score} color={color} />
+                      {tag && <span className="text-xs px-2 py-0.5 rounded shrink-0 font-medium" style={{ background: 'rgba(245,158,11,0.1)', color: '#fcd34d', border: '1px solid rgba(245,158,11,0.2)' }}>{tag}</span>}
+                      {tech && <span className="text-xs px-2 py-0.5 rounded shrink-0" style={{ background: 'rgba(124,58,237,0.1)', color: '#c4b5fd', border: '1px solid rgba(124,58,237,0.18)' }}>{tech}</span>}
+                      <div className="flex-1" />
+                      {!dimmed && <span className="text-xs px-3 py-1 rounded shrink-0 font-medium" style={{ background: 'rgba(124,58,237,0.1)', color: '#a78bfa', border: '1px solid rgba(124,58,237,0.22)' }}>▼ Details</span>}
                     </div>
+                    {angle && (
+                      <div className="px-4 pb-2.5 flex items-center gap-2">
+                        <span className="text-xs" style={{ color: 'rgba(167,139,250,0.5)' }}>📞</span>
+                        <span className="text-xs italic" style={{ color: 'rgba(167,139,250,0.65)' }}>{angle}</span>
+                      </div>
+                    )}
                   </div>
                 ))}
               </div>
             </div>
           </div>
+        </section>
 
-          <div style={{ height: 1, background: 'rgba(255,255,255,0.05)' }} />
-
-          {/* Block 3 — Tech stack */}
-          <div className="flex flex-col lg:flex-row items-center gap-12 px-8 py-20 mx-auto" style={{ maxWidth: 1100 }}>
-            {/* Text */}
-            <div className="flex-1 min-w-0">
-              <p className="text-xs font-semibold tracking-widest uppercase mb-4" style={{ color: '#7c3aed' }}>Product</p>
-              <h2 className="text-3xl font-bold text-white mb-5" style={{ letterSpacing: '-0.02em', lineHeight: 1.2 }}>Tech stack detection<br />across every source.</h2>
-              <p className="text-base leading-relaxed mb-8" style={{ color: 'var(--text-muted)' }}>
-                Cloud provider, DevOps tools, monitoring stack, programming languages — collected from the company's website, GitHub, and public job postings, then categorized and ranked.
-              </p>
-              <div className="grid grid-cols-2 gap-3">
-                {[
-                  { cat: 'Cloud', color: '#60a5fa', items: 'AWS, GCP, Azure, Vercel' },
-                  { cat: 'DevOps', color: '#a78bfa', items: 'Kubernetes, Terraform, Docker' },
-                  { cat: 'Languages', color: '#34d399', items: 'Python, Go, TypeScript' },
-                  { cat: 'Monitoring', color: '#f59e0b', items: 'Datadog, Grafana, Prometheus' },
-                ].map(({ cat, color, items }) => (
-                  <div key={cat} className="rounded-xl p-3" style={{ background: 'rgba(255,255,255,0.03)', border: '1px solid rgba(255,255,255,0.07)' }}>
-                    <p className="text-[10px] font-bold mb-1" style={{ color }}>{cat}</p>
-                    <p className="text-xs" style={{ color: 'rgba(255,255,255,0.45)' }}>{items}</p>
+        {/* ── FAQ ── */}
+        <section id="faq" className="flex flex-col items-center px-6 py-24" style={{ borderTop: '1px solid rgba(255,255,255,0.06)' }}>
+          <div className="w-full" style={{ maxWidth: 720 }}>
+            <div className="text-center mb-14">
+              <p className="text-xs font-semibold tracking-widest uppercase mb-4" style={{ color: '#7c3aed' }}>FAQ</p>
+              <h2 className="text-4xl font-bold text-white" style={{ letterSpacing: '-0.025em' }}>Got questions?</h2>
+            </div>
+            <div className="space-y-3">
+              {FAQ_ITEMS.map((item, i) => (
+                <div key={i} className="rounded-2xl overflow-hidden" style={{
+                  background: 'rgba(255,255,255,0.02)',
+                  border: `1px solid ${openFaq === i ? 'rgba(124,58,237,0.35)' : 'rgba(255,255,255,0.07)'}`,
+                  transition: 'border-color 0.2s',
+                }}>
+                  <button
+                    onClick={() => setOpenFaq(openFaq === i ? null : i)}
+                    className="w-full flex items-center justify-between px-6 py-5 text-left"
+                    style={{ background: 'none', border: 'none', cursor: 'pointer' }}
+                  >
+                    <span className="text-base font-semibold text-white pr-4">{item.q}</span>
+                    <svg className={`faq-chevron shrink-0 ${openFaq === i ? 'open' : ''}`} width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="rgba(124,58,237,0.8)" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                      <path d="M6 9l6 6 6-6"/>
+                    </svg>
+                  </button>
+                  <div className="faq-body" style={{ maxHeight: openFaq === i ? 200 : 0, opacity: openFaq === i ? 1 : 0 }}>
+                    <p className="px-6 pb-5 text-sm leading-relaxed" style={{ color: 'rgba(255,255,255,0.5)' }}>{item.a}</p>
                   </div>
-                ))}
-              </div>
-            </div>
-            {/* Illustration */}
-            <div className="flex-1 min-w-0 w-full">
-              <div className="rounded-2xl overflow-hidden" style={{
-                background: '#080e1f', border: '1px solid rgba(124,58,237,0.2)',
-                boxShadow: '0 24px 64px rgba(0,0,0,0.5), 0 0 0 1px rgba(255,255,255,0.03)',
-              }}>
-                <div className="flex items-center gap-1.5 px-4 py-3" style={{ background: '#050a14', borderBottom: '1px solid rgba(255,255,255,0.05)' }}>
-                  <div className="w-2.5 h-2.5 rounded-full" style={{ background: '#ef4444' }} />
-                  <div className="w-2.5 h-2.5 rounded-full" style={{ background: '#f59e0b' }} />
-                  <div className="w-2.5 h-2.5 rounded-full" style={{ background: '#10b981' }} />
-                  <span className="ml-4 text-[9px]" style={{ color: 'rgba(255,255,255,0.2)' }}>Tech stack · Pennylane</span>
                 </div>
-                <div className="p-5 space-y-4">
-                  {[
-                    { cat: 'Cloud', color: '#60a5fa', items: ['AWS', 'GCP'] },
-                    { cat: 'DevOps', color: '#a78bfa', items: ['Kubernetes', 'Terraform', 'Docker'] },
-                    { cat: 'Languages', color: '#34d399', items: ['Python', 'TypeScript', 'Go'] },
-                    { cat: 'Monitoring', color: '#f59e0b', items: ['Datadog', 'Grafana'] },
-                    { cat: 'Data', color: '#f472b6', items: ['Snowflake', 'dbt'] },
-                    { cat: 'AI', color: '#c4b5fd', items: ['OpenAI', 'LangChain'] },
-                  ].map(({ cat, color, items }) => (
-                    <div key={cat}>
-                      <p className="text-[10px] font-bold mb-2" style={{ color, opacity: 0.8 }}>{cat}</p>
-                      <div className="flex flex-wrap gap-1.5">
-                        {items.map(item => (
-                          <span key={item} className="text-xs px-2.5 py-1 rounded-lg font-medium" style={{ background: `${color}14`, color, border: `1px solid ${color}30` }}>{item}</span>
-                        ))}
-                      </div>
-                    </div>
-                  ))}
-                </div>
-              </div>
+              ))}
             </div>
+            <p className="text-center text-sm mt-10" style={{ color: 'rgba(255,255,255,0.35)' }}>
+              More questions?{' '}
+              <a href="https://mail.google.com/mail/?view=cm&to=noam.ramillon@datadoghq.com" target="_blank" rel="noopener noreferrer"
+                className="transition-colors hover:text-white" style={{ color: '#a78bfa' }}>
+                Reach out →
+              </a>
+            </p>
           </div>
+        </section>
 
+        {/* ── CTA ── */}
+        <section className="flex flex-col items-center px-6 py-24 relative overflow-hidden" style={{ borderTop: '1px solid rgba(255,255,255,0.06)' }}>
+          <div className="absolute inset-0 pointer-events-none" style={{
+            background: 'radial-gradient(ellipse 60% 60% at 50% 50%, rgba(124,58,237,0.18) 0%, transparent 70%)',
+          }} />
+          <div className="relative z-10 text-center" style={{ maxWidth: 600 }}>
+            <h2 className="text-4xl font-bold text-white mb-5" style={{ letterSpacing: '-0.025em', lineHeight: 1.15 }}>
+              Start scoring your territory today.
+            </h2>
+            <p className="text-lg mb-10" style={{ color: 'rgba(255,255,255,0.45)', lineHeight: 1.7 }}>
+              Stop guessing. Know exactly who to call, when to call, and what to say — in seconds.
+            </p>
+            <button onClick={() => openForm('signup')}
+              className="shimmer-btn inline-flex items-center gap-2 px-10 py-4 rounded-full text-base font-bold text-white transition-all hover:-translate-y-0.5 active:scale-[0.97]"
+              style={{ boxShadow: '0 0 48px rgba(124,58,237,0.6)' }}>
+              Get started free →
+            </button>
+            <p className="text-sm mt-4" style={{ color: 'rgba(255,255,255,0.25)' }}>No credit card required · 10 free analyses</p>
+          </div>
         </section>
 
         {/* ── FOOTER ── */}
-        <footer className="flex flex-col items-center px-6 py-12" style={{ borderTop: '1px solid rgba(255,255,255,0.06)' }}>
-          <div className="w-full flex flex-col md:flex-row items-center justify-between gap-6" style={{ maxWidth: 1100 }}>
-            <div className="flex items-center gap-2.5">
-              <InquiryLogo size={32} />
-              <span className="text-sm font-bold text-white">Inquiry</span>
-              <span className="text-xs mx-1" style={{ color: 'var(--text-muted)' }}>·</span>
-              <span className="text-xs" style={{ color: 'var(--text-muted)' }}>Built by </span>
-              <a href="https://www.linkedin.com/in/noamramillon/" target="_blank" rel="noopener noreferrer"
-                className="text-xs font-semibold transition-opacity hover:opacity-80" style={{ color: '#7c3aed' }}>
-                Noam Ramillon
-              </a>
+        <footer style={{ borderTop: '1px solid rgba(255,255,255,0.06)' }}>
+          <div className="flex flex-col md:flex-row items-start justify-between gap-10 px-10 py-14 mx-auto" style={{ maxWidth: 1100 }}>
+            {/* Brand */}
+            <div>
+              <div className="flex items-center gap-2.5 mb-3">
+                <InquiryLogo size={32} />
+                <span className="text-sm font-bold text-white">Inquiry</span>
+              </div>
+              <p className="text-sm mb-1" style={{ color: 'rgba(255,255,255,0.35)' }}>AI-powered account scoring</p>
+              <p className="text-sm" style={{ color: 'rgba(255,255,255,0.35)' }}>
+                Built by{' '}
+                <a href="https://www.linkedin.com/in/noamramillon/" target="_blank" rel="noopener noreferrer"
+                  className="transition-colors hover:text-white" style={{ color: '#7c3aed' }}>
+                  Noam Ramillon
+                </a>
+              </p>
             </div>
-            <div className="flex items-center gap-6">
-              {[['Product', 'features'], ['How it works', 'how-it-works']].map(([label, id]) => (
-                <button key={id} onClick={() => scrollTo(id)}
-                  className="text-xs transition-colors hover:text-white"
-                  style={{ color: 'var(--text-muted)', background: 'none', border: 'none', cursor: 'pointer' }}>
-                  {label}
-                </button>
-              ))}
-              <a href="https://mail.google.com/mail/?view=cm&to=noam.ramillon@datadoghq.com" target="_blank" rel="noopener noreferrer"
-                className="text-xs transition-colors hover:text-white" style={{ color: 'var(--text-muted)' }}>
-                Contact
-              </a>
+            {/* Links */}
+            <div className="flex gap-16">
+              <div>
+                <p className="text-xs font-semibold uppercase tracking-widest mb-4" style={{ color: 'rgba(255,255,255,0.25)' }}>Product</p>
+                <div className="flex flex-col gap-3">
+                  {[['Product', 'features'], ['How it works', 'how-it-works'], ['FAQ', 'faq']].map(([label, id]) => (
+                    <button key={id} onClick={() => scrollTo(id)}
+                      className="text-sm text-left transition-colors hover:text-white"
+                      style={{ color: 'rgba(255,255,255,0.45)', background: 'none', border: 'none', cursor: 'pointer' }}>
+                      {label}
+                    </button>
+                  ))}
+                </div>
+              </div>
+              <div>
+                <p className="text-xs font-semibold uppercase tracking-widest mb-4" style={{ color: 'rgba(255,255,255,0.25)' }}>Contact</p>
+                <div className="flex flex-col gap-3">
+                  <a href="https://mail.google.com/mail/?view=cm&to=noam.ramillon@datadoghq.com" target="_blank" rel="noopener noreferrer"
+                    className="text-sm transition-colors hover:text-white" style={{ color: 'rgba(255,255,255,0.45)' }}>
+                    Send email
+                  </a>
+                  <a href="https://www.linkedin.com/in/noamramillon/" target="_blank" rel="noopener noreferrer"
+                    className="text-sm transition-colors hover:text-white" style={{ color: 'rgba(255,255,255,0.45)' }}>
+                    LinkedIn
+                  </a>
+                </div>
+              </div>
             </div>
-            <p className="text-xs" style={{ color: 'rgba(255,255,255,0.15)' }}>© 2025 Inquiry</p>
+          </div>
+          <div className="flex items-center justify-between px-10 py-5 mx-auto" style={{ maxWidth: 1100, borderTop: '1px solid rgba(255,255,255,0.05)' }}>
+            <p className="text-xs" style={{ color: 'rgba(255,255,255,0.2)' }}>© 2025 Inquiry. All rights reserved.</p>
+            <button onClick={() => openForm('signup')} className="text-xs transition-colors hover:text-white" style={{ color: 'rgba(255,255,255,0.3)', background: 'none', border: 'none', cursor: 'pointer' }}>
+              Get started →
+            </button>
           </div>
         </footer>
 
