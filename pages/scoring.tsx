@@ -2,6 +2,7 @@ import { useEffect, useState, useRef, useCallback } from 'react'
 import AuthGuard from '@/components/layout/AuthGuard'
 import Sidebar from '@/components/layout/Sidebar'
 import AccountList from '@/components/accounts/AccountList'
+import OnboardingModal from '@/components/ui/OnboardingModal'
 import { supabaseBrowser } from '@/lib/supabase'
 import type { Account, Tier } from '@/types'
 
@@ -128,6 +129,7 @@ export default function ScoringPage() {
   const [toast, setToast] = useState('')
   const [userEmail, setUserEmail] = useState('')
   const [selectedIds, setSelectedIds] = useState<Set<string>>(new Set())
+  const [showOnboarding, setShowOnboarding] = useState(false)
   const stopRef = useRef(false)
 
   const loadAccounts = useCallback(async () => {
@@ -140,6 +142,10 @@ export default function ScoringPage() {
   }, [])
 
   useEffect(() => {
+    if (typeof window !== 'undefined' && !localStorage.getItem('inquiry_onboarded')) {
+      setShowOnboarding(true)
+    }
+
     loadAccounts()
 
     supabaseBrowser.auth.getSession().then(({ data }) => {
@@ -323,6 +329,8 @@ export default function ScoringPage() {
             onToggleSelectAll={toggleSelectAll}
           />
         </main>
+
+        {showOnboarding && <OnboardingModal onDone={() => setShowOnboarding(false)} />}
 
         {/* Fix #5: toast for already-scored duplicates */}
         {toast && (

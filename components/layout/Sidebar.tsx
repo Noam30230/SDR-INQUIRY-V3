@@ -235,7 +235,7 @@ export default function Sidebar({ accounts, isScoring, remainingCount = 0, userE
       <div className="mb-1" style={{ borderTop: '1px solid var(--border)' }} />
 
       {/* Tabs */}
-      <div className="flex gap-1 my-3 p-1 rounded-lg" style={{ background: 'var(--bg-hover)' }}>
+      <div id="onboarding-tabs" className="flex gap-1 my-3 p-1 rounded-lg" style={{ background: 'var(--bg-hover)' }}>
         {(['manual', 'csv'] as const).map(t => (
           <button
             key={t}
@@ -254,7 +254,7 @@ export default function Sidebar({ accounts, isScoring, remainingCount = 0, userE
 
       {/* Manual input */}
       {tab === 'manual' && (
-        <div className="space-y-2 mb-4">
+        <div id="onboarding-manual-area" className="space-y-2 mb-4">
           <textarea
             value={text}
             onChange={e => setText(e.target.value)}
