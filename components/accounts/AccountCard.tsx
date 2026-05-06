@@ -121,14 +121,6 @@ export default function AccountCard({ account, onDelete, selected, onToggleSelec
           <SignalChip label={account.raw_data.funding as string} variant="funding" />
         )}
 
-        {/* SF ID */}
-        {account.salesforce_id && (
-          <span className="text-xs font-mono px-2 py-0.5 rounded-full shrink-0"
-            style={{ background: 'rgba(148,163,184,0.1)', color: '#94a3b8' }}>
-            {account.salesforce_id}
-          </span>
-        )}
-
         {/* Score ring */}
         {isDone && account.score !== null && (
           <ScoreRing score={account.score ?? 0} />
