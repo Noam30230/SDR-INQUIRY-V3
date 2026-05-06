@@ -317,9 +317,24 @@ export default function Sidebar({ accounts, isScoring, remainingCount = 0, userE
             <span className="text-xs font-medium" style={{ color: isDragOver ? '#a78bfa' : 'var(--text-muted)' }}>
               {csvPreview.length > 0 ? `${csvPreview.length} rows loaded` : 'Drop CSV or click to browse'}
             </span>
-            <span className="text-xs" style={{ color: 'var(--text-muted)', opacity: 0.6 }}>
-              company · domain · org_id (optional)
-            </span>
+            {csvPreview.length > 0 ? (
+              <span
+                onClick={e => {
+                  e.stopPropagation()
+                  setCsvPreview([])
+                  setCsvMapping(null)
+                  if (fileRef.current) fileRef.current.value = ''
+                }}
+                className="text-xs px-2 py-0.5 rounded transition-colors hover:opacity-80"
+                style={{ background: 'rgba(239,68,68,0.12)', color: '#f87171', marginTop: 2 }}
+              >
+                ✕ Remove file
+              </span>
+            ) : (
+              <span className="text-xs" style={{ color: 'var(--text-muted)', opacity: 0.6 }}>
+                company · domain · org_id (optional)
+              </span>
+            )}
           </div>
           <input
             ref={fileRef}
