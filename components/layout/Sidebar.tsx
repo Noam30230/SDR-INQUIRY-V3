@@ -30,6 +30,11 @@ const TIERS: Array<{ tier: Tier; color: string }> = [
   { tier: 'DQ', color: '#ef4444' },
 ]
 
+function isValidDomain(d: string): boolean {
+  const clean = d.replace(/^https?:\/\//, '').replace(/\/.*$/, '').trim()
+  return /^[a-zA-Z0-9]([a-zA-Z0-9-]*[a-zA-Z0-9])?(\.[a-zA-Z0-9]([a-zA-Z0-9-]*[a-zA-Z0-9])?)*\.[a-zA-Z]{2,}$/.test(clean)
+}
+
 function parseTextarea(raw: string): ParsedRow[] {
   return raw
     .split('\n')
@@ -44,6 +49,25 @@ function parseTextarea(raw: string): ParsedRow[] {
       }
     })
     .filter(r => (r.name?.length ?? 0) > 0)
+}
+
+interface LineError { line: number; text: string; reason: string }
+
+function validateManualInput(raw: string): LineError[] {
+  const errors: LineError[] = []
+  raw.split('\n').forEach((line, i) => {
+    const trimmed = line.trim()
+    if (!trimmed) return
+    const parts = trimmed.split(',').map(p => p.trim())
+    if (parts.length < 2 || !parts[1]) {
+      errors.push({ line: i + 1, text: trimmed, reason: 'missing domain' })
+    } else if (!isValidDomain(parts[1])) {
+      errors.push({ line: i + 1, text: trimmed, reason: `"${parts[1]}" is not a valid domain` })
+    } else if (!parts[0]) {
+      errors.push({ line: i + 1, text: trimmed, reason: 'missing company name' })
+    }
+  })
+  return errors
 }
 
 export default function Sidebar({ accounts, isScoring, remainingCount = 0, userEmail, selectedIds, exportLabel, onScoreBatch, onStopBatch, onExport }: SidebarProps) {
@@ -83,6 +107,7 @@ export default function Sidebar({ accounts, isScoring, remainingCount = 0, userE
   }
 
   const manualQueue = parseTextarea(text)
+  const manualErrors = tab === 'manual' ? validateManualInput(text) : []
 
   function handleCsvUpload(e: React.ChangeEvent<HTMLInputElement>) {
     const file = e.target.files?.[0]
@@ -263,10 +288,23 @@ export default function Sidebar({ accounts, isScoring, remainingCount = 0, userE
             className="w-full px-3 py-2 text-sm text-white placeholder-gray-600 rounded-lg outline-none resize-none"
             style={{ background: 'var(--bg-hover)', border: '1px solid var(--border)', fontFamily: 'monospace' }}
           />
-          {/* Fix #6: "CharID" → "Salesforce ID" */}
           <p className="text-xs" style={{ color: 'var(--text-muted)', opacity: 0.7 }}>
             Format: Name, site.com — 1 per line
           </p>
+          {manualErrors.length > 0 && (
+            <div className="rounded-lg px-3 py-2 space-y-1" style={{ background: 'rgba(239,68,68,0.08)', border: '1px solid rgba(239,68,68,0.25)' }}>
+              <p className="text-xs font-semibold text-red-400">
+                ⚠ {manualErrors.length} line{manualErrors.length > 1 ? 's' : ''} with format errors
+              </p>
+              <div className="space-y-0.5 max-h-20 overflow-y-auto">
+                {manualErrors.map(err => (
+                  <p key={err.line} className="text-xs" style={{ color: '#fca5a5' }}>
+                    Line {err.line}: {err.reason}
+                  </p>
+                ))}
+              </div>
+            </div>
+          )}
           {/* Search depth toolbar */}
           <div className="flex items-center gap-1 pt-0.5">
             {(['standard', 'deep'] as const).map(mode => (
@@ -428,7 +466,7 @@ export default function Sidebar({ accounts, isScoring, remainingCount = 0, userE
       ) : (
         <button
           onClick={handleStart}
-          disabled={queueCount === 0}
+          disabled={queueCount === 0 || manualErrors.length > 0}
           className="w-full py-2.5 text-sm font-semibold text-white rounded-lg mb-3 transition-all disabled:opacity-30 disabled:cursor-not-allowed hover:-translate-y-0.5 active:scale-[0.97]"
           style={{ background: 'var(--primary)', boxShadow: '0 0 20px rgba(124,58,237,0.45)' }}
         >
