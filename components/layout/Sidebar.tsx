@@ -288,22 +288,10 @@ export default function Sidebar({ accounts, isScoring, remainingCount = 0, userE
             className="w-full px-3 py-2 text-sm text-white placeholder-gray-600 rounded-lg outline-none resize-none"
             style={{ background: 'var(--bg-hover)', border: '1px solid var(--border)', fontFamily: 'monospace' }}
           />
-          <p className="text-xs" style={{ color: 'var(--text-muted)', opacity: 0.7 }}>
-            Format: Name, site.com — 1 per line
-          </p>
           {manualErrors.length > 0 && (
-            <div className="rounded-lg px-3 py-2 space-y-1" style={{ background: 'rgba(239,68,68,0.08)', border: '1px solid rgba(239,68,68,0.25)' }}>
-              <p className="text-xs font-semibold text-red-400">
-                ⚠ {manualErrors.length} line{manualErrors.length > 1 ? 's' : ''} with format errors
-              </p>
-              <div className="space-y-0.5 max-h-20 overflow-y-auto">
-                {manualErrors.map(err => (
-                  <p key={err.line} className="text-xs" style={{ color: '#fca5a5' }}>
-                    Line {err.line}: {err.reason}
-                  </p>
-                ))}
-              </div>
-            </div>
+            <p className="text-xs" style={{ color: '#f87171', opacity: 0.8 }}>
+              ⚠ {manualErrors[0].reason} (line {manualErrors[0].line}){manualErrors.length > 1 ? ` +${manualErrors.length - 1} more` : ''}
+            </p>
           )}
           {/* Search depth toolbar */}
           <div className="flex items-center gap-1 pt-0.5">
