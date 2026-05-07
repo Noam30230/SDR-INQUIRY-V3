@@ -17,9 +17,17 @@ TIERING CRITERIA:
 - T1 (high priority): Confirmed SaaS or tech product company. A modern website with SaaS signals (pricing, login, signup, API, integrations) ALONE is sufficient for T1 if the product is clearly software. Cloud stack is a bonus, NOT a requirement. Active hiring is a bonus, NOT a requirement. A stable SaaS company that isn't actively recruiting can still be T1.
 - T2 (medium priority): Likely software company but product model is unclear, OR traditional sector company with meaningful tech signals. Some SaaS signals but not conclusive.
 - T3 (low priority): Traditional sector, few or no tech signals, basic site or page builder, no SaaS indicators.
-- DQ (disqualified): IT consulting firms, pure services companies (sells human time, not software), public institutions, NGOs. Do NOT DQ based on sector — legaltech, HR tech, fintech, AI, accounting SaaS are T1/T2.
+- DQ (disqualified): Pure IT staff augmentation / ESN (sells human time only, no product), public institutions, NGOs. Do NOT DQ based on sector — legaltech, HR tech, fintech, AI, SaaS, AMOA tools, accounting software are T1/T2.
 
-Key DQ question: "Does this company sell software as a product, or only human services/consulting?"
+Key DQ question: "Does this company sell software as a product, or exclusively human services?"
+
+STRICT DQ RULES — a company is DQ only when ALL of the following are true:
+1. No software product found (no login, no pricing, no SaaS signals on website)
+2. Web search confirms pure services/consulting model with no product
+3. Clear ESN/staff-aug signals: "régie", "portage salarial", "assistance technique", "IT staffing", or equivalent
+
+If the company has a login portal, pricing page, signup CTA, or any software product — it CANNOT be DQ. Assign T2 or T3 minimum.
+Words like "accompagnement", "conseil", "consulting", "agence", "services" alone are NOT sufficient to DQ. Many software companies use these words to describe their support or onboarding offering.
 
 SCORE (0-100):
 - 85-100: Clear SaaS product + cloud stack confirmed + tech team signals + funding or strong growth

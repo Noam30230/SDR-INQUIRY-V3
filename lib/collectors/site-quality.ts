@@ -242,19 +242,21 @@ export async function collectSiteQuality(domain: string): Promise<SiteQualityDat
   }
   result.saasKeywords = Array.from(foundSaas)
 
-  // Consulting / ESN signals (DQ indicators)
+  // Consulting / ESN signals — only unambiguous pure-services indicators
+  // Excluded: "our services", "nos services", "consulting", "agence", "prestation" — too many false positives
+  // (many SaaS companies use these words). Only keep strong ESN/staff-aug signals.
   const CONSULTING_KEYWORDS = [
-    { kw: 'our services', label: 'services company' },
-    { kw: 'nos services', label: 'services company' },
-    { kw: 'nos expertises', label: 'expertise/consulting' },
-    { kw: 'our expertise', label: 'expertise/consulting' },
-    { kw: 'conseil en', label: 'consulting' },
-    { kw: 'consulting', label: 'consulting' },
-    { kw: 'prestation', label: 'service billing' },
     { kw: 'régie', label: 'staff augmentation' },
-    { kw: 'freelance', label: 'freelance/agency' },
-    { kw: 'agence', label: 'agency' },
-    { kw: 'on behalf of', label: 'agency work' },
+    { kw: 'portage salarial', label: 'staff augmentation' },
+    { kw: 'assistance technique', label: 'staff augmentation' },
+    { kw: 'mise à disposition', label: 'staff augmentation' },
+    { kw: 'forfait et régie', label: 'staff augmentation' },
+    { kw: 'cabinet de conseil', label: 'consulting firm' },
+    { kw: 'société de conseil', label: 'consulting firm' },
+    { kw: 'management consulting', label: 'consulting firm' },
+    { kw: 'it staffing', label: 'IT staffing' },
+    { kw: 'staff augmentation', label: 'staff augmentation' },
+    { kw: 'body shopping', label: 'staff augmentation' },
   ]
   const foundConsulting = new Set<string>()
   for (const { kw, label } of CONSULTING_KEYWORDS) {
