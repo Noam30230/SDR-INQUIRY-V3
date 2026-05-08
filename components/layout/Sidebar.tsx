@@ -21,6 +21,7 @@ interface SidebarProps {
   onScoreBatch: (items: ParsedRow[], searchDepth: 'standard' | 'deep') => Promise<void>
   onStopBatch: () => void
   onExport: () => void
+  onReplayTour?: () => void
 }
 
 const TIERS: Array<{ tier: Tier; color: string }> = [
@@ -70,7 +71,7 @@ function validateManualInput(raw: string): LineError[] {
   return errors
 }
 
-export default function Sidebar({ accounts, isScoring, remainingCount = 0, userEmail, selectedIds, exportLabel, onScoreBatch, onStopBatch, onExport }: SidebarProps) {
+export default function Sidebar({ accounts, isScoring, remainingCount = 0, userEmail, selectedIds, exportLabel, onScoreBatch, onStopBatch, onExport, onReplayTour }: SidebarProps) {
   const [tab, setTab] = useState<'manual' | 'csv'>('manual')
   const [searchDepth, setSearchDepth] = useState<'standard' | 'deep'>('standard')
   const [text, setText] = useState('')
@@ -191,6 +192,15 @@ export default function Sidebar({ accounts, isScoring, remainingCount = 0, userE
                   <div className="px-3 py-2 border-b" style={{ borderColor: 'var(--border)' }}>
                     <p className="text-xs font-medium truncate" style={{ color: 'var(--text-muted)' }}>{userEmail}</p>
                   </div>
+                )}
+                {onReplayTour && (
+                  <button
+                    onClick={() => { onReplayTour(); setMenuOpen(false) }}
+                    className="w-full text-left px-3 py-2 text-xs transition-colors hover:bg-white/5"
+                    style={{ color: 'var(--text-muted)' }}
+                  >
+                    🗺 Replay tour
+                  </button>
                 )}
                 <button
                   onClick={() => { supabaseBrowser.auth.signOut(); setMenuOpen(false) }}

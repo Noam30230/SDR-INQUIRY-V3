@@ -130,6 +130,7 @@ export default function ScoringPage() {
   const [userEmail, setUserEmail] = useState('')
   const [selectedIds, setSelectedIds] = useState<Set<string>>(new Set())
   const [showOnboarding, setShowOnboarding] = useState(false)
+  const [userId, setUserId] = useState('')
   const stopRef = useRef(false)
 
   const loadAccounts = useCallback(async () => {
@@ -145,13 +146,18 @@ export default function ScoringPage() {
     loadAccounts()
 
     supabaseBrowser.auth.getSession().then(({ data }) => {
-      setUserEmail(data.session?.user?.email || '')
-      // Show onboarding only for brand-new accounts (signed up < 2 min ago)
-      const createdAt = data.session?.user?.created_at
+      const user = data.session?.user
+      setUserEmail(user?.email || '')
+      setUserId(user?.id || '')
+      // Show onboarding only for brand-new accounts (signed up < 10 min ago)
+      // Key is per-user so a new account on the same browser isn't blocked by a previous session
+      const createdAt = user?.created_at
+      const userId = user?.id || ''
+      const onboardedKey = `inquiry_onboarded_${userId}`
       const isNewUser = createdAt
-        ? Date.now() - new Date(createdAt).getTime() < 2 * 60 * 1000
+        ? Date.now() - new Date(createdAt).getTime() < 10 * 60 * 1000
         : false
-      if (isNewUser && !localStorage.getItem('inquiry_onboarded')) {
+      if (isNewUser && !localStorage.getItem(onboardedKey)) {
         setShowOnboarding(true)
       }
     })
@@ -309,6 +315,7 @@ export default function ScoringPage() {
           onScoreBatch={scoreBatch}
           onStopBatch={stopBatch}
           onExport={handleExport}
+          onReplayTour={() => setShowOnboarding(true)}
         />
         <main className="flex-1 flex flex-col min-w-0 p-6 overflow-hidden">
           <div className="flex items-center justify-between mb-5 shrink-0">
@@ -334,7 +341,7 @@ export default function ScoringPage() {
           />
         </main>
 
-        {showOnboarding && <OnboardingModal onDone={() => setShowOnboarding(false)} />}
+        {showOnboarding && <OnboardingModal userId={userId} onDone={() => setShowOnboarding(false)} />}
 
         {/* Fix #5: toast for already-scored duplicates */}
         {toast && (

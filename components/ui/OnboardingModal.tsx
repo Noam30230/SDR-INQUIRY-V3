@@ -125,7 +125,7 @@ const STEPS: StepDef[] = [
   },
 ]
 
-export default function OnboardingModal({ onDone }: { onDone: () => void }) {
+export default function OnboardingModal({ onDone, userId }: { onDone: () => void; userId?: string }) {
   const [step, setStep] = useState(0)
   const [rect, setRect] = useState<DOMRect | null>(null)
   const [visible, setVisible] = useState(false)
@@ -152,15 +152,18 @@ export default function OnboardingModal({ onDone }: { onDone: () => void }) {
     return () => { clearTimeout(t); window.removeEventListener('resize', measure) }
   }, [step, current.spotlight])
 
+  function markDone() {
+    const key = userId ? `inquiry_onboarded_${userId}` : 'inquiry_onboarded'
+    localStorage.setItem(key, 'true')
+    onDone()
+  }
+
   function next() {
-    if (isLast) { localStorage.setItem('inquiry_onboarded', 'true'); onDone() }
+    if (isLast) markDone()
     else setStep(s => s + 1)
   }
 
-  function skip() {
-    localStorage.setItem('inquiry_onboarded', 'true')
-    onDone()
-  }
+  function skip() { markDone() }
 
   const cardStyle: React.CSSProperties = {
     background: 'var(--bg-card)',
