@@ -74,6 +74,9 @@ export default function AccountCard({ account, onDelete, selected, onToggleSelec
   const isDQ = account.tier === 'DQ'
   const topTechs = account.tech_stack ? getTopTechs(account.tech_stack) : []
   const leftBorderColor = account.tier ? TIER_LEFT_BORDER[account.tier] : 'var(--border)'
+  const isExistingCustomer = isDone && account.signals?.negative?.some(
+    s => /already a datadog customer|existing customer|current customer/i.test(s)
+  )
 
   return (
     <div
@@ -115,6 +118,14 @@ export default function AccountCard({ account, onDelete, selected, onToggleSelec
         >
           {toTitleCase(account.company_name)}
         </span>
+
+        {/* Already a customer warning */}
+        {isExistingCustomer && (
+          <span className="shrink-0 text-xs font-medium px-2 py-0.5 rounded-full"
+            style={{ background: 'rgba(251,191,36,0.12)', border: '1px solid rgba(251,191,36,0.3)', color: '#fbbf24' }}>
+            ⚠ Already customer
+          </span>
+        )}
 
         {/* Funding badge — outlined pill */}
         {isDone && (account.raw_data?.funding as string) && (account.raw_data.funding as string) !== 'unknown' && (
