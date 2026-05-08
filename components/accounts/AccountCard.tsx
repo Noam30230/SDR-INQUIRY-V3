@@ -128,7 +128,7 @@ export default function AccountCard({ account, onDelete, selected, onToggleSelec
         )}
 
         {/* Funding badge — outlined pill */}
-        {isDone && (account.raw_data?.funding as string) && (account.raw_data.funding as string) !== 'unknown' && (
+        {isDone && (account.raw_data?.funding as string) && !['unknown', 'bootstrapped'].includes(account.raw_data.funding as string) && (
           <SignalChip label={account.raw_data.funding as string} variant="funding" />
         )}
 
