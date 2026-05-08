@@ -169,6 +169,23 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
 
     const scored = await scoreAccount(aggregated, searchDepth ?? 'standard')
 
+    // Hard DQ override: Claude confirmed existing Datadog customer via web search
+    if (scored.is_existing_customer) {
+      await supabaseAdmin.from('accounts').update({
+        tier: 'DQ',
+        score: 0,
+        signals: { positive: [], negative: ['Already a Datadog customer — no outbound needed'] },
+        tech_stack: EMPTY_STACK,
+        web_quality: null,
+        press_signals: { articles: [] },
+        reasoning: 'Confirmed Datadog customer via web search. They are already a customer — skip outbound.',
+        raw_data: { pappers: pappers ?? null, is_existing_customer: true },
+        status: 'done',
+        domain: domain || null,
+      }).eq('id', account.id)
+      return res.status(200).json({ id: account.id, status: 'done', tier: 'DQ', score: 0 })
+    }
+
     const sq = aggregated.siteQuality
     const webQuality = sq ? {
       hosting: sq.hosting,
