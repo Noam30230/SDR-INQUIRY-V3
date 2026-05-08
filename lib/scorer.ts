@@ -9,9 +9,10 @@ const SYSTEM_PROMPT = `You are a B2B account qualification expert for Datadog.
 Datadog is a cloud monitoring platform (APM, logs, infrastructure, security, synthetics).
 Your mission: search the web to find real signals about this company, then assign an SDR priority tier.
 
-SEARCH STRATEGY (do exactly 2 targeted searches):
+SEARCH STRATEGY (do exactly 3 targeted searches):
 1. Search "[company name] SaaS product tech stack cloud AWS GCP Azure funding" — combines product model + infra signals + funding in one query
 2. Search "[company name] software engineers team size Crunchbase LinkedIn" — find team signals and any additional funding/growth data
+3. Search "[company name] Datadog customer OR case study OR uses Datadog OR powered by Datadog" — check if they are already a Datadog customer
 
 TIERING CRITERIA:
 - T1 (high priority): Confirmed SaaS or tech product company. A modern website with SaaS signals (pricing, login, signup, API, integrations) ALONE is sufficient for T1 if the product is clearly software. Cloud stack is a bonus, NOT a requirement. Active hiring is a bonus, NOT a requirement. A stable SaaS company that isn't actively recruiting can still be T1.
@@ -114,6 +115,7 @@ function buildPrompt(data: AggregatedData): string {
   lines.push(`  "tier": "T1" | "T2" | "T3" | "DQ",`)
   lines.push(`  "score": <0-100>,`)
   lines.push(`  "funding": "pre-seed" | "seed" | "Series A" | "Series B" | "Series C+" | "bootstrapped" | "unknown",`)
+  lines.push(`  "is_existing_customer": true | false,`)
   lines.push(`  "call_angle": "One sentence SDR opening angle in English (max 15 words)",`)
   lines.push(`  "signals": {`)
   lines.push(`    "positive": ["signal 1", ...],`)
@@ -134,11 +136,13 @@ export async function scoreAccount(data: AggregatedData, searchDepth: 'standard'
   const prompt = buildPrompt(data)
 
   const searchInstruction = searchDepth === 'deep'
-    ? `SEARCH STRATEGY (do exactly 2 targeted searches):
+    ? `SEARCH STRATEGY (do exactly 3 targeted searches):
 1. Search "[company name] SaaS product tech stack cloud AWS GCP Azure funding" — combines product model + infra signals + funding in one query
-2. Search "[company name] software engineers team size Crunchbase LinkedIn" — find team signals and any additional funding/growth data`
-    : `SEARCH STRATEGY (do exactly 1 targeted search):
-1. Search "[company name] SaaS product tech stack cloud funding" — find product model, infra signals, and funding in one query`
+2. Search "[company name] software engineers team size Crunchbase LinkedIn" — find team signals and any additional funding/growth data
+3. Search "[company name] Datadog customer OR case study OR uses Datadog OR powered by Datadog" — check if they are already a Datadog customer`
+    : `SEARCH STRATEGY (do exactly 2 targeted searches):
+1. Search "[company name] SaaS product tech stack cloud funding" — find product model, infra signals, and funding in one query
+2. Search "[company name] Datadog customer OR case study OR uses Datadog" — check if they are already a Datadog customer`
 
   const systemPrompt = SYSTEM_PROMPT.replace(
     /SEARCH STRATEGY[\s\S]*?(?=\nTIERING CRITERIA)/,
@@ -177,6 +181,7 @@ export async function scoreAccount(data: AggregatedData, searchDepth: 'standard'
       reasoning: parsed.reasoning || '',
       funding: parsed.funding || 'unknown',
       call_angle: parsed.call_angle || '',
+      is_existing_customer: parsed.is_existing_customer === true,
     }
   } catch {
     return {

@@ -173,4 +173,5 @@ export interface ScorerOutput {
   reasoning: string
   call_angle?: string
   funding?: string
+  is_existing_customer?: boolean
 }

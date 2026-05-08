@@ -204,6 +204,7 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
           pappers: aggregated.pappers ?? null,
           call_angle: scored.call_angle || null,
           funding: scored.funding || null,
+          is_existing_customer: scored.is_existing_customer || false,
         },
         status: 'done',
         domain: domain || null,

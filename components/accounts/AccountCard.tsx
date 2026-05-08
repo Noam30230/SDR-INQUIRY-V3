@@ -74,8 +74,10 @@ export default function AccountCard({ account, onDelete, selected, onToggleSelec
   const isDQ = account.tier === 'DQ'
   const topTechs = account.tech_stack ? getTopTechs(account.tech_stack) : []
   const leftBorderColor = account.tier ? TIER_LEFT_BORDER[account.tier] : 'var(--border)'
-  const isExistingCustomer = isDone && account.signals?.negative?.some(
-    s => /already a datadog customer|existing customer|current customer/i.test(s)
+  const isExistingCustomer = isDone && !!(
+    account.raw_data?.is_existing_customer ||
+    account.raw_data?.alreadyCustomer ||
+    account.signals?.negative?.some(s => /already a datadog customer/i.test(s))
   )
 
   return (
