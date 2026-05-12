@@ -156,7 +156,7 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
       'series g', 'series h',
       'growth', 'late stage', 'ipo', 'public',
     ]
-    function fundingRank(name: string): number {
+    const fundingRank = (name: string): number => {
       const n = name.toLowerCase()
       const idx = FUNDING_ORDER.findIndex(s => n.includes(s) || s.includes(n))
       return idx === -1 ? 999 : idx
