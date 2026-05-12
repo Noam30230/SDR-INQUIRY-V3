@@ -201,12 +201,11 @@ export default function DashboardPage() {
     localStorage.setItem('inquiry_layout_version', LAYOUT_VERSION)
   }
 
-  // Only updates visual state — never touches localStorage
-  // (prevents mount-time compaction from overwriting the saved layout)
-  function handleLayoutChange(newLayout: typeof DEFAULT_LAYOUT) {
-    layoutRef.current = newLayout
-    setLayout(newLayout)
-  }
+  // Intentional no-op: react-grid-layout fires this on mount and on every re-render.
+  // We must NEVER update state here — layout state and ref are only updated in
+  // onDragStop and onResizeStop (explicit user actions).
+  // eslint-disable-next-line @typescript-eslint/no-unused-vars
+  function handleLayoutChange(_newLayout: typeof DEFAULT_LAYOUT) {}
 
   function toggleWidget(id: string) {
     setVisibleWidgets(prev => {
@@ -486,13 +485,25 @@ export default function DashboardPage() {
               rowHeight={rowHeight}
               width={containerWidth - MARGIN * 2}
               onLayoutChange={handleLayoutChange}
-              onResizeStop={(newLayout) => { persistLayout(newLayout as typeof DEFAULT_LAYOUT); calcRowHeight() }}
-              onDragStop={(newLayout) => { persistLayout(newLayout as typeof DEFAULT_LAYOUT); calcRowHeight() }}
+              onResizeStop={(newLayout) => {
+                const l = newLayout as typeof DEFAULT_LAYOUT
+                layoutRef.current = l
+                setLayout(l)
+                persistLayout(l)
+                calcRowHeight()
+              }}
+              onDragStop={(newLayout) => {
+                const l = newLayout as typeof DEFAULT_LAYOUT
+                layoutRef.current = l
+                setLayout(l)
+                persistLayout(l)
+                calcRowHeight()
+              }}
               draggableHandle=".drag-handle"
               margin={[MARGIN, MARGIN]}
               containerPadding={[MARGIN, MARGIN]}
               compactType={null}
-              preventCollision={true}
+              preventCollision={false}
             >
               {visibleLayout.map(item => (
                 <div key={item.i} style={{ cursor: 'default' }}>
