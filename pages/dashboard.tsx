@@ -82,11 +82,13 @@ const labelStyle: React.CSSProperties = {
 }
 
 function BigNumber({ value, suffix = '', color = 'white', h = 2 }: { value: string | number; suffix?: string; color?: string; h?: number }) {
-  const fontSize = Math.max(24, Math.min(72, h * 22))
+  // rowHeight=60, margin=12 → pixel height = h*60 + (h-1)*12 = h*72 - 12
+  const pixelHeight = h * 72 - 12
+  const fontSize = Math.max(28, (pixelHeight - 40) * 0.38)
   return (
     <div className="flex-1 flex items-center justify-center">
       <span style={{ fontSize, fontWeight: 700, color, lineHeight: 1 }}>
-        {value}<span style={{ fontSize: fontSize * 0.5, opacity: 0.6 }}>{suffix}</span>
+        {value}<span style={{ fontSize: fontSize * 0.45, opacity: 0.6 }}>{suffix}</span>
       </span>
     </div>
   )
@@ -203,7 +205,8 @@ export default function DashboardPage() {
           </div>
         )
       case 'tiers': {
-        const tierFontSize = Math.max(18, Math.min(40, h * 14))
+        const pixelH = h * 72 - 12
+        const tierFontSize = Math.max(16, (pixelH - 50) * 0.3)
         return (
           <div style={cardStyle}>
             <div style={labelStyle}>Tier breakdown</div>
