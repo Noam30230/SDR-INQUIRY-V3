@@ -1,10 +1,9 @@
-import { useEffect, useState, useCallback } from 'react'
-import { useRouter } from 'next/router'
+import { useEffect, useState, useCallback, useRef } from 'react'
 import AuthGuard from '@/components/layout/AuthGuard'
 import { supabaseBrowser } from '@/lib/supabase'
 import {
-  BarChart, Bar, XAxis, YAxis, Tooltip, ResponsiveContainer,
-  LineChart, Line, PieChart, Pie, Cell,
+  LineChart, Line, XAxis, YAxis, Tooltip, ResponsiveContainer,
+  PieChart, Pie, Cell,
 } from 'recharts'
 import GridLayout from 'react-grid-layout'
 import 'react-grid-layout/css/styles.css'
@@ -22,7 +21,7 @@ const DEFAULT_LAYOUT = [
   { i: 'dqrate',   x: 4, y: 0, w: 2, h: 2, minW: 2, minH: 2 },
   { i: 'tiers',    x: 6, y: 0, w: 6, h: 2, minW: 4, minH: 2 },
   { i: 'activity', x: 0, y: 2, w: 7, h: 4, minW: 4, minH: 3 },
-  { i: 'techs',    x: 7, y: 2, w: 5, h: 4, minW: 4, minH: 3 },
+  { i: 'techs',    x: 7, y: 2, w: 5, h: 4, minW: 3, minH: 3 },
   { i: 'users',    x: 0, y: 6, w: 4, h: 4, minW: 3, minH: 3 },
   { i: 'funding',  x: 4, y: 6, w: 4, h: 4, minW: 3, minH: 3 },
 ]
@@ -33,10 +32,13 @@ const ALL_WIDGETS = [
   { id: 'dqrate',   label: 'DQ rate' },
   { id: 'tiers',    label: 'Tier breakdown' },
   { id: 'activity', label: 'Activity (14 days)' },
-  { id: 'techs',    label: 'Top technologies' },
+  { id: 'techs',    label: 'Top cloud providers' },
   { id: 'users',    label: 'Top users' },
   { id: 'funding',  label: 'Funding detected' },
 ]
+
+const ROW_HEIGHT = 90
+const MARGIN = 12
 
 interface Stats {
   total: number
@@ -58,7 +60,7 @@ const cardStyle: React.CSSProperties = {
   background: 'var(--bg-card)',
   border: '1px solid var(--border)',
   borderRadius: 14,
-  padding: '16px 18px',
+  padding: '14px 16px',
   height: '100%',
   boxSizing: 'border-box',
   display: 'flex',
@@ -72,7 +74,8 @@ const labelStyle: React.CSSProperties = {
   letterSpacing: '0.08em',
   textTransform: 'uppercase',
   color: 'var(--text-muted)',
-  marginBottom: 8,
+  marginBottom: 10,
+  flexShrink: 0,
 }
 
 function BigNumber({ value, suffix = '', color = 'white', pixelH = 120 }: { value: string | number; suffix?: string; color?: string; pixelH?: number }) {
@@ -87,35 +90,27 @@ function BigNumber({ value, suffix = '', color = 'white', pixelH = 120 }: { valu
 }
 
 export default function DashboardPage() {
-  const router = useRouter()
   const [stats, setStats] = useState<Stats | null>(null)
   const [loading, setLoading] = useState(true)
   const [layout, setLayout] = useState(DEFAULT_LAYOUT)
   const [visibleWidgets, setVisibleWidgets] = useState<Set<string>>(new Set(ALL_WIDGETS.map(w => w.id)))
   const [showWidgetMenu, setShowWidgetMenu] = useState(false)
-  const [containerWidth, setContainerWidth] = useState(1200)
-  const [rowHeight, setRowHeight] = useState(60)
-  const MARGIN = 12
+  const [containerWidth, setContainerWidth] = useState(900)
+  const gridRef = useRef<HTMLDivElement>(null)
 
-  // Calculate rowHeight so grid fills 100% of available height
-  const calcRowHeight = useCallback(() => {
-    const el = document.getElementById('dashboard-grid')
-    if (!el) return
-    const containerH = el.offsetHeight
-    setContainerWidth(el.offsetWidth)
-    const vl = layout.filter(l => visibleWidgets.has(l.i))
-    const numRows = vl.length ? Math.max(...vl.map(l => l.y + l.h)) : 10
-    const rh = Math.max(40, (containerH - (numRows + 1) * MARGIN) / numRows)
-    setRowHeight(rh)
-  }, [layout, visibleWidgets])
-
+  // Measure container width on mount and resize
   useEffect(() => {
-    calcRowHeight()
-    window.addEventListener('resize', calcRowHeight)
-    return () => window.removeEventListener('resize', calcRowHeight)
-  }, [calcRowHeight])
+    function measure() {
+      if (gridRef.current) {
+        setContainerWidth(gridRef.current.offsetWidth)
+      }
+    }
+    measure()
+    window.addEventListener('resize', measure)
+    return () => window.removeEventListener('resize', measure)
+  }, [])
 
-  // Load saved layout
+  // Load saved layout/widgets
   useEffect(() => {
     try {
       const saved = localStorage.getItem('inquiry_dashboard_layout')
@@ -126,20 +121,13 @@ export default function DashboardPage() {
   }, [])
 
   const fetchStats = useCallback(async () => {
-    // Show cached data instantly while fetching fresh data
     try {
       const cached = localStorage.getItem('inquiry_stats_cache')
-      if (cached) {
-        setStats(JSON.parse(cached))
-        setLoading(false)
-      }
+      if (cached) { setStats(JSON.parse(cached)); setLoading(false) }
     } catch {}
-
     try {
       const token = await getToken()
-      const res = await fetch('/api/stats', {
-        headers: { Authorization: `Bearer ${token}` },
-      })
+      const res = await fetch('/api/stats', { headers: { Authorization: `Bearer ${token}` } })
       if (res.ok) {
         const data = await res.json()
         setStats(data)
@@ -166,7 +154,6 @@ export default function DashboardPage() {
         next.delete(id)
       } else {
         next.add(id)
-        // Restore layout item from DEFAULT_LAYOUT if it was removed
         setLayout(prevLayout => {
           if (!prevLayout.find(l => l.i === id)) {
             const defaultItem = DEFAULT_LAYOUT.find(l => l.i === id)
@@ -188,34 +175,40 @@ export default function DashboardPage() {
   }
 
   const tierData = stats ? Object.entries(stats.tiers).map(([name, value]) => ({ name, value })) : []
+  const visibleLayout = layout.filter(l => visibleWidgets.has(l.i))
 
   function renderWidget(id: string) {
     const layoutItem = visibleLayout.find(l => l.i === id)
     const h = layoutItem?.h ?? 2
-    const pixelH = h * rowHeight + (h - 1) * MARGIN
+    const pixelH = h * ROW_HEIGHT + (h - 1) * MARGIN
 
-    if (!stats) return <div style={cardStyle}><div style={labelStyle}>{id}</div><div style={{ flex: 1, display: 'flex', alignItems: 'center', justifyContent: 'center' }}><div className="w-5 h-5 border-2 border-t-transparent rounded-full animate-spin" style={{ borderColor: '#7c3aed', borderTopColor: 'transparent' }} /></div></div>
+    const spinner = (
+      <div style={{ flex: 1, display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+        <div className="w-5 h-5 border-2 border-t-transparent rounded-full animate-spin"
+          style={{ borderColor: '#7c3aed', borderTopColor: 'transparent' }} />
+      </div>
+    )
 
     switch (id) {
       case 'total':
         return (
           <div style={cardStyle}>
             <div style={labelStyle}>Total scored</div>
-            <BigNumber value={stats.total} color="#a78bfa" pixelH={pixelH} />
+            {!stats ? spinner : <BigNumber value={stats.total} color="#a78bfa" pixelH={pixelH} />}
           </div>
         )
       case 'avg':
         return (
           <div style={cardStyle}>
             <div style={labelStyle}>Average score</div>
-            <BigNumber value={stats.avgScore} suffix="/100" color="#10b981" pixelH={pixelH} />
+            {!stats ? spinner : <BigNumber value={stats.avgScore} suffix="/100" color="#10b981" pixelH={pixelH} />}
           </div>
         )
       case 'dqrate':
         return (
           <div style={cardStyle}>
             <div style={labelStyle}>DQ rate</div>
-            <BigNumber value={stats.dqRate} suffix="%" color="#ef4444" pixelH={pixelH} />
+            {!stats ? spinner : <BigNumber value={stats.dqRate} suffix="%" color="#ef4444" pixelH={pixelH} />}
           </div>
         )
       case 'tiers': {
@@ -223,15 +216,17 @@ export default function DashboardPage() {
         return (
           <div style={cardStyle}>
             <div style={labelStyle}>Tier breakdown</div>
-            <div className="flex-1 flex items-stretch gap-2 min-h-0">
-              {tierData.map(({ name, value }) => (
-                <div key={name} className="flex-1 flex flex-col items-center justify-center gap-1 rounded-xl overflow-hidden"
-                  style={{ background: `${TIER_COLORS[name]}10`, border: `1px solid ${TIER_COLORS[name]}25` }}>
-                  <span style={{ fontSize: tierFontSize, fontWeight: 700, color: TIER_COLORS[name], lineHeight: 1 }}>{value}</span>
-                  <span style={{ fontSize: 10, color: 'var(--text-muted)', fontWeight: 600 }}>{name}</span>
-                </div>
-              ))}
-            </div>
+            {!stats ? spinner : (
+              <div className="flex-1 flex items-stretch gap-2 min-h-0">
+                {tierData.map(({ name, value }) => (
+                  <div key={name} className="flex-1 flex flex-col items-center justify-center gap-1 rounded-xl"
+                    style={{ background: `${TIER_COLORS[name]}10`, border: `1px solid ${TIER_COLORS[name]}25` }}>
+                    <span style={{ fontSize: tierFontSize, fontWeight: 700, color: TIER_COLORS[name], lineHeight: 1 }}>{value}</span>
+                    <span style={{ fontSize: 10, color: 'var(--text-muted)', fontWeight: 600 }}>{name}</span>
+                  </div>
+                ))}
+              </div>
+            )}
           </div>
         )
       }
@@ -239,91 +234,105 @@ export default function DashboardPage() {
         return (
           <div style={cardStyle}>
             <div style={labelStyle}>Activity — last 14 days</div>
-            <div className="flex-1">
-              <ResponsiveContainer width="100%" height="100%">
-                <LineChart data={stats.activityData} margin={{ top: 4, right: 8, left: -20, bottom: 0 }}>
-                  <XAxis dataKey="date" tick={{ fill: 'var(--text-muted)', fontSize: 10 }} axisLine={false} tickLine={false} />
-                  <YAxis tick={{ fill: 'var(--text-muted)', fontSize: 10 }} axisLine={false} tickLine={false} allowDecimals={false} />
-                  <Tooltip
-                    contentStyle={{ background: 'var(--bg-card)', border: '1px solid var(--border)', borderRadius: 8, fontSize: 12 }}
-                    labelStyle={{ color: 'white' }}
-                    itemStyle={{ color: '#a78bfa' }}
-                  />
-                  <Line type="monotone" dataKey="count" stroke="#7c3aed" strokeWidth={2} dot={false} activeDot={{ r: 4, fill: '#a78bfa' }} />
-                </LineChart>
-              </ResponsiveContainer>
-            </div>
+            {!stats ? spinner : (
+              <div className="flex-1 min-h-0">
+                <ResponsiveContainer width="100%" height="100%">
+                  <LineChart data={stats.activityData} margin={{ top: 4, right: 8, left: -20, bottom: 0 }}>
+                    <XAxis dataKey="date" tick={{ fill: 'var(--text-muted)', fontSize: 10 }} axisLine={false} tickLine={false} />
+                    <YAxis tick={{ fill: 'var(--text-muted)', fontSize: 10 }} axisLine={false} tickLine={false} allowDecimals={false} />
+                    <Tooltip
+                      contentStyle={{ background: 'var(--bg-card)', border: '1px solid var(--border)', borderRadius: 8, fontSize: 12 }}
+                      labelStyle={{ color: 'white' }}
+                      itemStyle={{ color: '#a78bfa' }}
+                    />
+                    <Line type="monotone" dataKey="count" stroke="#7c3aed" strokeWidth={2} dot={false} activeDot={{ r: 4, fill: '#a78bfa' }} />
+                  </LineChart>
+                </ResponsiveContainer>
+              </div>
+            )}
           </div>
         )
-      case 'techs':
+      case 'techs': {
+        const maxCount = stats ? Math.max(...stats.topTechs.map(t => t.count), 1) : 1
         return (
           <div style={cardStyle}>
-            <div style={labelStyle}>Top technologies</div>
-            <div className="flex-1">
-              <ResponsiveContainer width="100%" height="100%">
-                <BarChart data={stats.topTechs} layout="vertical" margin={{ top: 0, right: 8, left: 8, bottom: 0 }}>
-                  <XAxis type="number" tick={{ fill: 'var(--text-muted)', fontSize: 10 }} axisLine={false} tickLine={false} allowDecimals={false} />
-                  <YAxis type="category" dataKey="name" tick={{ fill: '#e2e8f0', fontSize: 11 }} axisLine={false} tickLine={false} width={70} />
-                  <Tooltip
-                    contentStyle={{ background: 'var(--bg-card)', border: '1px solid var(--border)', borderRadius: 8, fontSize: 12 }}
-                    labelStyle={{ color: 'white' }}
-                    itemStyle={{ color: '#a78bfa' }}
-                  />
-                  <Bar dataKey="count" fill="#7c3aed" radius={[0, 4, 4, 0]} />
-                </BarChart>
-              </ResponsiveContainer>
-            </div>
+            <div style={labelStyle}>Top cloud providers</div>
+            {!stats ? spinner : (
+              <div style={{ flex: 1, overflowY: 'auto', display: 'flex', flexDirection: 'column', gap: 8 }}>
+                {stats.topTechs.length === 0 ? (
+                  <p style={{ color: 'var(--text-muted)', fontSize: 13, textAlign: 'center', marginTop: 16 }}>No data yet</p>
+                ) : stats.topTechs.map(({ name, count }) => (
+                  <div key={name}>
+                    <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: 4 }}>
+                      <span style={{ fontSize: 12, color: 'white', fontWeight: 500 }}>{name}</span>
+                      <span style={{ fontSize: 11, color: 'var(--text-muted)' }}>{count}</span>
+                    </div>
+                    <div style={{ height: 4, borderRadius: 9999, background: 'rgba(255,255,255,0.06)', overflow: 'hidden' }}>
+                      <div style={{ height: '100%', borderRadius: 9999, background: '#7c3aed', width: `${Math.round((count / maxCount) * 100)}%`, transition: 'width 0.4s ease' }} />
+                    </div>
+                  </div>
+                ))}
+              </div>
+            )}
           </div>
         )
+      }
       case 'users':
         return (
           <div style={cardStyle}>
             <div style={labelStyle}>Top users</div>
-            <div className="flex-1 flex flex-col justify-center gap-3">
-              {stats.topUsers.map(({ name, pct }, i) => (
-                <div key={i} className="flex items-center gap-3">
-                  <div className="w-7 h-7 rounded-full flex items-center justify-center text-xs font-bold shrink-0"
-                    style={{ background: 'rgba(124,58,237,0.15)', color: '#a78bfa' }}>
-                    {name[0]}
-                  </div>
-                  <div className="flex-1 flex flex-col gap-1">
-                    <span style={{ fontSize: 12, color: 'white', fontWeight: 500 }}>{name}</span>
-                    <div className="w-full rounded-full overflow-hidden" style={{ height: 4, background: 'rgba(255,255,255,0.06)' }}>
-                      <div className="h-full rounded-full transition-all"
-                        style={{ width: `${pct}%`, background: i === 0 ? '#7c3aed' : 'rgba(124,58,237,0.4)' }} />
+            {!stats ? spinner : (
+              <div style={{ flex: 1, overflowY: 'auto', display: 'flex', flexDirection: 'column', gap: 6 }}>
+                {stats.topUsers.length === 0 ? (
+                  <p style={{ color: 'var(--text-muted)', fontSize: 13, textAlign: 'center', marginTop: 16 }}>No data yet</p>
+                ) : stats.topUsers.map(({ name }, i) => (
+                  <div key={i} style={{ display: 'flex', alignItems: 'center', gap: 10, padding: '6px 0' }}>
+                    <span style={{ fontSize: 11, color: 'var(--text-muted)', width: 16, textAlign: 'right', flexShrink: 0, fontVariantNumeric: 'tabular-nums' }}>
+                      {i + 1}
+                    </span>
+                    <div style={{
+                      width: 30, height: 30, borderRadius: '50%',
+                      background: i === 0 ? 'rgba(124,58,237,0.2)' : 'rgba(255,255,255,0.06)',
+                      border: `1px solid ${i === 0 ? 'rgba(124,58,237,0.4)' : 'rgba(255,255,255,0.08)'}`,
+                      display: 'flex', alignItems: 'center', justifyContent: 'center',
+                      fontSize: 12, fontWeight: 700,
+                      color: i === 0 ? '#a78bfa' : 'var(--text-muted)',
+                      flexShrink: 0,
+                    }}>
+                      {name[0]}
                     </div>
+                    <span style={{ fontSize: 13, color: i === 0 ? 'white' : 'rgba(255,255,255,0.75)', fontWeight: i === 0 ? 600 : 400 }}>
+                      {name}
+                    </span>
                   </div>
-                </div>
-              ))}
-              {stats.topUsers.length === 0 && (
-                <p style={{ color: 'var(--text-muted)', fontSize: 13, textAlign: 'center' }}>No data yet</p>
-              )}
-            </div>
+                ))}
+              </div>
+            )}
           </div>
         )
       case 'funding':
         return (
           <div style={cardStyle}>
             <div style={labelStyle}>Funding detected</div>
-            {stats.fundingData.length === 0 ? (
+            {!stats ? spinner : stats.fundingData.length === 0 ? (
               <div className="flex-1 flex items-center justify-center">
                 <p style={{ color: 'var(--text-muted)', fontSize: 13 }}>No funding data yet</p>
               </div>
             ) : (
-              <div className="flex-1 flex items-center gap-4">
-                <PieChart width={120} height={120}>
-                  <Pie data={stats.fundingData} cx={55} cy={55} innerRadius={32} outerRadius={52} dataKey="count" paddingAngle={3}>
+              <div style={{ flex: 1, display: 'flex', alignItems: 'center', gap: 16, minHeight: 0 }}>
+                <PieChart width={110} height={110}>
+                  <Pie data={stats.fundingData} cx={50} cy={50} innerRadius={28} outerRadius={48} dataKey="count" paddingAngle={3}>
                     {stats.fundingData.map((_, idx) => (
                       <Cell key={idx} fill={FUNDING_COLORS[idx % FUNDING_COLORS.length]} />
                     ))}
                   </Pie>
                 </PieChart>
-                <div className="flex flex-col gap-1.5 flex-1">
+                <div style={{ flex: 1, overflowY: 'auto', display: 'flex', flexDirection: 'column', gap: 6 }}>
                   {stats.fundingData.map(({ name, count }, idx) => (
-                    <div key={name} className="flex items-center gap-2">
-                      <span className="w-2 h-2 rounded-full shrink-0" style={{ background: FUNDING_COLORS[idx % FUNDING_COLORS.length] }} />
-                      <span style={{ fontSize: 12, color: 'var(--text-muted)' }}>{name}</span>
-                      <span style={{ fontSize: 12, color: 'white', marginLeft: 'auto', fontWeight: 600 }}>{count}</span>
+                    <div key={name} style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
+                      <span style={{ width: 8, height: 8, borderRadius: '50%', background: FUNDING_COLORS[idx % FUNDING_COLORS.length], flexShrink: 0 }} />
+                      <span style={{ fontSize: 12, color: 'var(--text-muted)', flex: 1 }}>{name}</span>
+                      <span style={{ fontSize: 12, color: 'white', fontWeight: 600 }}>{count}</span>
                     </div>
                   ))}
                 </div>
@@ -335,8 +344,6 @@ export default function DashboardPage() {
         return null
     }
   }
-
-  const visibleLayout = layout.filter(l => visibleWidgets.has(l.i))
 
   return (
     <AuthGuard>
@@ -350,7 +357,7 @@ export default function DashboardPage() {
             <div>
               <h1 className="text-lg font-bold text-white">Dashboard</h1>
               <p className="text-xs mt-0.5" style={{ color: 'var(--text-muted)' }}>
-                {loading ? 'Loading…' : `${stats?.total ?? 0} accounts scored in total`}
+                {loading ? 'Loading…' : `${stats?.total ?? 0} accounts scored`}
               </p>
             </div>
             <div className="flex items-center gap-2">
@@ -394,13 +401,13 @@ export default function DashboardPage() {
             </div>
           </div>
 
-          {/* Grid */}
-          <div className="flex-1 overflow-hidden p-3" id="dashboard-grid" style={{ height: '100%' }}>
+          {/* Scrollable grid */}
+          <div ref={gridRef} className="flex-1 overflow-y-auto p-3">
             <GridLayout
               className="layout"
               layout={visibleLayout}
               cols={12}
-              rowHeight={rowHeight}
+              rowHeight={ROW_HEIGHT}
               width={containerWidth - 24}
               onLayoutChange={handleLayoutChange}
               draggableHandle=".drag-handle"
@@ -410,8 +417,7 @@ export default function DashboardPage() {
             >
               {visibleLayout.map(item => (
                 <div key={item.i} style={{ cursor: 'default' }}>
-                  <div className="drag-handle" style={{ position: 'absolute', top: 8, right: 36, cursor: 'grab', padding: '4px 6px', borderRadius: 6, zIndex: 10 }}
-                    title="Drag to move">
+                  <div className="drag-handle" style={{ position: 'absolute', top: 8, right: 10, cursor: 'grab', padding: '4px 6px', borderRadius: 6, zIndex: 10 }} title="Drag">
                     <svg width="10" height="10" viewBox="0 0 10 10" fill="none">
                       {[0,3,6].map(y => [0,3,6].map(x => (
                         <circle key={`${x}-${y}`} cx={x+1} cy={y+1} r="0.8" fill="#4b5563" />
