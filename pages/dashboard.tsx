@@ -51,7 +51,7 @@ interface Stats {
   dqRate: number
   topTechs: { name: string; count: number }[]
   activityData: { date: string; count: number }[]
-  topUsers: { name: string; count: number }[]
+  topUsers: { name: string; count: number; pct: number }[]
   fundingData: { name: string; count: number }[]
 }
 
@@ -263,18 +263,20 @@ export default function DashboardPage() {
         return (
           <div style={cardStyle}>
             <div style={labelStyle}>Top users</div>
-            <div className="flex-1 flex flex-col justify-center gap-2">
-              {stats.topUsers.map(({ name, count }, i) => (
+            <div className="flex-1 flex flex-col justify-center gap-3">
+              {stats.topUsers.map(({ name, pct }, i) => (
                 <div key={i} className="flex items-center gap-3">
-                  <span style={{ fontSize: 11, color: 'var(--text-muted)', width: 16, textAlign: 'right' }}>#{i + 1}</span>
-                  <div className="flex-1 flex items-center gap-2">
-                    <div className="w-7 h-7 rounded-full flex items-center justify-center text-xs font-bold shrink-0"
-                      style={{ background: 'rgba(124,58,237,0.15)', color: '#a78bfa' }}>
-                      {name[0]}
-                    </div>
-                    <span style={{ fontSize: 13, color: 'white', fontWeight: 500 }}>{name}</span>
+                  <div className="w-7 h-7 rounded-full flex items-center justify-center text-xs font-bold shrink-0"
+                    style={{ background: 'rgba(124,58,237,0.15)', color: '#a78bfa' }}>
+                    {name[0]}
                   </div>
-                  <span style={{ fontSize: 12, color: '#a78bfa', fontWeight: 600 }}>{count}</span>
+                  <div className="flex-1 flex flex-col gap-1">
+                    <span style={{ fontSize: 12, color: 'white', fontWeight: 500 }}>{name}</span>
+                    <div className="w-full rounded-full overflow-hidden" style={{ height: 4, background: 'rgba(255,255,255,0.06)' }}>
+                      <div className="h-full rounded-full transition-all"
+                        style={{ width: `${pct}%`, background: i === 0 ? '#7c3aed' : 'rgba(124,58,237,0.4)' }} />
+                    </div>
+                  </div>
                 </div>
               ))}
               {stats.topUsers.length === 0 && (

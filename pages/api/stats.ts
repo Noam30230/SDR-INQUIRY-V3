@@ -1,28 +1,74 @@
 import type { NextApiRequest, NextApiResponse } from 'next'
+import { createClient } from '@supabase/supabase-js'
 import { supabaseAdmin } from '@/lib/supabase-admin'
+
+// Fetch all pages from Supabase (default limit is 1000)
+async function fetchAllAccounts(userId: string) {
+  const PAGE = 1000
+  let from = 0
+  const all: Record<string, unknown>[] = []
+  while (true) {
+    const { data, error } = await supabaseAdmin
+      .from('accounts')
+      .select('*')
+      .eq('status', 'done')
+      .eq('user_id', userId)
+      .range(from, from + PAGE - 1)
+    if (error) throw error
+    if (!data || data.length === 0) break
+    all.push(...data)
+    if (data.length < PAGE) break
+    from += PAGE
+  }
+  return all
+}
+
+// Fetch all accounts for top users widget (admin, no user filter)
+async function fetchAllAccountsAdmin() {
+  const PAGE = 1000
+  let from = 0
+  const all: Record<string, unknown>[] = []
+  while (true) {
+    const { data, error } = await supabaseAdmin
+      .from('accounts')
+      .select('user_id')
+      .eq('status', 'done')
+      .range(from, from + PAGE - 1)
+    if (error) throw error
+    if (!data || data.length === 0) break
+    all.push(...data)
+    if (data.length < PAGE) break
+    from += PAGE
+  }
+  return all
+}
 
 export default async function handler(req: NextApiRequest, res: NextApiResponse) {
   const token = req.headers.authorization?.replace('Bearer ', '')
   if (!token) return res.status(401).json({ error: 'Unauthorized' })
 
+  // Authenticate user from token
+  const supabaseUser = createClient(
+    process.env.NEXT_PUBLIC_SUPABASE_URL!,
+    process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!,
+    { global: { headers: { Authorization: `Bearer ${token}` } } }
+  )
+  const { data: { user } } = await supabaseUser.auth.getUser()
+  if (!user) return res.status(401).json({ error: 'Unauthorized' })
+
   try {
-    const { data: accounts, error } = await supabaseAdmin
-      .from('accounts')
-      .select('*')
-      .eq('status', 'done')
-
-    if (error) throw error
-
+    // Personal accounts only
+    const accounts = await fetchAllAccounts(user.id)
     const total = accounts.length
 
     // T1/T2/T3/DQ counts
     const tiers: Record<string, number> = { T1: 0, T2: 0, T3: 0, DQ: 0 }
-    accounts.forEach(a => { if (a.tier) tiers[a.tier] = (tiers[a.tier] || 0) + 1 })
+    accounts.forEach(a => { if (a.tier) tiers[a.tier as string] = (tiers[a.tier as string] || 0) + 1 })
 
     // Average score
     const scored = accounts.filter(a => typeof a.score === 'number')
     const avgScore = scored.length
-      ? Math.round(scored.reduce((s, a) => s + a.score, 0) / scored.length)
+      ? Math.round(scored.reduce((s, a) => s + (a.score as number), 0) / scored.length)
       : 0
 
     // DQ rate
@@ -62,10 +108,11 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
       count,
     }))
 
-    // Top users — extract first name from email
+    // Top users — all team (admin query, no user filter)
+    const allAccounts = await fetchAllAccountsAdmin()
     const userCount: Record<string, number> = {}
-    accounts.forEach(a => {
-      if (a.user_id) userCount[a.user_id] = (userCount[a.user_id] || 0) + 1
+    allAccounts.forEach(a => {
+      if (a.user_id) userCount[a.user_id as string] = (userCount[a.user_id as string] || 0) + 1
     })
 
     const { data: usersData } = await supabaseAdmin.auth.admin.listUsers()
@@ -78,12 +125,14 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
       return first.charAt(0).toUpperCase() + first.slice(1).toLowerCase()
     }
 
+    const maxCount = Math.max(...Object.values(userCount), 1)
     const topUsers = Object.entries(userCount)
       .sort((a, b) => b[1] - a[1])
       .slice(0, 5)
       .map(([userId, count]) => ({
         name: getFirstName(emailMap[userId] || userId),
         count,
+        pct: Math.round((count / maxCount) * 100),
       }))
 
     // Funding breakdown
