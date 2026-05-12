@@ -91,11 +91,32 @@ function BigNumber({ value, suffix = '', color = 'white', pixelH = 120 }: {
   )
 }
 
+// Load from localStorage synchronously so state is correct on first render,
+// before react-grid-layout fires onLayoutChange and would overwrite it.
+function loadSavedLayout(): typeof DEFAULT_LAYOUT {
+  if (typeof window === 'undefined') return DEFAULT_LAYOUT
+  try {
+    const saved = localStorage.getItem('inquiry_dashboard_layout')
+    if (saved) return JSON.parse(saved)
+  } catch {}
+  return DEFAULT_LAYOUT
+}
+
+function loadSavedWidgets(): Set<string> {
+  if (typeof window === 'undefined') return new Set(ALL_WIDGETS.map(w => w.id))
+  try {
+    const saved = localStorage.getItem('inquiry_dashboard_widgets')
+    if (saved) return new Set<string>(JSON.parse(saved))
+  } catch {}
+  return new Set(ALL_WIDGETS.map(w => w.id))
+}
+
 export default function DashboardPage() {
   const [stats, setStats] = useState<Stats | null>(null)
   const [loading, setLoading] = useState(true)
-  const [layout, setLayout] = useState(DEFAULT_LAYOUT)
-  const [visibleWidgets, setVisibleWidgets] = useState<Set<string>>(new Set(ALL_WIDGETS.map(w => w.id)))
+  // Lazy initializers: read localStorage on first render (before GridLayout fires onLayoutChange)
+  const [layout, setLayout] = useState<typeof DEFAULT_LAYOUT>(loadSavedLayout)
+  const [visibleWidgets, setVisibleWidgets] = useState<Set<string>>(loadSavedWidgets)
   const [showWidgetMenu, setShowWidgetMenu] = useState(false)
   const [containerWidth, setContainerWidth] = useState(900)
   const [rowHeight, setRowHeight] = useState(60)
@@ -120,16 +141,6 @@ export default function DashboardPage() {
     window.addEventListener('resize', onResize)
     return () => window.removeEventListener('resize', onResize)
   }, [calcRowHeight, visibleWidgets])
-
-  // Load saved layout/widgets
-  useEffect(() => {
-    try {
-      const saved = localStorage.getItem('inquiry_dashboard_layout')
-      if (saved) setLayout(JSON.parse(saved))
-      const savedWidgets = localStorage.getItem('inquiry_dashboard_widgets')
-      if (savedWidgets) setVisibleWidgets(new Set(JSON.parse(savedWidgets)))
-    } catch {}
-  }, [])
 
   const fetchStats = useCallback(async () => {
     try {
