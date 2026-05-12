@@ -1,20 +1,17 @@
 import { useState, useRef, useEffect } from 'react'
 import Papa from 'papaparse'
 import type { Account, Tier } from '@/types'
-import { supabaseBrowser } from '@/lib/supabase'
 import { detectColumns, parseRows, type ParsedRow } from '@/lib/csv-parser'
 
 interface SidebarProps {
   accounts: Account[]
   isScoring: boolean
-  userEmail: string
   selectedIds?: Set<string>
   exportLabel?: string
   remainingCount?: number
   onScoreBatch: (items: ParsedRow[], searchDepth: 'standard' | 'deep') => Promise<void>
   onStopBatch: () => void
   onExport: () => void
-  onReplayTour?: () => void
 }
 
 const TIERS: Array<{ tier: Tier; color: string }> = [
@@ -64,24 +61,14 @@ function validateManualInput(raw: string): LineError[] {
   return errors
 }
 
-export default function Sidebar({ accounts, isScoring, remainingCount = 0, userEmail, selectedIds, exportLabel, onScoreBatch, onStopBatch, onExport, onReplayTour }: SidebarProps) {
+export default function Sidebar({ accounts, isScoring, remainingCount = 0, selectedIds, exportLabel, onScoreBatch, onStopBatch, onExport }: SidebarProps) {
   const [tab, setTab] = useState<'manual' | 'csv'>('manual')
   const [searchDepth, setSearchDepth] = useState<'standard' | 'deep'>('standard')
   const [text, setText] = useState('')
   const [csvPreview, setCsvPreview] = useState<ParsedRow[]>([])
   const [csvMapping, setCsvMapping] = useState<{ nameCol: string | null; domainCol: string | null; sfdcCol: string | null } | null>(null)
-  const [menuOpen, setMenuOpen] = useState(false)
   const [isDragOver, setIsDragOver] = useState(false)
   const fileRef = useRef<HTMLInputElement>(null)
-  const menuRef = useRef<HTMLDivElement>(null)
-
-  useEffect(() => {
-    function handleClick(e: MouseEvent) {
-      if (menuRef.current && !menuRef.current.contains(e.target as Node)) setMenuOpen(false)
-    }
-    document.addEventListener('mousedown', handleClick)
-    return () => document.removeEventListener('mousedown', handleClick)
-  }, [])
 
   // Fix #9: elapsed time counter while scoring
   const [elapsed, setElapsed] = useState(0)
@@ -147,61 +134,8 @@ export default function Sidebar({ accounts, isScoring, remainingCount = 0, userE
     >
       {/* Header */}
       <div className="mb-5">
-        <div className="flex items-center justify-between gap-2 mb-1">
-          <div className="leading-none">
-            <div className="text-sm font-bold text-white leading-tight">Scoring</div>
-            <div className="flex items-center gap-1 mt-0.5">
-              <span className="text-xs" style={{ color: 'var(--text-muted)' }}>by </span>
-              <a
-                href="https://www.linkedin.com/in/noamramillon/"
-                target="_blank"
-                rel="noopener noreferrer"
-                className="text-xs font-semibold transition-opacity hover:opacity-80"
-                style={{ color: '#7c3aed' }}
-              >
-                Noam Ramillon
-              </a>
-            </div>
-          </div>
-          {/* Context menu */}
-          <div className="relative" ref={menuRef}>
-            <button
-              onClick={() => setMenuOpen(o => !o)}
-              className="flex flex-col items-center justify-center gap-[4px] w-7 h-7 rounded-md transition-colors hover:bg-white/5"
-            >
-              {[0,1,2].map(i => (
-                <span key={i} className="block w-[14px] h-[1.5px] rounded-full" style={{ background: 'var(--text-muted)' }} />
-              ))}
-            </button>
-            {menuOpen && (
-              <div
-                className="absolute right-0 top-full mt-1 rounded-xl py-1.5 z-50 min-w-[180px]"
-                style={{ background: 'var(--bg-card)', border: '1px solid var(--border)', boxShadow: '0 8px 24px rgba(0,0,0,0.4)' }}
-              >
-                {userEmail && (
-                  <div className="px-3 py-2 border-b" style={{ borderColor: 'var(--border)' }}>
-                    <p className="text-xs font-medium truncate" style={{ color: 'var(--text-muted)' }}>{userEmail}</p>
-                  </div>
-                )}
-                {onReplayTour && (
-                  <button
-                    onClick={() => { onReplayTour(); setMenuOpen(false) }}
-                    className="w-full text-left px-3 py-2 text-xs transition-colors hover:bg-white/5"
-                    style={{ color: 'var(--text-muted)' }}
-                  >
-                    🗺 Replay tour
-                  </button>
-                )}
-                <button
-                  onClick={() => { supabaseBrowser.auth.signOut(); setMenuOpen(false) }}
-                  className="w-full text-left px-3 py-2 text-xs transition-colors hover:bg-white/5"
-                  style={{ color: '#f87171' }}
-                >
-                  🚪 Log out
-                </button>
-              </div>
-            )}
-          </div>
+        <div className="mb-1">
+          <div className="text-sm font-bold text-white leading-tight">Scoring</div>
         </div>
         {(() => {
           const done = accounts.filter(a => a.status === 'done' && a.created_at)

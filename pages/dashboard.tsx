@@ -72,7 +72,7 @@ const labelStyle: React.CSSProperties = {
   fontWeight: 600,
   letterSpacing: '0.08em',
   textTransform: 'uppercase',
-  color: 'var(--text-muted)',
+  color: 'white',
   marginBottom: 10,
   flexShrink: 0,
 }

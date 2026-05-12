@@ -128,7 +128,6 @@ export default function ScoringPage() {
   const [remainingCount, setRemainingCount] = useState(0)
   const [isLoading, setIsLoading] = useState(true)
   const [toast, setToast] = useState('')
-  const [userEmail, setUserEmail] = useState('')
   const [selectedIds, setSelectedIds] = useState<Set<string>>(new Set())
   const [showOnboarding, setShowOnboarding] = useState(false)
   const [userId, setUserId] = useState('')
@@ -148,7 +147,6 @@ export default function ScoringPage() {
 
     supabaseBrowser.auth.getSession().then(({ data }) => {
       const user = data.session?.user
-      setUserEmail(user?.email || '')
       setUserId(user?.id || '')
       // Show onboarding only for brand-new accounts (signed up < 10 min ago)
       // Key is per-user so a new account on the same browser isn't blocked by a previous session
@@ -174,6 +172,13 @@ export default function ScoringPage() {
 
     return () => { supabaseBrowser.removeChannel(channel) }
   }, [loadAccounts])
+
+  // Listen for Replay tour event dispatched from AppNav
+  useEffect(() => {
+    const handle = () => setShowOnboarding(true)
+    window.addEventListener('inquiry:replayTour', handle)
+    return () => window.removeEventListener('inquiry:replayTour', handle)
+  }, [])
 
   async function scoreBatch(items: Array<{ name?: string; domain: string; salesforceId?: string }>, searchDepth: 'standard' | 'deep' = 'standard') {
     stopRef.current = false
@@ -304,7 +309,6 @@ export default function ScoringPage() {
         <Sidebar
           accounts={accounts}
           isScoring={isScoring}
-          userEmail={userEmail}
           selectedIds={selectedIds}
           exportLabel={
             selectedIds.size > 0
@@ -317,7 +321,6 @@ export default function ScoringPage() {
           onScoreBatch={scoreBatch}
           onStopBatch={stopBatch}
           onExport={handleExport}
-          onReplayTour={() => setShowOnboarding(true)}
         />
         <main className="flex-1 flex flex-col min-w-0 p-6 overflow-hidden">
           <div className="flex items-center justify-between mb-5 shrink-0">

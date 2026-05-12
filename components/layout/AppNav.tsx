@@ -1,4 +1,4 @@
-import { useEffect, useState } from 'react'
+import { useEffect, useState, useRef } from 'react'
 import { useRouter } from 'next/router'
 import { supabaseBrowser } from '@/lib/supabase'
 
@@ -37,6 +37,8 @@ function getDisplayName(email: string): string {
 export default function AppNav() {
   const router = useRouter()
   const [email, setEmail] = useState('')
+  const [profileOpen, setProfileOpen] = useState(false)
+  const profileRef = useRef<HTMLDivElement>(null)
 
   useEffect(() => {
     supabaseBrowser.auth.getSession().then(({ data }) => {
@@ -44,8 +46,29 @@ export default function AppNav() {
     })
   }, [])
 
+  // Close dropdown when clicking outside
+  useEffect(() => {
+    function handleClick(e: MouseEvent) {
+      if (profileRef.current && !profileRef.current.contains(e.target as Node)) {
+        setProfileOpen(false)
+      }
+    }
+    document.addEventListener('mousedown', handleClick)
+    return () => document.removeEventListener('mousedown', handleClick)
+  }, [])
+
   const displayName = getDisplayName(email)
   const initial = displayName ? displayName[0].toUpperCase() : '?'
+
+  function handleLogout() {
+    supabaseBrowser.auth.signOut()
+    setProfileOpen(false)
+  }
+
+  function handleReplayTour() {
+    window.dispatchEvent(new CustomEvent('inquiry:replayTour'))
+    setProfileOpen(false)
+  }
 
   return (
     <aside
@@ -102,26 +125,72 @@ export default function AppNav() {
         })}
       </nav>
 
-      {/* Profile at bottom */}
-      <div style={{ padding: '12px 14px', borderTop: '1px solid var(--border)', marginTop: 8 }}>
-        <div style={{ display: 'flex', alignItems: 'center', gap: 10 }}>
+      {/* Profile section — clickable, opens dropdown */}
+      <div ref={profileRef} style={{ position: 'relative', borderTop: '1px solid var(--border)', marginTop: 8 }}>
+        {/* Dropdown (opens upward) */}
+        {profileOpen && (
           <div style={{
-            width: 32,
-            height: 32,
-            borderRadius: '50%',
+            position: 'absolute',
+            bottom: '100%',
+            left: 8,
+            right: 8,
+            marginBottom: 6,
+            borderRadius: 10,
+            overflow: 'hidden',
+            background: 'var(--bg-base)',
+            border: '1px solid var(--border)',
+            boxShadow: '0 -8px 24px rgba(0,0,0,0.4)',
+          }}>
+            {router.pathname === '/scoring' && (
+              <button
+                onClick={handleReplayTour}
+                style={{
+                  width: '100%', textAlign: 'left', padding: '9px 14px',
+                  fontSize: 12, color: 'var(--text-muted)', background: 'none',
+                  border: 'none', cursor: 'pointer', display: 'flex', alignItems: 'center', gap: 8,
+                }}
+                onMouseEnter={e => (e.currentTarget.style.background = 'rgba(255,255,255,0.04)')}
+                onMouseLeave={e => (e.currentTarget.style.background = 'none')}
+              >
+                <span style={{ fontSize: 14 }}>🗺</span> Replay tour
+              </button>
+            )}
+            <button
+              onClick={handleLogout}
+              style={{
+                width: '100%', textAlign: 'left', padding: '9px 14px',
+                fontSize: 12, color: '#f87171', background: 'none',
+                border: 'none', cursor: 'pointer', display: 'flex', alignItems: 'center', gap: 8,
+              }}
+              onMouseEnter={e => (e.currentTarget.style.background = 'rgba(239,68,68,0.06)')}
+              onMouseLeave={e => (e.currentTarget.style.background = 'none')}
+            >
+              <span style={{ fontSize: 14 }}>🚪</span> Log out
+            </button>
+          </div>
+        )}
+
+        {/* Profile row */}
+        <button
+          onClick={() => setProfileOpen(v => !v)}
+          style={{
+            width: '100%', display: 'flex', alignItems: 'center', gap: 10,
+            padding: '12px 14px', background: 'none', border: 'none', cursor: 'pointer',
+            transition: 'background 0.12s',
+          }}
+          onMouseEnter={e => (e.currentTarget.style.background = 'rgba(255,255,255,0.03)')}
+          onMouseLeave={e => (e.currentTarget.style.background = 'none')}
+        >
+          <div style={{
+            width: 32, height: 32, borderRadius: '50%', flexShrink: 0,
             background: 'rgba(124,58,237,0.18)',
             border: '1px solid rgba(124,58,237,0.3)',
-            display: 'flex',
-            alignItems: 'center',
-            justifyContent: 'center',
-            fontSize: 13,
-            fontWeight: 700,
-            color: '#a78bfa',
-            flexShrink: 0,
+            display: 'flex', alignItems: 'center', justifyContent: 'center',
+            fontSize: 13, fontWeight: 700, color: '#a78bfa',
           }}>
             {initial}
           </div>
-          <div style={{ minWidth: 0 }}>
+          <div style={{ minWidth: 0, textAlign: 'left', flex: 1 }}>
             <div style={{ fontSize: 13, fontWeight: 600, color: 'white', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
               {displayName || 'User'}
             </div>
@@ -129,7 +198,11 @@ export default function AppNav() {
               {email}
             </div>
           </div>
-        </div>
+          <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="var(--text-muted)" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"
+            style={{ flexShrink: 0, transform: profileOpen ? 'rotate(180deg)' : 'rotate(0deg)', transition: 'transform 0.15s' }}>
+            <polyline points="18 15 12 9 6 15"/>
+          </svg>
+        </button>
       </div>
     </aside>
   )
