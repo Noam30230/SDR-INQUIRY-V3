@@ -132,13 +132,24 @@ export default function DashboardPage() {
   }, [])
 
   const fetchStats = useCallback(async () => {
+    // Show cached data instantly while fetching fresh data
+    try {
+      const cached = localStorage.getItem('inquiry_stats_cache')
+      if (cached) {
+        setStats(JSON.parse(cached))
+        setLoading(false)
+      }
+    } catch {}
+
     try {
       const token = await getToken()
       const res = await fetch('/api/stats', {
         headers: { Authorization: `Bearer ${token}` },
       })
       if (res.ok) {
-        setStats(await res.json())
+        const data = await res.json()
+        setStats(data)
+        localStorage.setItem('inquiry_stats_cache', JSON.stringify(data))
       }
     } catch (e) {
       console.error('Dashboard fetch error:', e)
