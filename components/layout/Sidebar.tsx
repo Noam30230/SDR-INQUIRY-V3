@@ -136,18 +136,6 @@ export default function Sidebar({ accounts, isScoring, remainingCount = 0, selec
       <div className="mb-5">
         <div className="mb-1">
           <div className="text-sm font-bold text-white leading-tight">Scoring</div>
-          <div className="flex items-center gap-1 mt-0.5">
-            <span className="text-xs" style={{ color: 'var(--text-muted)' }}>by </span>
-            <a
-              href="https://www.linkedin.com/in/noamramillon/"
-              target="_blank"
-              rel="noopener noreferrer"
-              className="text-xs font-semibold transition-opacity hover:opacity-80"
-              style={{ color: '#7c3aed' }}
-            >
-              Noam Ramillon
-            </a>
-          </div>
         </div>
         {(() => {
           const done = accounts.filter(a => a.status === 'done' && a.created_at)

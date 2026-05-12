@@ -89,6 +89,19 @@ export default function AppNav() {
           <InquiryLogo size={26} />
           <span style={{ fontWeight: 700, fontSize: 14, color: 'white', letterSpacing: '-0.01em' }}>Inquiry</span>
         </div>
+        <div style={{ display: 'flex', alignItems: 'center', gap: 4, marginTop: 4 }}>
+          <span style={{ fontSize: 10, color: 'var(--text-muted)' }}>by</span>
+          <a
+            href="https://www.linkedin.com/in/noamramillon/"
+            target="_blank"
+            rel="noopener noreferrer"
+            style={{ fontSize: 10, fontWeight: 600, color: '#7c3aed', textDecoration: 'none', transition: 'opacity 0.12s' }}
+            onMouseEnter={e => (e.currentTarget.style.opacity = '0.75')}
+            onMouseLeave={e => (e.currentTarget.style.opacity = '1')}
+          >
+            Noam Ramillon
+          </a>
+        </div>
       </div>
 
       {/* Nav items */}
