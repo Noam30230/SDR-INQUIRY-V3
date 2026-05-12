@@ -1,5 +1,6 @@
 import { useEffect, useState, useRef, useCallback } from 'react'
 import AuthGuard from '@/components/layout/AuthGuard'
+import AppNav from '@/components/layout/AppNav'
 import Sidebar from '@/components/layout/Sidebar'
 import AccountList from '@/components/accounts/AccountList'
 import OnboardingModal from '@/components/ui/OnboardingModal'
@@ -299,6 +300,7 @@ export default function ScoringPage() {
   return (
     <AuthGuard>
       <div className="flex h-screen overflow-hidden" style={{ background: 'var(--bg-base)' }}>
+        <AppNav />
         <Sidebar
           accounts={accounts}
           isScoring={isScoring}

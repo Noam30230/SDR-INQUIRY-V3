@@ -1,12 +1,4 @@
 import { useState, useRef, useEffect } from 'react'
-import { useRouter } from 'next/router'
-
-const InquiryLogo = ({ size = 32 }: { size?: number }) => (
-  <svg width={size} height={size} viewBox="0 0 64 64" fill="none" xmlns="http://www.w3.org/2000/svg">
-    <rect x="10" y="28" width="36" height="8" rx="3.6" fill="#7c3aed" />
-    <circle cx="52" cy="32" r="4.2" fill="#7c3aed" />
-  </svg>
-)
 import Papa from 'papaparse'
 import type { Account, Tier } from '@/types'
 import { supabaseBrowser } from '@/lib/supabase'
@@ -73,7 +65,6 @@ function validateManualInput(raw: string): LineError[] {
 }
 
 export default function Sidebar({ accounts, isScoring, remainingCount = 0, userEmail, selectedIds, exportLabel, onScoreBatch, onStopBatch, onExport, onReplayTour }: SidebarProps) {
-  const router = useRouter()
   const [tab, setTab] = useState<'manual' | 'csv'>('manual')
   const [searchDepth, setSearchDepth] = useState<'standard' | 'deep'>('standard')
   const [text, setText] = useState('')
@@ -157,37 +148,21 @@ export default function Sidebar({ accounts, isScoring, remainingCount = 0, userE
       {/* Header */}
       <div className="mb-5">
         <div className="flex items-center justify-between gap-2 mb-1">
-          <div className="flex items-center gap-2.5">
-            <InquiryLogo size={32} />
-            <div className="leading-none">
-              <div className="text-sm font-bold text-white leading-tight">Inquiry</div>
-              <div className="flex items-center gap-1 mt-0.5">
-                <span className="text-xs" style={{ color: 'var(--text-muted)' }}>by </span>
-                <a
-                  href="https://www.linkedin.com/in/noamramillon/"
-                  target="_blank"
-                  rel="noopener noreferrer"
-                  className="text-xs font-semibold transition-opacity hover:opacity-80"
-                  style={{ color: '#7c3aed' }}
-                >
-                  Noam Ramillon
-                </a>
-              </div>
+          <div className="leading-none">
+            <div className="text-sm font-bold text-white leading-tight">Scoring</div>
+            <div className="flex items-center gap-1 mt-0.5">
+              <span className="text-xs" style={{ color: 'var(--text-muted)' }}>by </span>
+              <a
+                href="https://www.linkedin.com/in/noamramillon/"
+                target="_blank"
+                rel="noopener noreferrer"
+                className="text-xs font-semibold transition-opacity hover:opacity-80"
+                style={{ color: '#7c3aed' }}
+              >
+                Noam Ramillon
+              </a>
             </div>
           </div>
-          {/* Dashboard link */}
-          <button
-            onClick={() => router.push('/dashboard')}
-            title="Dashboard"
-            className="flex items-center justify-center w-7 h-7 rounded-md transition-colors hover:bg-white/5"
-            style={{ color: 'var(--text-muted)' }}
-          >
-            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-              <rect x="2" y="3" width="7" height="8" rx="1"/><rect x="13" y="3" width="9" height="5" rx="1"/>
-              <rect x="13" y="12" width="9" height="9" rx="1"/><rect x="2" y="15" width="7" height="6" rx="1"/>
-            </svg>
-          </button>
-
           {/* Context menu */}
           <div className="relative" ref={menuRef}>
             <button

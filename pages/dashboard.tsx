@@ -9,13 +9,7 @@ import {
 import GridLayout from 'react-grid-layout'
 import 'react-grid-layout/css/styles.css'
 import 'react-resizable/css/styles.css'
-
-const InquiryLogo = ({ size = 28 }: { size?: number }) => (
-  <svg width={size} height={size} viewBox="0 0 64 64" fill="none" xmlns="http://www.w3.org/2000/svg">
-    <rect x="10" y="28" width="36" height="8" rx="3.6" fill="#7c3aed" />
-    <circle cx="52" cy="32" r="4.2" fill="#7c3aed" />
-  </svg>
-)
+import AppNav from '@/components/layout/AppNav'
 
 const TIER_COLORS: Record<string, string> = {
   T1: '#10b981', T2: '#f59e0b', T3: '#6b7280', DQ: '#ef4444',
@@ -347,30 +341,7 @@ export default function DashboardPage() {
   return (
     <AuthGuard>
       <div className="flex h-screen overflow-hidden" style={{ background: 'var(--bg-base)' }}>
-        {/* Sidebar minimal */}
-        <aside style={{ width: 56, background: 'var(--bg-card)', borderRight: '1px solid var(--border)', display: 'flex', flexDirection: 'column', alignItems: 'center', paddingTop: 16, gap: 8 }}>
-          <div style={{ marginBottom: 8 }}><InquiryLogo size={28} /></div>
-          <button
-            onClick={() => router.push('/scoring')}
-            title="Scoring"
-            className="w-9 h-9 rounded-lg flex items-center justify-center transition-colors hover:bg-white/5"
-            style={{ color: 'var(--text-muted)' }}
-          >
-            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-              <path d="M3 3h7v7H3zM14 3h7v7h-7zM14 14h7v7h-7zM3 14h7v7H3z"/>
-            </svg>
-          </button>
-          <button
-            title="Dashboard"
-            className="w-9 h-9 rounded-lg flex items-center justify-center"
-            style={{ background: 'rgba(124,58,237,0.15)', color: '#a78bfa' }}
-          >
-            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-              <rect x="2" y="3" width="7" height="8" rx="1"/><rect x="13" y="3" width="9" height="5" rx="1"/>
-              <rect x="13" y="12" width="9" height="9" rx="1"/><rect x="2" y="15" width="7" height="6" rx="1"/>
-            </svg>
-          </button>
-        </aside>
+        <AppNav />
 
         {/* Main */}
         <main className="flex-1 flex flex-col overflow-hidden">

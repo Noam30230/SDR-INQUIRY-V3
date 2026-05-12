@@ -271,7 +271,7 @@ export default function LoginPage() {
           ? "Incorrect email or password."
           : error.message)
       } else {
-        router.replace('/scoring')
+        router.replace('/dashboard')
       }
     } else {
       const { data, error } = await supabaseBrowser.auth.signUp({ email, password })
@@ -280,7 +280,7 @@ export default function LoginPage() {
           ? "This email already has an account. Click Log in."
           : error.message)
       } else if (data.session) {
-        router.replace('/scoring')
+        router.replace('/dashboard')
       } else {
         setSuccess("Account created! You can now log in.")
         setMode('signin')
