@@ -1,4 +1,5 @@
 import { useState, useRef, useEffect } from 'react'
+import { useRouter } from 'next/router'
 
 const InquiryLogo = ({ size = 32 }: { size?: number }) => (
   <svg width={size} height={size} viewBox="0 0 64 64" fill="none" xmlns="http://www.w3.org/2000/svg">
@@ -72,6 +73,7 @@ function validateManualInput(raw: string): LineError[] {
 }
 
 export default function Sidebar({ accounts, isScoring, remainingCount = 0, userEmail, selectedIds, exportLabel, onScoreBatch, onStopBatch, onExport, onReplayTour }: SidebarProps) {
+  const router = useRouter()
   const [tab, setTab] = useState<'manual' | 'csv'>('manual')
   const [searchDepth, setSearchDepth] = useState<'standard' | 'deep'>('standard')
   const [text, setText] = useState('')
@@ -173,6 +175,19 @@ export default function Sidebar({ accounts, isScoring, remainingCount = 0, userE
               </div>
             </div>
           </div>
+          {/* Dashboard link */}
+          <button
+            onClick={() => router.push('/dashboard')}
+            title="Dashboard"
+            className="flex items-center justify-center w-7 h-7 rounded-md transition-colors hover:bg-white/5"
+            style={{ color: 'var(--text-muted)' }}
+          >
+            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+              <rect x="2" y="3" width="7" height="8" rx="1"/><rect x="13" y="3" width="9" height="5" rx="1"/>
+              <rect x="13" y="12" width="9" height="9" rx="1"/><rect x="2" y="15" width="7" height="6" rx="1"/>
+            </svg>
+          </button>
+
           {/* Context menu */}
           <div className="relative" ref={menuRef}>
             <button
