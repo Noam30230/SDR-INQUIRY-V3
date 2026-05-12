@@ -79,7 +79,7 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
     const emailMap: Record<string, string> = {}
     usersData?.users?.forEach(u => { if (u.id && u.email) emailMap[u.id] = u.email })
 
-    function getFirstName(email: string): string {
+    const getFirstName = (email: string): string => {
       const local = email.split('@')[0]
       const first = local.split('.')[0]
       return first.charAt(0).toUpperCase() + first.slice(1).toLowerCase()
