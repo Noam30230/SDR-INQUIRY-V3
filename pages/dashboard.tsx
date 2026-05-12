@@ -477,7 +477,7 @@ export default function DashboardPage() {
           </div>
 
           {/* Grid — scrollable so extended widgets don't get cut */}
-          <div ref={gridRef} className="flex-1 overflow-y-auto" style={{ padding: MARGIN }}>
+          <div ref={gridRef} className="flex-1 min-h-0 overflow-y-auto" style={{ padding: MARGIN }}>
             <GridLayout
               className="layout"
               layout={visibleLayout}
