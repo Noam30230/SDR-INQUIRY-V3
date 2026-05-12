@@ -16,17 +16,22 @@ const TIER_COLORS: Record<string, string> = {
 const FUNDING_COLORS = ['#7c3aed', '#a78bfa', '#10b981', '#f59e0b', '#6b7280']
 const MARGIN = 12
 const HEADER_H = 57
+// Bump this when DEFAULT_LAYOUT changes to automatically clear stale/broken saved layouts
+const LAYOUT_VERSION = 'v4'
 
+// 4-row layout: KPIs | Tier Breakdown | Activity+Techs | Users+Funding
+// Every row fills all 12 columns → vertical compaction can never reorder anything
 const DEFAULT_LAYOUT = [
-  { i: 'total',    x: 0, y: 0, w: 2, h: 2, minW: 2, minH: 2 },
-  { i: 'avg',      x: 2, y: 0, w: 2, h: 2, minW: 2, minH: 2 },
-  { i: 'dqrate',   x: 4, y: 0, w: 2, h: 2, minW: 2, minH: 2 },
-  { i: 'tiers',    x: 6, y: 0, w: 6, h: 2, minW: 4, minH: 2 },
-  { i: 'activity', x: 0, y: 2, w: 7, h: 4, minW: 4, minH: 3 },
-  { i: 'techs',    x: 7, y: 2, w: 5, h: 4, minW: 3, minH: 3 },
-  { i: 'users',    x: 0, y: 6, w: 4, h: 4, minW: 3, minH: 3 },
-  { i: 'funding',  x: 4, y: 6, w: 4, h: 4, minW: 3, minH: 3 },
+  { i: 'total',    x: 0, y:  0, w: 4, h: 3, minW: 2, minH: 2 },
+  { i: 'dqrate',   x: 4, y:  0, w: 4, h: 3, minW: 2, minH: 2 },
+  { i: 'avg',      x: 8, y:  0, w: 4, h: 3, minW: 2, minH: 2 },
+  { i: 'tiers',    x: 0, y:  3, w: 12, h: 2, minW: 4, minH: 2 },
+  { i: 'activity', x: 0, y:  5, w: 7,  h: 5, minW: 4, minH: 3 },
+  { i: 'techs',    x: 7, y:  5, w: 5,  h: 5, minW: 3, minH: 3 },
+  { i: 'users',    x: 0, y: 10, w: 6,  h: 4, minW: 3, minH: 3 },
+  { i: 'funding',  x: 6, y: 10, w: 6,  h: 4, minW: 3, minH: 3 },
 ]
+// numRows = 14  →  rowHeight = (availH - 15*MARGIN) / 14
 
 const ALL_WIDGETS = [
   { id: 'total',    label: 'Total scored' },
@@ -103,11 +108,16 @@ function BigNumber({ value, suffix = '', color = 'white', pixelH = 120 }: {
   )
 }
 
-// Load from localStorage synchronously so state is correct on first render,
-// before react-grid-layout fires onLayoutChange and would overwrite it.
+// Load saved layout — clears corrupted/old-version layouts automatically
 function loadSavedLayout(): typeof DEFAULT_LAYOUT {
   if (typeof window === 'undefined') return DEFAULT_LAYOUT
   try {
+    // Version mismatch → wipe old layout so user gets the clean default
+    if (localStorage.getItem('inquiry_layout_version') !== LAYOUT_VERSION) {
+      localStorage.removeItem('inquiry_dashboard_layout')
+      localStorage.setItem('inquiry_layout_version', LAYOUT_VERSION)
+      return DEFAULT_LAYOUT
+    }
     const saved = localStorage.getItem('inquiry_dashboard_layout')
     if (saved) return JSON.parse(saved)
   } catch {}
@@ -135,6 +145,9 @@ export default function DashboardPage() {
   const gridRef = useRef<HTMLDivElement>(null)
   // Tracks the current layout without creating reactive deps (avoids feedback loop on drag)
   const layoutRef = useRef<typeof DEFAULT_LAYOUT>(layout)
+  // Skip the very first onLayoutChange call that react-grid-layout fires on mount —
+  // that call may have compacted/normalised positions that differ from the saved layout.
+  const isFirstLayoutCall = useRef(true)
 
   // visibleWidgetsRef lets calcRowHeight always read the latest set without stale closure
   const visibleWidgetsRef = useRef(visibleWidgets)
@@ -156,13 +169,12 @@ export default function DashboardPage() {
   useEffect(() => {
     const el = gridRef.current
     if (!el) return
-    // ResizeObserver fires on every real size change (mount, window resize, font load…)
-    const ro = new ResizeObserver(() => calcRowHeight())
+    calcRowHeight()                                        // immediate (layout already resolved)
+    const raf = requestAnimationFrame(() => calcRowHeight()) // backup after next paint
+    const ro = new ResizeObserver(() => calcRowHeight())   // ongoing: window resize etc.
     ro.observe(el)
-    // RAF ensures browser has finished its first flex layout before we measure
-    const raf = requestAnimationFrame(() => calcRowHeight())
     return () => { ro.disconnect(); cancelAnimationFrame(raf) }
-  }, [calcRowHeight, visibleWidgets]) // re-attach when widgets toggle so numRows updates
+  }, [calcRowHeight, visibleWidgets])
 
   const fetchStats = useCallback(async () => {
     try {
@@ -187,20 +199,17 @@ export default function DashboardPage() {
   useEffect(() => { fetchStats() }, [fetchStats])
 
   function handleLayoutChange(newLayout: typeof DEFAULT_LAYOUT) {
-    // Ignore mount-time normalization: only save if positions actually changed.
-    // This prevents react-grid-layout's initial onLayoutChange from overwriting
-    // the user's custom saved layout.
-    const changed = newLayout.some(item => {
-      const prev = layoutRef.current.find(l => l.i === item.i)
-      return !prev || prev.x !== item.x || prev.y !== item.y || prev.w !== item.w || prev.h !== item.h
-    })
-    if (!changed) {
+    // Skip the first call on mount — react-grid-layout fires it immediately with
+    // potentially normalised positions; we must not overwrite the saved layout.
+    if (isFirstLayoutCall.current) {
+      isFirstLayoutCall.current = false
       if (gridRef.current) setContainerWidth(gridRef.current.offsetWidth)
       return
     }
     layoutRef.current = newLayout
     setLayout(newLayout)
     localStorage.setItem('inquiry_dashboard_layout', JSON.stringify(newLayout))
+    localStorage.setItem('inquiry_layout_version', LAYOUT_VERSION)
     if (gridRef.current) setContainerWidth(gridRef.current.offsetWidth)
   }
 
@@ -229,12 +238,15 @@ export default function DashboardPage() {
   }
 
   function resetLayout() {
-    layoutRef.current = DEFAULT_LAYOUT  // reset ref so calcRowHeight uses default numRows
+    isFirstLayoutCall.current = true   // next mount-time onLayoutChange must be skipped again
+    layoutRef.current = DEFAULT_LAYOUT
     setLayout(DEFAULT_LAYOUT)
     const all = new Set(ALL_WIDGETS.map(w => w.id))
     setVisibleWidgets(all)
     localStorage.removeItem('inquiry_dashboard_layout')
     localStorage.removeItem('inquiry_dashboard_widgets')
+    localStorage.setItem('inquiry_layout_version', LAYOUT_VERSION)
+    requestAnimationFrame(() => calcRowHeight())
   }
 
   const tierData = stats ? Object.entries(stats.tiers).map(([name, value]) => ({ name, value })) : []
@@ -484,7 +496,8 @@ export default function DashboardPage() {
               onDragStop={() => calcRowHeight()}
               draggableHandle=".drag-handle"
               margin={[MARGIN, MARGIN]}
-              compactType={null}
+              containerPadding={[MARGIN, MARGIN]}
+              compactType="vertical"
               preventCollision={false}
             >
               {visibleLayout.map(item => (
