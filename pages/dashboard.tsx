@@ -486,8 +486,8 @@ export default function DashboardPage() {
               rowHeight={rowHeight}
               width={containerWidth - MARGIN * 2}
               onLayoutChange={handleLayoutChange}
-              onResizeStop={(newLayout) => { persistLayout(newLayout); calcRowHeight() }}
-              onDragStop={(newLayout) => { persistLayout(newLayout); calcRowHeight() }}
+              onResizeStop={(newLayout) => { persistLayout(newLayout as typeof DEFAULT_LAYOUT); calcRowHeight() }}
+              onDragStop={(newLayout) => { persistLayout(newLayout as typeof DEFAULT_LAYOUT); calcRowHeight() }}
               draggableHandle=".drag-handle"
               margin={[MARGIN, MARGIN]}
               containerPadding={[MARGIN, MARGIN]}
