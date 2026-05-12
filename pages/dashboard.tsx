@@ -81,11 +81,12 @@ const labelStyle: React.CSSProperties = {
   marginBottom: 8,
 }
 
-function BigNumber({ value, suffix = '', color = 'white' }: { value: string | number; suffix?: string; color?: string }) {
+function BigNumber({ value, suffix = '', color = 'white', h = 2 }: { value: string | number; suffix?: string; color?: string; h?: number }) {
+  const fontSize = Math.max(24, Math.min(72, h * 22))
   return (
     <div className="flex-1 flex items-center justify-center">
-      <span style={{ fontSize: 48, fontWeight: 700, color, lineHeight: 1 }}>
-        {value}<span style={{ fontSize: 24, opacity: 0.6 }}>{suffix}</span>
+      <span style={{ fontSize, fontWeight: 700, color, lineHeight: 1 }}>
+        {value}<span style={{ fontSize: fontSize * 0.5, opacity: 0.6 }}>{suffix}</span>
       </span>
     </div>
   )
@@ -146,7 +147,19 @@ export default function DashboardPage() {
   function toggleWidget(id: string) {
     setVisibleWidgets(prev => {
       const next = new Set(prev)
-      next.has(id) ? next.delete(id) : next.add(id)
+      if (next.has(id)) {
+        next.delete(id)
+      } else {
+        next.add(id)
+        // Restore layout item from DEFAULT_LAYOUT if it was removed
+        setLayout(prevLayout => {
+          if (!prevLayout.find(l => l.i === id)) {
+            const defaultItem = DEFAULT_LAYOUT.find(l => l.i === id)
+            if (defaultItem) return [...prevLayout, defaultItem]
+          }
+          return prevLayout
+        })
+      }
       localStorage.setItem('inquiry_dashboard_widgets', JSON.stringify([...next]))
       return next
     })
@@ -162,6 +175,9 @@ export default function DashboardPage() {
   const tierData = stats ? Object.entries(stats.tiers).map(([name, value]) => ({ name, value })) : []
 
   function renderWidget(id: string) {
+    const layoutItem = visibleLayout.find(l => l.i === id)
+    const h = layoutItem?.h ?? 2
+
     if (!stats) return <div style={cardStyle}><div style={labelStyle}>{id}</div><div style={{ flex: 1, display: 'flex', alignItems: 'center', justifyContent: 'center' }}><div className="w-5 h-5 border-2 border-t-transparent rounded-full animate-spin" style={{ borderColor: '#7c3aed', borderTopColor: 'transparent' }} /></div></div>
 
     switch (id) {
@@ -169,38 +185,40 @@ export default function DashboardPage() {
         return (
           <div style={cardStyle}>
             <div style={labelStyle}>Total scored</div>
-            <BigNumber value={stats.total} color="#a78bfa" />
+            <BigNumber value={stats.total} color="#a78bfa" h={h} />
           </div>
         )
       case 'avg':
         return (
           <div style={cardStyle}>
             <div style={labelStyle}>Average score</div>
-            <BigNumber value={stats.avgScore} suffix="/100" color="#10b981" />
+            <BigNumber value={stats.avgScore} suffix="/100" color="#10b981" h={h} />
           </div>
         )
       case 'dqrate':
         return (
           <div style={cardStyle}>
             <div style={labelStyle}>DQ rate</div>
-            <BigNumber value={stats.dqRate} suffix="%" color="#ef4444" />
+            <BigNumber value={stats.dqRate} suffix="%" color="#ef4444" h={h} />
           </div>
         )
-      case 'tiers':
+      case 'tiers': {
+        const tierFontSize = Math.max(18, Math.min(40, h * 14))
         return (
           <div style={cardStyle}>
             <div style={labelStyle}>Tier breakdown</div>
-            <div className="flex-1 flex items-center gap-4">
+            <div className="flex-1 flex items-stretch gap-2 min-h-0">
               {tierData.map(({ name, value }) => (
-                <div key={name} className="flex-1 flex flex-col items-center justify-center gap-1 rounded-xl py-3"
+                <div key={name} className="flex-1 flex flex-col items-center justify-center gap-1 rounded-xl overflow-hidden"
                   style={{ background: `${TIER_COLORS[name]}10`, border: `1px solid ${TIER_COLORS[name]}25` }}>
-                  <span style={{ fontSize: 28, fontWeight: 700, color: TIER_COLORS[name] }}>{value}</span>
-                  <span style={{ fontSize: 11, color: 'var(--text-muted)', fontWeight: 600 }}>{name}</span>
+                  <span style={{ fontSize: tierFontSize, fontWeight: 700, color: TIER_COLORS[name], lineHeight: 1 }}>{value}</span>
+                  <span style={{ fontSize: 10, color: 'var(--text-muted)', fontWeight: 600 }}>{name}</span>
                 </div>
               ))}
             </div>
           </div>
         )
+      }
       case 'activity':
         return (
           <div style={cardStyle}>
@@ -392,6 +410,8 @@ export default function DashboardPage() {
               onLayoutChange={handleLayoutChange}
               draggableHandle=".drag-handle"
               margin={[12, 12]}
+              compactType="vertical"
+              preventCollision={false}
             >
               {visibleLayout.map(item => (
                 <div key={item.i} style={{ cursor: 'default' }}>

@@ -28,20 +28,18 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
     // DQ rate
     const dqRate = total ? Math.round((tiers.DQ / total) * 100) : 0
 
-    // Top technos
-    const techCount: Record<string, number> = {}
+    // Top cloud providers only (Cloud category of tech_stack)
+    const cloudCount: Record<string, number> = {}
     accounts.forEach(a => {
       if (a.tech_stack && typeof a.tech_stack === 'object') {
-        Object.values(a.tech_stack).forEach((arr: unknown) => {
-          if (Array.isArray(arr)) {
-            arr.forEach((tech: string) => {
-              if (tech) techCount[tech] = (techCount[tech] || 0) + 1
-            })
-          }
+        const stack = a.tech_stack as Record<string, string[]>
+        const cloudTechs = stack.Cloud || []
+        cloudTechs.forEach((tech: string) => {
+          if (tech) cloudCount[tech] = (cloudCount[tech] || 0) + 1
         })
       }
     })
-    const topTechs = Object.entries(techCount)
+    const topTechs = Object.entries(cloudCount)
       .sort((a, b) => b[1] - a[1])
       .slice(0, 8)
       .map(([name, count]) => ({ name, count }))
