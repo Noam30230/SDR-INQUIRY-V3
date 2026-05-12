@@ -17,7 +17,7 @@ interface SidebarProps {
 const TIERS: Array<{ tier: Tier; color: string }> = [
   { tier: 'T1', color: '#10b981' },
   { tier: 'T2', color: '#f59e0b' },
-  { tier: 'T3', color: '#6b7280' },
+  { tier: 'T3', color: '#f97316' },
   { tier: 'DQ', color: '#ef4444' },
 ]
 
@@ -148,7 +148,9 @@ export default function Sidebar({ accounts, isScoring, remainingCount = 0, selec
           const ago = days > 0 ? `${days}d ago` : hours > 0 ? `${hours}h ago` : mins > 0 ? `${mins}m ago` : 'just now'
           return (
             <p className="text-xs mt-1 flex items-center gap-1.5" style={{ color: 'var(--text-muted)' }}>
-              <span>🕐</span> Last run {ago}
+              <svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                <circle cx="12" cy="12" r="10"/><polyline points="12 6 12 12 16 14"/>
+              </svg> Last run {ago}
             </p>
           )
         })()}
@@ -206,7 +208,7 @@ export default function Sidebar({ accounts, isScoring, remainingCount = 0, selec
               border: tab === t ? '1px solid var(--border)' : '1px solid transparent',
             }}
           >
-            {t === 'manual' ? '✏️ Manual' : '📂 CSV'}
+            {t === 'manual' ? 'Manual' : 'CSV'}
           </button>
         ))}
       </div>
@@ -220,7 +222,7 @@ export default function Sidebar({ accounts, isScoring, remainingCount = 0, selec
             placeholder={"Pennylane, pennylane.com\nQonto, qonto.com, SF-001234"}
             rows={5}
             className="w-full px-3 py-2 text-sm text-white placeholder-gray-600 rounded-lg outline-none resize-none"
-            style={{ background: 'var(--bg-hover)', border: '1px solid var(--border)', fontFamily: 'monospace' }}
+            style={{ background: 'var(--bg-hover)', border: '1px solid var(--border)', fontFamily: 'monospace', fontStyle: 'italic' }}
           />
           {manualErrors.length > 0 && (
             <p className="text-xs" style={{ color: '#f87171', opacity: 0.8 }}>
@@ -392,7 +394,9 @@ export default function Sidebar({ accounts, isScoring, remainingCount = 0, selec
           className="w-full py-2.5 text-sm font-semibold text-white rounded-lg mb-3 transition-all disabled:opacity-30 disabled:cursor-not-allowed hover:-translate-y-0.5 active:scale-[0.97]"
           style={{ background: 'var(--primary)', boxShadow: '0 0 20px rgba(124,58,237,0.45)' }}
         >
-          ▶ Start analysis · {queueCount} account{queueCount !== 1 ? 's' : ''}
+          {queueCount === 0
+            ? 'Add accounts to start'
+            : `▶ Start analysis · ${queueCount} account${queueCount !== 1 ? 's' : ''}`}
         </button>
       )}
 
@@ -415,7 +419,22 @@ export default function Sidebar({ accounts, isScoring, remainingCount = 0, selec
 
       {/* Fix #10: "GPT-4o" → "GPT-4o mini" */}
       <p className="text-xs text-center pt-3" style={{ color: 'var(--text-muted)', opacity: 0.6, borderTop: '1px solid var(--border)' }}>
-        Sources: 🌐 Website · 🐙 GitHub · 🤖 Claude AI
+        <span className="flex items-center justify-center gap-3">
+          <span className="flex items-center gap-1">
+            <svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><circle cx="12" cy="12" r="10"/><path d="M2 12h20M12 2a15.3 15.3 0 0 1 4 10 15.3 15.3 0 0 1-4 10 15.3 15.3 0 0 1-4-10 15.3 15.3 0 0 1 4-10z"/></svg>
+            Web
+          </span>
+          <span style={{ opacity: 0.3 }}>·</span>
+          <span className="flex items-center gap-1">
+            <svg width="11" height="11" viewBox="0 0 24 24" fill="currentColor"><path d="M12 2C6.477 2 2 6.484 2 12.017c0 4.425 2.865 8.18 6.839 9.504.5.092.682-.217.682-.483 0-.237-.008-.868-.013-1.703-2.782.605-3.369-1.343-3.369-1.343-.454-1.158-1.11-1.466-1.11-1.466-.908-.62.069-.608.069-.608 1.003.07 1.531 1.032 1.531 1.032.892 1.53 2.341 1.088 2.91.832.092-.647.35-1.088.636-1.338-2.22-.253-4.555-1.113-4.555-4.951 0-1.093.39-1.988 1.029-2.688-.103-.253-.446-1.272.098-2.65 0 0 .84-.27 2.75 1.026A9.564 9.564 0 0 1 12 6.844a9.59 9.59 0 0 1 2.504.337c1.909-1.296 2.747-1.027 2.747-1.027.546 1.379.202 2.398.1 2.651.64.7 1.028 1.595 1.028 2.688 0 3.848-2.339 4.695-4.566 4.943.359.309.678.92.678 1.855 0 1.338-.012 2.419-.012 2.747 0 .268.18.58.688.482A10.02 10.02 0 0 0 22 12.017C22 6.484 17.522 2 12 2z"/></svg>
+            GitHub
+          </span>
+          <span style={{ opacity: 0.3 }}>·</span>
+          <span className="flex items-center gap-1">
+            <svg width="11" height="11" viewBox="0 0 24 24" fill="currentColor"><path d="M12 2L9.5 9.5 2 12l7.5 2.5L12 22l2.5-7.5L22 12l-7.5-2.5z"/></svg>
+            Claude
+          </span>
+        </span>
       </p>
     </aside>
   )

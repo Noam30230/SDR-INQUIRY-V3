@@ -1,18 +1,19 @@
 import type { Account, TechStack, WebQuality, PappersData } from '@/types'
 import SignalChip from '@/components/ui/SignalChip'
 
-const CATEGORY_ICONS: Record<keyof TechStack, string> = {
-  Cloud: '☁️', Monitoring: '📊', DevOps: '⚙️',
-  Languages: '💻', Data: '🗄️', AI: '🤖',
-  Security: '🔒', Other: '🔧',
-}
-
-type TechVariant = 'tech' | 'tech-cloud' | 'tech-other'
+type TechVariant = 'tech' | 'tech-cloud' | 'tech-devops' | 'tech-monitoring' | 'tech-languages' | 'tech-ai' | 'tech-data' | 'tech-other'
 
 function categoryVariant(cat: keyof TechStack): TechVariant {
-  if (cat === 'Cloud') return 'tech-cloud'
-  if (cat === 'Other') return 'tech-other'
-  return 'tech'
+  const map: Partial<Record<keyof TechStack, TechVariant>> = {
+    Cloud:      'tech-cloud',
+    DevOps:     'tech-devops',
+    Monitoring: 'tech-monitoring',
+    Languages:  'tech-languages',
+    AI:         'tech-ai',
+    Data:       'tech-data',
+    Other:      'tech-other',
+  }
+  return map[cat] ?? 'tech'
 }
 
 function TechGroup({ category, items }: { category: keyof TechStack; items: string[] }) {
@@ -21,7 +22,7 @@ function TechGroup({ category, items }: { category: keyof TechStack; items: stri
   return (
     <div className="flex items-start gap-2">
       <span className="text-xs shrink-0 mt-0.5 w-20 text-right" style={{ color: 'var(--text-muted)' }}>
-        {CATEGORY_ICONS[category]} {category}
+        {category}
       </span>
       <div className="flex flex-wrap gap-1">
         {items.map(item => <SignalChip key={item} label={item} variant={variant} />)}

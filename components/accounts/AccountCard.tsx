@@ -8,14 +8,24 @@ function toTitleCase(name: string): string {
   return name.replace(/\S+/g, w => w.charAt(0).toUpperCase() + w.slice(1).toLowerCase())
 }
 
-function getTopTechs(stack: TechStack): string[] {
+function getTopTechs(stack: TechStack): Array<{ name: string; category: keyof TechStack }> {
   const priority: Array<keyof TechStack> = ['Cloud', 'DevOps', 'Monitoring', 'Languages', 'AI', 'Data']
-  const techs: string[] = []
+  const techs: Array<{ name: string; category: keyof TechStack }> = []
   for (const cat of priority) {
-    techs.push(...(stack[cat] || []))
-    if (techs.length >= 3) break  // Fix #7: reduced to 3 to avoid banner wrapping
+    for (const t of (stack[cat] || [])) {
+      techs.push({ name: t, category: cat })
+      if (techs.length >= 3) return techs
+    }
   }
-  return techs.slice(0, 3)
+  return techs
+}
+
+function techVariant(cat: keyof TechStack): string {
+  const map: Partial<Record<keyof TechStack, string>> = {
+    Cloud: 'tech-cloud', DevOps: 'tech-devops', Monitoring: 'tech-monitoring',
+    Languages: 'tech-languages', AI: 'tech-ai', Data: 'tech-data',
+  }
+  return map[cat] ?? 'tech-other'
 }
 
 const TIER_LEFT_BORDER: Record<string, string> = {
@@ -125,7 +135,9 @@ export default function AccountCard({ account, onDelete, selected, onToggleSelec
         {isExistingCustomer && (
           <span className="shrink-0 text-xs font-medium px-2 py-0.5 rounded-full"
             style={{ background: 'rgba(251,191,36,0.12)', border: '1px solid rgba(251,191,36,0.3)', color: '#fbbf24' }}>
-            ⚠ Already customer
+            <svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round" style={{ display: 'inline', verticalAlign: 'middle', marginRight: 4 }}>
+              <path d="M10.29 3.86L1.82 18a2 2 0 0 0 1.71 3h16.94a2 2 0 0 0 1.71-3L13.71 3.86a2 2 0 0 0-3.42 0z"/><line x1="12" y1="9" x2="12" y2="13"/><line x1="12" y1="17" x2="12.01" y2="17"/>
+            </svg>Already customer
           </span>
         )}
 
@@ -158,7 +170,7 @@ export default function AccountCard({ account, onDelete, selected, onToggleSelec
         {/* Tech chips — Fix #7: nowrap + overflow hidden keeps banner single-line */}
         {topTechs.length > 0 && (
           <div className="flex items-center gap-1 overflow-hidden flex-1 min-w-0">
-            {topTechs.map(t => <SignalChip key={t} label={t} variant="tech" />)}
+            {topTechs.map(t => <SignalChip key={t.name} label={t.name} variant={techVariant(t.category) as any} />)}
           </div>
         )}
 
@@ -196,7 +208,9 @@ export default function AccountCard({ account, onDelete, selected, onToggleSelec
           className="px-4 py-2 flex items-center gap-2 border-t"
           style={{ borderColor: 'rgba(124,58,237,0.12)', background: 'rgba(124,58,237,0.04)' }}
         >
-          <span className="text-xs shrink-0" style={{ color: 'var(--text-muted)' }}>📞</span>
+          <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className="shrink-0" style={{ color: 'var(--text-muted)' }}>
+            <path d="M22 16.92v3a2 2 0 0 1-2.18 2 19.79 19.79 0 0 1-8.63-3.07A19.5 19.5 0 0 1 4.71 12a19.79 19.79 0 0 1-3.07-8.67A2 2 0 0 1 3.62 1h3a2 2 0 0 1 2 1.72c.127.96.361 1.903.7 2.81a2 2 0 0 1-.45 2.11L7.91 8.6a16 16 0 0 0 6 6l.96-.96a2 2 0 0 1 2.11-.45c.907.339 1.85.573 2.81.7A2 2 0 0 1 22 16.92z"/>
+          </svg>
           <span className="text-xs italic" style={{ color: '#a78bfa' }}>
             {account.raw_data.call_angle as string}
           </span>

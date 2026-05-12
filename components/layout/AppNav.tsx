@@ -106,9 +106,11 @@ export default function AppNav() {
                 gap: 10,
                 padding: '9px 12px',
                 borderRadius: 8,
-                background: active ? 'rgba(124,58,237,0.12)' : 'transparent',
-                color: active ? '#a78bfa' : 'var(--text-muted)',
+                background: active ? 'rgba(124,58,237,0.14)' : 'transparent',
+                color: active ? '#c4b5fd' : 'var(--text-muted)',
                 border: 'none',
+                borderLeft: active ? '3px solid #7c3aed' : '3px solid transparent',
+                paddingLeft: active ? 9 : 12,
                 cursor: 'pointer',
                 fontSize: 13,
                 fontWeight: active ? 600 : 400,
@@ -152,20 +154,24 @@ export default function AppNav() {
                 onMouseEnter={e => (e.currentTarget.style.background = 'rgba(255,255,255,0.04)')}
                 onMouseLeave={e => (e.currentTarget.style.background = 'none')}
               >
-                <span style={{ fontSize: 14 }}>🗺</span> Replay tour
+                <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                  <circle cx="12" cy="12" r="10"/><polygon points="10 8 16 12 10 16 10 8"/>
+                </svg> Replay tour
               </button>
             )}
             <button
               onClick={handleLogout}
               style={{
                 width: '100%', textAlign: 'left', padding: '9px 14px',
-                fontSize: 12, color: '#f87171', background: 'none',
+                fontSize: 12, color: 'var(--text-muted)', background: 'none',
                 border: 'none', cursor: 'pointer', display: 'flex', alignItems: 'center', gap: 8,
               }}
-              onMouseEnter={e => (e.currentTarget.style.background = 'rgba(239,68,68,0.06)')}
-              onMouseLeave={e => (e.currentTarget.style.background = 'none')}
+              onMouseEnter={e => { (e.currentTarget as HTMLButtonElement).style.background = 'rgba(239,68,68,0.06)'; (e.currentTarget as HTMLButtonElement).style.color = '#f87171' }}
+              onMouseLeave={e => { (e.currentTarget as HTMLButtonElement).style.background = 'none'; (e.currentTarget as HTMLButtonElement).style.color = 'var(--text-muted)' }}
             >
-              <span style={{ fontSize: 14 }}>🚪</span> Log out
+              <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                <path d="M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4"/><polyline points="16 17 21 12 16 7"/><line x1="21" y1="12" x2="9" y2="12"/>
+              </svg> Log out
             </button>
           </div>
         )}
@@ -194,8 +200,8 @@ export default function AppNav() {
             <div style={{ fontSize: 13, fontWeight: 600, color: 'white', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
               {displayName || 'User'}
             </div>
-            <div style={{ fontSize: 11, color: 'var(--text-muted)', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
-              {email}
+            <div style={{ fontSize: 10, color: 'var(--text-muted)', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }} title={email}>
+              {email.length > 22 ? email.slice(0, 19) + '…' : email}
             </div>
           </div>
           <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="var(--text-muted)" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"

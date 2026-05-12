@@ -1,4 +1,4 @@
-@import url('https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@400;500;600;700&display=swap');
+@import url('https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@400;500;600;700&family=JetBrains+Mono:wght@500;700&display=swap');
 
 @tailwind base;
 @tailwind components;
@@ -15,7 +15,7 @@
   --text-muted: #64748b;
   --tier-t1: #10b981;
   --tier-t2: #f59e0b;
-  --tier-t3: #6b7280;
+  --tier-t3: #f97316;
   --tier-dq: #ef4444;
 }
 
@@ -78,11 +78,13 @@ button:not(:disabled):active {
 
   .bg-tier-t1 { background-color: rgba(16, 185, 129, 0.12); }
   .bg-tier-t2 { background-color: rgba(245, 158, 11, 0.12); }
-  .bg-tier-t3 { background-color: rgba(107, 114, 128, 0.12); }
+  .bg-tier-t3 { background-color: rgba(249, 115, 22, 0.12); }
   .bg-tier-dq { background-color: rgba(239, 68, 68, 0.12); }
 
   .border-tier-t1 { border-color: rgba(16, 185, 129, 0.3); }
   .border-tier-t2 { border-color: rgba(245, 158, 11, 0.3); }
-  .border-tier-t3 { border-color: rgba(107, 114, 128, 0.3); }
+  .border-tier-t3 { border-color: rgba(249, 115, 22, 0.3); }
   .border-tier-dq { border-color: rgba(239, 68, 68, 0.3); }
+
+  .kpi-number { font-family: 'JetBrains Mono', monospace; }
 }

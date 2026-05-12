@@ -11,7 +11,7 @@ import 'react-resizable/css/styles.css'
 import AppNav from '@/components/layout/AppNav'
 
 const TIER_COLORS: Record<string, string> = {
-  T1: '#10b981', T2: '#f59e0b', T3: '#6b7280', DQ: '#ef4444',
+  T1: '#10b981', T2: '#f59e0b', T3: '#f97316', DQ: '#ef4444',
 }
 const FUNDING_COLORS = ['#7c3aed', '#a78bfa', '#10b981', '#f59e0b', '#6b7280']
 const MARGIN = 12
@@ -77,6 +77,18 @@ const labelStyle: React.CSSProperties = {
   flexShrink: 0,
 }
 
+function dqRateColor(rate: number): string {
+  if (rate < 15) return '#10b981'
+  if (rate <= 25) return '#f59e0b'
+  return '#ef4444'
+}
+function avgScoreColor(score: number): string {
+  if (score >= 75) return '#10b981'
+  if (score >= 60) return '#a78bfa'
+  if (score >= 40) return '#f59e0b'
+  return '#ef4444'
+}
+
 function BigNumber({ value, suffix = '', color = 'white', pixelH = 120 }: {
   value: string | number; suffix?: string; color?: string; pixelH?: number
 }) {
@@ -84,7 +96,7 @@ function BigNumber({ value, suffix = '', color = 'white', pixelH = 120 }: {
   const fontSize = Math.min(56, Math.max(22, (pixelH - 50) * 0.36))
   return (
     <div style={{ flex: 1, display: 'flex', alignItems: 'center', justifyContent: 'center', minHeight: 0, overflow: 'hidden' }}>
-      <span style={{ fontSize, fontWeight: 700, color, lineHeight: 1, whiteSpace: 'nowrap' }}>
+      <span style={{ fontSize, fontWeight: 700, color, lineHeight: 1, whiteSpace: 'nowrap', fontFamily: "'JetBrains Mono', monospace" }}>
         {value}<span style={{ fontSize: fontSize * 0.42, opacity: 0.6 }}>{suffix}</span>
       </span>
     </div>
@@ -226,14 +238,14 @@ export default function DashboardPage() {
         return (
           <div style={cardStyle}>
             <div style={labelStyle}>Average score</div>
-            {!stats ? spinner : <BigNumber value={stats.avgScore} suffix="/100" color="#10b981" pixelH={pixelH} />}
+            {!stats ? spinner : <BigNumber value={stats.avgScore} suffix="/100" color={avgScoreColor(stats.avgScore)} pixelH={pixelH} />}
           </div>
         )
       case 'dqrate':
         return (
           <div style={cardStyle}>
             <div style={labelStyle}>DQ rate</div>
-            {!stats ? spinner : <BigNumber value={stats.dqRate} suffix="%" color="#ef4444" pixelH={pixelH} />}
+            {!stats ? spinner : <BigNumber value={stats.dqRate} suffix="%" color={dqRateColor(stats.dqRate)} pixelH={pixelH} />}
           </div>
         )
       case 'tiers': {
