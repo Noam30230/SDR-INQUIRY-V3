@@ -17,7 +17,7 @@ const FUNDING_COLORS = ['#7c3aed', '#a78bfa', '#10b981', '#f59e0b', '#6b7280']
 const MARGIN = 12
 const HEADER_H = 57
 // Bump this when DEFAULT_LAYOUT changes to automatically clear stale/broken saved layouts
-const LAYOUT_VERSION = 'v4'
+const LAYOUT_VERSION = 'v5'
 
 // 4-row layout: KPIs | Tier Breakdown | Activity+Techs | Users+Funding
 // Every row fills all 12 columns → vertical compaction can never reorder anything
@@ -491,8 +491,8 @@ export default function DashboardPage() {
               draggableHandle=".drag-handle"
               margin={[MARGIN, MARGIN]}
               containerPadding={[MARGIN, MARGIN]}
-              compactType="vertical"
-              preventCollision={false}
+              compactType={null}
+              preventCollision={true}
             >
               {visibleLayout.map(item => (
                 <div key={item.i} style={{ cursor: 'default' }}>
