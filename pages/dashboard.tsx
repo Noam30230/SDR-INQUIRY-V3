@@ -133,16 +133,18 @@ export default function DashboardPage() {
   const [containerWidth, setContainerWidth] = useState(900)
   const [rowHeight, setRowHeight] = useState(60)
   const gridRef = useRef<HTMLDivElement>(null)
+  // Tracks the current layout without creating reactive deps (avoids feedback loop on drag)
+  const layoutRef = useRef<typeof DEFAULT_LAYOUT>(layout)
 
-  // Compute rowHeight from VIEWPORT height (not container) so user-resized widgets can scroll
-  // Only depends on visibleWidgets, not current layout — avoids feedback loop when user drags
+  // Compute rowHeight from the CURRENT layout + viewport so the grid always fills 100%
   const calcRowHeight = useCallback((widgets: Set<string>) => {
     const el = gridRef.current
     if (!el) return
     setContainerWidth(el.offsetWidth)
     const availH = window.innerHeight - HEADER_H - MARGIN * 2
-    const visibleDefaults = DEFAULT_LAYOUT.filter(l => widgets.has(l.i))
-    const numRows = visibleDefaults.length ? Math.max(...visibleDefaults.map(l => l.y + l.h)) : 8
+    // Use layoutRef (the actual saved layout) not DEFAULT_LAYOUT
+    const visibleItems = layoutRef.current.filter(l => widgets.has(l.i))
+    const numRows = visibleItems.length ? Math.max(...visibleItems.map(l => l.y + l.h)) : 8
     const rh = Math.max(36, (availH - (numRows + 1) * MARGIN) / numRows)
     setRowHeight(rh)
   }, [])
@@ -177,9 +179,9 @@ export default function DashboardPage() {
   useEffect(() => { fetchStats() }, [fetchStats])
 
   function handleLayoutChange(newLayout: typeof DEFAULT_LAYOUT) {
+    layoutRef.current = newLayout  // keep ref in sync for calcRowHeight
     setLayout(newLayout)
     localStorage.setItem('inquiry_dashboard_layout', JSON.stringify(newLayout))
-    // Recalculate width only (not rowHeight — let user resize freely)
     if (gridRef.current) setContainerWidth(gridRef.current.offsetWidth)
   }
 
@@ -204,6 +206,7 @@ export default function DashboardPage() {
   }
 
   function resetLayout() {
+    layoutRef.current = DEFAULT_LAYOUT  // reset ref so calcRowHeight uses default numRows
     setLayout(DEFAULT_LAYOUT)
     const all = new Set(ALL_WIDGETS.map(w => w.id))
     setVisibleWidgets(all)
