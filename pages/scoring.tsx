@@ -134,12 +134,21 @@ export default function ScoringPage() {
   const stopRef = useRef(false)
 
   const loadAccounts = useCallback(async () => {
+    // Stale-while-revalidate: render immediately from cache, then update with fresh data
+    try {
+      const cached = localStorage.getItem('inquiry_accounts_cache')
+      if (cached) {
+        setAccounts(JSON.parse(cached) as Account[])
+        setIsLoading(false)
+      }
+    } catch {}
     const res = await authFetch('/api/accounts')
     if (res.ok) {
-      const data = await res.json()
-      setAccounts(data as Account[])
+      const data = await res.json() as Account[]
+      setAccounts(data)
+      try { localStorage.setItem('inquiry_accounts_cache', JSON.stringify(data)) } catch {}
     }
-    setIsLoading(false)  // Fix #4: done loading
+    setIsLoading(false)
   }, [])
 
   useEffect(() => {
@@ -247,7 +256,11 @@ export default function ScoringPage() {
 
   async function deleteAccount(id: string) {
     await authFetch(`/api/accounts/${id}`, { method: 'DELETE' })
-    setAccounts(prev => prev.filter(a => a.id !== id))
+    setAccounts(prev => {
+      const next = prev.filter(a => a.id !== id)
+      try { localStorage.setItem('inquiry_accounts_cache', JSON.stringify(next)) } catch {}
+      return next
+    })
   }
 
   async function deleteByTier(tier: 'all' | Tier) {
@@ -255,8 +268,13 @@ export default function ScoringPage() {
     await authFetch(`/api/accounts${param}`, { method: 'DELETE' })
     if (tier === 'all') {
       setAccounts([])
+      try { localStorage.removeItem('inquiry_accounts_cache') } catch {}
     } else {
-      setAccounts(prev => prev.filter(a => a.tier !== tier))
+      setAccounts(prev => {
+        const next = prev.filter(a => a.tier !== tier)
+        try { localStorage.setItem('inquiry_accounts_cache', JSON.stringify(next)) } catch {}
+        return next
+      })
     }
   }
 

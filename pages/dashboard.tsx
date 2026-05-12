@@ -145,9 +145,6 @@ export default function DashboardPage() {
   const gridRef = useRef<HTMLDivElement>(null)
   // Tracks the current layout without creating reactive deps (avoids feedback loop on drag)
   const layoutRef = useRef<typeof DEFAULT_LAYOUT>(layout)
-  // Skip the very first onLayoutChange call that react-grid-layout fires on mount —
-  // that call may have compacted/normalised positions that differ from the saved layout.
-  const isFirstLayoutCall = useRef(true)
 
   // visibleWidgetsRef lets calcRowHeight always read the latest set without stale closure
   const visibleWidgetsRef = useRef(visibleWidgets)
@@ -198,19 +195,17 @@ export default function DashboardPage() {
 
   useEffect(() => { fetchStats() }, [fetchStats])
 
-  function handleLayoutChange(newLayout: typeof DEFAULT_LAYOUT) {
-    // Skip the first call on mount — react-grid-layout fires it immediately with
-    // potentially normalised positions; we must not overwrite the saved layout.
-    if (isFirstLayoutCall.current) {
-      isFirstLayoutCall.current = false
-      if (gridRef.current) setContainerWidth(gridRef.current.offsetWidth)
-      return
-    }
-    layoutRef.current = newLayout
-    setLayout(newLayout)
+  // Only called after an explicit user drag or resize — safe to persist
+  function persistLayout(newLayout: typeof DEFAULT_LAYOUT) {
     localStorage.setItem('inquiry_dashboard_layout', JSON.stringify(newLayout))
     localStorage.setItem('inquiry_layout_version', LAYOUT_VERSION)
-    if (gridRef.current) setContainerWidth(gridRef.current.offsetWidth)
+  }
+
+  // Only updates visual state — never touches localStorage
+  // (prevents mount-time compaction from overwriting the saved layout)
+  function handleLayoutChange(newLayout: typeof DEFAULT_LAYOUT) {
+    layoutRef.current = newLayout
+    setLayout(newLayout)
   }
 
   function toggleWidget(id: string) {
@@ -238,7 +233,6 @@ export default function DashboardPage() {
   }
 
   function resetLayout() {
-    isFirstLayoutCall.current = true   // next mount-time onLayoutChange must be skipped again
     layoutRef.current = DEFAULT_LAYOUT
     setLayout(DEFAULT_LAYOUT)
     const all = new Set(ALL_WIDGETS.map(w => w.id))
@@ -492,8 +486,8 @@ export default function DashboardPage() {
               rowHeight={rowHeight}
               width={containerWidth - MARGIN * 2}
               onLayoutChange={handleLayoutChange}
-              onResizeStop={() => calcRowHeight()}
-              onDragStop={() => calcRowHeight()}
+              onResizeStop={(newLayout) => { persistLayout(newLayout); calcRowHeight() }}
+              onDragStop={(newLayout) => { persistLayout(newLayout); calcRowHeight() }}
               draggableHandle=".drag-handle"
               margin={[MARGIN, MARGIN]}
               containerPadding={[MARGIN, MARGIN]}
