@@ -14,6 +14,8 @@ const TIER_COLORS: Record<string, string> = {
   T1: '#10b981', T2: '#f59e0b', T3: '#6b7280', DQ: '#ef4444',
 }
 const FUNDING_COLORS = ['#7c3aed', '#a78bfa', '#10b981', '#f59e0b', '#6b7280']
+const MARGIN = 12
+const HEADER_H = 57
 
 const DEFAULT_LAYOUT = [
   { i: 'total',    x: 0, y: 0, w: 2, h: 2, minW: 2, minH: 2 },
@@ -36,9 +38,6 @@ const ALL_WIDGETS = [
   { id: 'users',    label: 'Top users' },
   { id: 'funding',  label: 'Funding detected' },
 ]
-
-const ROW_HEIGHT = 90
-const MARGIN = 12
 
 interface Stats {
   total: number
@@ -78,12 +77,15 @@ const labelStyle: React.CSSProperties = {
   flexShrink: 0,
 }
 
-function BigNumber({ value, suffix = '', color = 'white', pixelH = 120 }: { value: string | number; suffix?: string; color?: string; pixelH?: number }) {
-  const fontSize = Math.max(24, (pixelH - 50) * 0.38)
+function BigNumber({ value, suffix = '', color = 'white', pixelH = 120 }: {
+  value: string | number; suffix?: string; color?: string; pixelH?: number
+}) {
+  // Cap at 56px so numbers never overflow the card
+  const fontSize = Math.min(56, Math.max(22, (pixelH - 50) * 0.36))
   return (
-    <div className="flex-1 flex items-center justify-center">
-      <span style={{ fontSize, fontWeight: 700, color, lineHeight: 1 }}>
-        {value}<span style={{ fontSize: fontSize * 0.45, opacity: 0.6 }}>{suffix}</span>
+    <div style={{ flex: 1, display: 'flex', alignItems: 'center', justifyContent: 'center', minHeight: 0, overflow: 'hidden' }}>
+      <span style={{ fontSize, fontWeight: 700, color, lineHeight: 1, whiteSpace: 'nowrap' }}>
+        {value}<span style={{ fontSize: fontSize * 0.42, opacity: 0.6 }}>{suffix}</span>
       </span>
     </div>
   )
@@ -96,19 +98,28 @@ export default function DashboardPage() {
   const [visibleWidgets, setVisibleWidgets] = useState<Set<string>>(new Set(ALL_WIDGETS.map(w => w.id)))
   const [showWidgetMenu, setShowWidgetMenu] = useState(false)
   const [containerWidth, setContainerWidth] = useState(900)
+  const [rowHeight, setRowHeight] = useState(60)
   const gridRef = useRef<HTMLDivElement>(null)
 
-  // Measure container width on mount and resize
-  useEffect(() => {
-    function measure() {
-      if (gridRef.current) {
-        setContainerWidth(gridRef.current.offsetWidth)
-      }
-    }
-    measure()
-    window.addEventListener('resize', measure)
-    return () => window.removeEventListener('resize', measure)
+  // Compute rowHeight from VIEWPORT height (not container) so user-resized widgets can scroll
+  // Only depends on visibleWidgets, not current layout — avoids feedback loop when user drags
+  const calcRowHeight = useCallback((widgets: Set<string>) => {
+    const el = gridRef.current
+    if (!el) return
+    setContainerWidth(el.offsetWidth)
+    const availH = window.innerHeight - HEADER_H - MARGIN * 2
+    const visibleDefaults = DEFAULT_LAYOUT.filter(l => widgets.has(l.i))
+    const numRows = visibleDefaults.length ? Math.max(...visibleDefaults.map(l => l.y + l.h)) : 8
+    const rh = Math.max(36, (availH - (numRows + 1) * MARGIN) / numRows)
+    setRowHeight(rh)
   }, [])
+
+  useEffect(() => {
+    calcRowHeight(visibleWidgets)
+    const onResize = () => calcRowHeight(visibleWidgets)
+    window.addEventListener('resize', onResize)
+    return () => window.removeEventListener('resize', onResize)
+  }, [calcRowHeight, visibleWidgets])
 
   // Load saved layout/widgets
   useEffect(() => {
@@ -145,6 +156,8 @@ export default function DashboardPage() {
   function handleLayoutChange(newLayout: typeof DEFAULT_LAYOUT) {
     setLayout(newLayout)
     localStorage.setItem('inquiry_dashboard_layout', JSON.stringify(newLayout))
+    // Recalculate width only (not rowHeight — let user resize freely)
+    if (gridRef.current) setContainerWidth(gridRef.current.offsetWidth)
   }
 
   function toggleWidget(id: string) {
@@ -156,8 +169,8 @@ export default function DashboardPage() {
         next.add(id)
         setLayout(prevLayout => {
           if (!prevLayout.find(l => l.i === id)) {
-            const defaultItem = DEFAULT_LAYOUT.find(l => l.i === id)
-            if (defaultItem) return [...prevLayout, defaultItem]
+            const def = DEFAULT_LAYOUT.find(l => l.i === id)
+            if (def) return [...prevLayout, def]
           }
           return prevLayout
         })
@@ -169,7 +182,8 @@ export default function DashboardPage() {
 
   function resetLayout() {
     setLayout(DEFAULT_LAYOUT)
-    setVisibleWidgets(new Set(ALL_WIDGETS.map(w => w.id)))
+    const all = new Set(ALL_WIDGETS.map(w => w.id))
+    setVisibleWidgets(all)
     localStorage.removeItem('inquiry_dashboard_layout')
     localStorage.removeItem('inquiry_dashboard_widgets')
   }
@@ -180,7 +194,7 @@ export default function DashboardPage() {
   function renderWidget(id: string) {
     const layoutItem = visibleLayout.find(l => l.i === id)
     const h = layoutItem?.h ?? 2
-    const pixelH = h * ROW_HEIGHT + (h - 1) * MARGIN
+    const pixelH = h * rowHeight + (h - 1) * MARGIN
 
     const spinner = (
       <div style={{ flex: 1, display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
@@ -212,15 +226,21 @@ export default function DashboardPage() {
           </div>
         )
       case 'tiers': {
-        const tierFontSize = Math.max(16, (pixelH - 50) * 0.3)
+        // Cap tier font so it never overflows the card height
+        const tierFontSize = Math.min(42, Math.max(14, (pixelH - 50) * 0.28))
         return (
           <div style={cardStyle}>
             <div style={labelStyle}>Tier breakdown</div>
             {!stats ? spinner : (
-              <div className="flex-1 flex items-stretch gap-2 min-h-0">
+              <div style={{ flex: 1, display: 'flex', alignItems: 'stretch', gap: 8, minHeight: 0, overflow: 'hidden' }}>
                 {tierData.map(({ name, value }) => (
-                  <div key={name} className="flex-1 flex flex-col items-center justify-center gap-1 rounded-xl"
-                    style={{ background: `${TIER_COLORS[name]}10`, border: `1px solid ${TIER_COLORS[name]}25` }}>
+                  <div key={name} style={{
+                    flex: 1, display: 'flex', flexDirection: 'column',
+                    alignItems: 'center', justifyContent: 'center', gap: 4,
+                    borderRadius: 10, overflow: 'hidden',
+                    background: `${TIER_COLORS[name]}10`,
+                    border: `1px solid ${TIER_COLORS[name]}25`,
+                  }}>
                     <span style={{ fontSize: tierFontSize, fontWeight: 700, color: TIER_COLORS[name], lineHeight: 1 }}>{value}</span>
                     <span style={{ fontSize: 10, color: 'var(--text-muted)', fontWeight: 600 }}>{name}</span>
                   </div>
@@ -235,7 +255,7 @@ export default function DashboardPage() {
           <div style={cardStyle}>
             <div style={labelStyle}>Activity — last 14 days</div>
             {!stats ? spinner : (
-              <div className="flex-1 min-h-0">
+              <div style={{ flex: 1, minHeight: 0 }}>
                 <ResponsiveContainer width="100%" height="100%">
                   <LineChart data={stats.activityData} margin={{ top: 4, right: 8, left: -20, bottom: 0 }}>
                     <XAxis dataKey="date" tick={{ fill: 'var(--text-muted)', fontSize: 10 }} axisLine={false} tickLine={false} />
@@ -258,20 +278,24 @@ export default function DashboardPage() {
           <div style={cardStyle}>
             <div style={labelStyle}>Top cloud providers</div>
             {!stats ? spinner : (
-              <div style={{ flex: 1, overflowY: 'auto', display: 'flex', flexDirection: 'column', gap: 8 }}>
-                {stats.topTechs.length === 0 ? (
-                  <p style={{ color: 'var(--text-muted)', fontSize: 13, textAlign: 'center', marginTop: 16 }}>No data yet</p>
-                ) : stats.topTechs.map(({ name, count }) => (
-                  <div key={name}>
-                    <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: 4 }}>
-                      <span style={{ fontSize: 12, color: 'white', fontWeight: 500 }}>{name}</span>
-                      <span style={{ fontSize: 11, color: 'var(--text-muted)' }}>{count}</span>
-                    </div>
-                    <div style={{ height: 4, borderRadius: 9999, background: 'rgba(255,255,255,0.06)', overflow: 'hidden' }}>
-                      <div style={{ height: '100%', borderRadius: 9999, background: '#7c3aed', width: `${Math.round((count / maxCount) * 100)}%`, transition: 'width 0.4s ease' }} />
-                    </div>
-                  </div>
-                ))}
+              <div style={{ flex: 1, overflowY: 'auto', display: 'flex', flexDirection: 'column', gap: 10 }}>
+                {stats.topTechs.length === 0
+                  ? <p style={{ color: 'var(--text-muted)', fontSize: 13, textAlign: 'center', marginTop: 16 }}>No data yet</p>
+                  : stats.topTechs.map(({ name, count }) => {
+                      const pct = Math.round((count / maxCount) * 100)
+                      return (
+                        <div key={name}>
+                          <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: 5 }}>
+                            <span style={{ fontSize: 12, color: 'white', fontWeight: 500 }}>{name}</span>
+                            <span style={{ fontSize: 11, color: 'var(--text-muted)' }}>{count}</span>
+                          </div>
+                          <div style={{ height: 5, borderRadius: 9999, background: 'rgba(255,255,255,0.06)' }}>
+                            <div style={{ height: '100%', borderRadius: 9999, background: 'linear-gradient(90deg,#6d28d9,#7c3aed)', width: `${pct}%` }} />
+                          </div>
+                        </div>
+                      )
+                    })
+                }
               </div>
             )}
           </div>
@@ -282,30 +306,28 @@ export default function DashboardPage() {
           <div style={cardStyle}>
             <div style={labelStyle}>Top users</div>
             {!stats ? spinner : (
-              <div style={{ flex: 1, overflowY: 'auto', display: 'flex', flexDirection: 'column', gap: 6 }}>
-                {stats.topUsers.length === 0 ? (
-                  <p style={{ color: 'var(--text-muted)', fontSize: 13, textAlign: 'center', marginTop: 16 }}>No data yet</p>
-                ) : stats.topUsers.map(({ name }, i) => (
-                  <div key={i} style={{ display: 'flex', alignItems: 'center', gap: 10, padding: '6px 0' }}>
-                    <span style={{ fontSize: 11, color: 'var(--text-muted)', width: 16, textAlign: 'right', flexShrink: 0, fontVariantNumeric: 'tabular-nums' }}>
-                      {i + 1}
-                    </span>
-                    <div style={{
-                      width: 30, height: 30, borderRadius: '50%',
-                      background: i === 0 ? 'rgba(124,58,237,0.2)' : 'rgba(255,255,255,0.06)',
-                      border: `1px solid ${i === 0 ? 'rgba(124,58,237,0.4)' : 'rgba(255,255,255,0.08)'}`,
-                      display: 'flex', alignItems: 'center', justifyContent: 'center',
-                      fontSize: 12, fontWeight: 700,
-                      color: i === 0 ? '#a78bfa' : 'var(--text-muted)',
-                      flexShrink: 0,
-                    }}>
-                      {name[0]}
-                    </div>
-                    <span style={{ fontSize: 13, color: i === 0 ? 'white' : 'rgba(255,255,255,0.75)', fontWeight: i === 0 ? 600 : 400 }}>
-                      {name}
-                    </span>
-                  </div>
-                ))}
+              <div style={{ flex: 1, overflowY: 'auto', display: 'flex', flexDirection: 'column', gap: 4 }}>
+                {stats.topUsers.length === 0
+                  ? <p style={{ color: 'var(--text-muted)', fontSize: 13, textAlign: 'center', marginTop: 16 }}>No data yet</p>
+                  : stats.topUsers.map(({ name }, i) => (
+                      <div key={i} style={{ display: 'flex', alignItems: 'center', gap: 10, padding: '5px 0', borderBottom: i < stats.topUsers.length - 1 ? '1px solid rgba(255,255,255,0.04)' : 'none' }}>
+                        <span style={{ fontSize: 11, color: 'var(--text-muted)', width: 14, textAlign: 'right', flexShrink: 0 }}>{i + 1}</span>
+                        <div style={{
+                          width: 28, height: 28, borderRadius: '50%', flexShrink: 0,
+                          background: i === 0 ? 'rgba(124,58,237,0.2)' : 'rgba(255,255,255,0.05)',
+                          border: `1px solid ${i === 0 ? 'rgba(124,58,237,0.4)' : 'rgba(255,255,255,0.07)'}`,
+                          display: 'flex', alignItems: 'center', justifyContent: 'center',
+                          fontSize: 11, fontWeight: 700,
+                          color: i === 0 ? '#a78bfa' : 'var(--text-muted)',
+                        }}>
+                          {name[0]}
+                        </div>
+                        <span style={{ fontSize: 13, fontWeight: i === 0 ? 600 : 400, color: i === 0 ? 'white' : 'rgba(255,255,255,0.7)' }}>
+                          {name}
+                        </span>
+                      </div>
+                    ))
+                }
               </div>
             )}
           </div>
@@ -314,30 +336,33 @@ export default function DashboardPage() {
         return (
           <div style={cardStyle}>
             <div style={labelStyle}>Funding detected</div>
-            {!stats ? spinner : stats.fundingData.length === 0 ? (
-              <div className="flex-1 flex items-center justify-center">
-                <p style={{ color: 'var(--text-muted)', fontSize: 13 }}>No funding data yet</p>
-              </div>
-            ) : (
-              <div style={{ flex: 1, display: 'flex', alignItems: 'center', gap: 16, minHeight: 0 }}>
-                <PieChart width={110} height={110}>
-                  <Pie data={stats.fundingData} cx={50} cy={50} innerRadius={28} outerRadius={48} dataKey="count" paddingAngle={3}>
-                    {stats.fundingData.map((_, idx) => (
-                      <Cell key={idx} fill={FUNDING_COLORS[idx % FUNDING_COLORS.length]} />
-                    ))}
-                  </Pie>
-                </PieChart>
-                <div style={{ flex: 1, overflowY: 'auto', display: 'flex', flexDirection: 'column', gap: 6 }}>
-                  {stats.fundingData.map(({ name, count }, idx) => (
-                    <div key={name} style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
-                      <span style={{ width: 8, height: 8, borderRadius: '50%', background: FUNDING_COLORS[idx % FUNDING_COLORS.length], flexShrink: 0 }} />
-                      <span style={{ fontSize: 12, color: 'var(--text-muted)', flex: 1 }}>{name}</span>
-                      <span style={{ fontSize: 12, color: 'white', fontWeight: 600 }}>{count}</span>
-                    </div>
-                  ))}
+            {!stats ? spinner : stats.fundingData.length === 0
+              ? <div style={{ flex: 1, display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+                  <p style={{ color: 'var(--text-muted)', fontSize: 13 }}>No funding data yet</p>
                 </div>
-              </div>
-            )}
+              : (
+                <div style={{ flex: 1, display: 'flex', alignItems: 'center', gap: 16, minHeight: 0, overflow: 'hidden' }}>
+                  <div style={{ flexShrink: 0 }}>
+                    <PieChart width={100} height={100}>
+                      <Pie data={stats.fundingData} cx={45} cy={45} innerRadius={26} outerRadius={44} dataKey="count" paddingAngle={3}>
+                        {stats.fundingData.map((_, idx) => (
+                          <Cell key={idx} fill={FUNDING_COLORS[idx % FUNDING_COLORS.length]} />
+                        ))}
+                      </Pie>
+                    </PieChart>
+                  </div>
+                  <div style={{ flex: 1, overflowY: 'auto', display: 'flex', flexDirection: 'column', gap: 6 }}>
+                    {stats.fundingData.map(({ name, count }, idx) => (
+                      <div key={name} style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
+                        <span style={{ width: 8, height: 8, borderRadius: '50%', background: FUNDING_COLORS[idx % FUNDING_COLORS.length], flexShrink: 0 }} />
+                        <span style={{ fontSize: 12, color: 'var(--text-muted)', flex: 1 }}>{name}</span>
+                        <span style={{ fontSize: 12, color: 'white', fontWeight: 600 }}>{count}</span>
+                      </div>
+                    ))}
+                  </div>
+                </div>
+              )
+            }
           </div>
         )
       default:
@@ -350,13 +375,12 @@ export default function DashboardPage() {
       <div className="flex h-screen overflow-hidden" style={{ background: 'var(--bg-base)' }}>
         <AppNav />
 
-        {/* Main */}
         <main className="flex-1 flex flex-col overflow-hidden">
           {/* Header */}
-          <div className="flex items-center justify-between px-6 py-4 shrink-0" style={{ borderBottom: '1px solid var(--border)' }}>
+          <div className="flex items-center justify-between px-6 shrink-0" style={{ height: HEADER_H, borderBottom: '1px solid var(--border)' }}>
             <div>
               <h1 className="text-lg font-bold text-white">Dashboard</h1>
-              <p className="text-xs mt-0.5" style={{ color: 'var(--text-muted)' }}>
+              <p className="text-xs" style={{ color: 'var(--text-muted)' }}>
                 {loading ? 'Loading…' : `${stats?.total ?? 0} accounts scored`}
               </p>
             </div>
@@ -371,23 +395,18 @@ export default function DashboardPage() {
               <div className="relative">
                 <button
                   onClick={() => setShowWidgetMenu(v => !v)}
-                  className="flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-medium transition-all"
+                  className="flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-medium"
                   style={{ background: 'rgba(124,58,237,0.12)', border: '1px solid rgba(124,58,237,0.3)', color: '#a78bfa' }}
                 >
                   + Widgets
                 </button>
                 {showWidgetMenu && (
-                  <div
-                    className="absolute right-0 top-full mt-1 rounded-xl py-1.5 z-50 min-w-[180px]"
-                    style={{ background: 'var(--bg-card)', border: '1px solid var(--border)', boxShadow: '0 8px 24px rgba(0,0,0,0.4)' }}
-                  >
+                  <div className="absolute right-0 top-full mt-1 rounded-xl py-1.5 z-50 min-w-[180px]"
+                    style={{ background: 'var(--bg-card)', border: '1px solid var(--border)', boxShadow: '0 8px 24px rgba(0,0,0,0.4)' }}>
                     {ALL_WIDGETS.map(w => (
-                      <button
-                        key={w.id}
-                        onClick={() => toggleWidget(w.id)}
+                      <button key={w.id} onClick={() => toggleWidget(w.id)}
                         className="w-full text-left px-3 py-2 text-xs flex items-center gap-2 transition-colors hover:bg-white/5"
-                        style={{ color: visibleWidgets.has(w.id) ? 'white' : 'var(--text-muted)' }}
-                      >
+                        style={{ color: visibleWidgets.has(w.id) ? 'white' : 'var(--text-muted)' }}>
                         <span className="w-3.5 h-3.5 rounded flex items-center justify-center shrink-0"
                           style={{ background: visibleWidgets.has(w.id) ? 'rgba(124,58,237,0.4)' : 'transparent', border: `1px solid ${visibleWidgets.has(w.id) ? 'rgba(124,58,237,0.7)' : 'var(--border)'}` }}>
                           {visibleWidgets.has(w.id) && <span style={{ fontSize: 8, color: '#a78bfa' }}>✓</span>}
@@ -401,14 +420,14 @@ export default function DashboardPage() {
             </div>
           </div>
 
-          {/* Scrollable grid */}
-          <div ref={gridRef} className="flex-1 overflow-y-auto p-3">
+          {/* Grid — scrollable so extended widgets don't get cut */}
+          <div ref={gridRef} className="flex-1 overflow-y-auto" style={{ padding: MARGIN }}>
             <GridLayout
               className="layout"
               layout={visibleLayout}
               cols={12}
-              rowHeight={ROW_HEIGHT}
-              width={containerWidth - 24}
+              rowHeight={rowHeight}
+              width={containerWidth - MARGIN * 2}
               onLayoutChange={handleLayoutChange}
               draggableHandle=".drag-handle"
               margin={[MARGIN, MARGIN]}
@@ -417,7 +436,9 @@ export default function DashboardPage() {
             >
               {visibleLayout.map(item => (
                 <div key={item.i} style={{ cursor: 'default' }}>
-                  <div className="drag-handle" style={{ position: 'absolute', top: 8, right: 10, cursor: 'grab', padding: '4px 6px', borderRadius: 6, zIndex: 10 }} title="Drag">
+                  <div className="drag-handle"
+                    style={{ position: 'absolute', top: 8, right: 10, cursor: 'grab', padding: '4px 6px', borderRadius: 6, zIndex: 10 }}
+                    title="Drag">
                     <svg width="10" height="10" viewBox="0 0 10 10" fill="none">
                       {[0,3,6].map(y => [0,3,6].map(x => (
                         <circle key={`${x}-${y}`} cx={x+1} cy={y+1} r="0.8" fill="#4b5563" />
