@@ -78,8 +78,8 @@ const labelStyle: React.CSSProperties = {
 }
 
 function dqRateColor(rate: number): string {
-  if (rate < 15) return '#10b981'
-  if (rate <= 25) return '#f59e0b'
+  if (rate < 8) return '#10b981'
+  if (rate <= 15) return '#f97316'
   return '#ef4444'
 }
 function avgScoreColor(score: number): string {
@@ -179,7 +179,18 @@ export default function DashboardPage() {
   useEffect(() => { fetchStats() }, [fetchStats])
 
   function handleLayoutChange(newLayout: typeof DEFAULT_LAYOUT) {
-    layoutRef.current = newLayout  // keep ref in sync for calcRowHeight
+    // Ignore mount-time normalization: only save if positions actually changed.
+    // This prevents react-grid-layout's initial onLayoutChange from overwriting
+    // the user's custom saved layout.
+    const changed = newLayout.some(item => {
+      const prev = layoutRef.current.find(l => l.i === item.i)
+      return !prev || prev.x !== item.x || prev.y !== item.y || prev.w !== item.w || prev.h !== item.h
+    })
+    if (!changed) {
+      if (gridRef.current) setContainerWidth(gridRef.current.offsetWidth)
+      return
+    }
+    layoutRef.current = newLayout
     setLayout(newLayout)
     localStorage.setItem('inquiry_dashboard_layout', JSON.stringify(newLayout))
     if (gridRef.current) setContainerWidth(gridRef.current.offsetWidth)
@@ -455,9 +466,11 @@ export default function DashboardPage() {
               rowHeight={rowHeight}
               width={containerWidth - MARGIN * 2}
               onLayoutChange={handleLayoutChange}
+              onResizeStop={() => calcRowHeight(visibleWidgets)}
+              onDragStop={() => calcRowHeight(visibleWidgets)}
               draggableHandle=".drag-handle"
               margin={[MARGIN, MARGIN]}
-              compactType="vertical"
+              compactType={null}
               preventCollision={false}
             >
               {visibleLayout.map(item => (
