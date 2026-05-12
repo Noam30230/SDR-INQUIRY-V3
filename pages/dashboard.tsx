@@ -136,13 +136,17 @@ export default function DashboardPage() {
   // Tracks the current layout without creating reactive deps (avoids feedback loop on drag)
   const layoutRef = useRef<typeof DEFAULT_LAYOUT>(layout)
 
-  // Compute rowHeight from the CURRENT layout + viewport so the grid always fills 100%
-  const calcRowHeight = useCallback((widgets: Set<string>) => {
+  // visibleWidgetsRef lets calcRowHeight always read the latest set without stale closure
+  const visibleWidgetsRef = useRef(visibleWidgets)
+  useEffect(() => { visibleWidgetsRef.current = visibleWidgets }, [visibleWidgets])
+
+  // Measure grid container directly (no hardcoded HEADER_H, no window formula)
+  const calcRowHeight = useCallback(() => {
     const el = gridRef.current
-    if (!el) return
+    if (!el || el.clientHeight === 0) return
     setContainerWidth(el.offsetWidth)
-    const availH = window.innerHeight - HEADER_H - MARGIN * 2
-    // Use layoutRef (the actual saved layout) not DEFAULT_LAYOUT
+    const availH = el.clientHeight - MARGIN * 2          // actual inner height
+    const widgets = visibleWidgetsRef.current
     const visibleItems = layoutRef.current.filter(l => widgets.has(l.i))
     const numRows = visibleItems.length ? Math.max(...visibleItems.map(l => l.y + l.h)) : 8
     const rh = Math.max(36, (availH - (numRows + 1) * MARGIN) / numRows)
@@ -150,11 +154,15 @@ export default function DashboardPage() {
   }, [])
 
   useEffect(() => {
-    calcRowHeight(visibleWidgets)
-    const onResize = () => calcRowHeight(visibleWidgets)
-    window.addEventListener('resize', onResize)
-    return () => window.removeEventListener('resize', onResize)
-  }, [calcRowHeight, visibleWidgets])
+    const el = gridRef.current
+    if (!el) return
+    // ResizeObserver fires on every real size change (mount, window resize, font load…)
+    const ro = new ResizeObserver(() => calcRowHeight())
+    ro.observe(el)
+    // RAF ensures browser has finished its first flex layout before we measure
+    const raf = requestAnimationFrame(() => calcRowHeight())
+    return () => { ro.disconnect(); cancelAnimationFrame(raf) }
+  }, [calcRowHeight, visibleWidgets]) // re-attach when widgets toggle so numRows updates
 
   const fetchStats = useCallback(async () => {
     try {
@@ -206,7 +214,11 @@ export default function DashboardPage() {
         setLayout(prevLayout => {
           if (!prevLayout.find(l => l.i === id)) {
             const def = DEFAULT_LAYOUT.find(l => l.i === id)
-            if (def) return [...prevLayout, def]
+            if (def) {
+              const updated = [...prevLayout, def]
+              layoutRef.current = updated  // keep ref in sync so calcRowHeight sees new item
+              return updated
+            }
           }
           return prevLayout
         })
@@ -466,8 +478,8 @@ export default function DashboardPage() {
               rowHeight={rowHeight}
               width={containerWidth - MARGIN * 2}
               onLayoutChange={handleLayoutChange}
-              onResizeStop={() => calcRowHeight(visibleWidgets)}
-              onDragStop={() => calcRowHeight(visibleWidgets)}
+              onResizeStop={() => calcRowHeight()}
+              onDragStop={() => calcRowHeight()}
               draggableHandle=".drag-handle"
               margin={[MARGIN, MARGIN]}
               compactType={null}
