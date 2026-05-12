@@ -7,16 +7,10 @@ import '@/styles/globals.css'
 export default function App({ Component, pageProps }: AppProps) {
   const router = useRouter()
   const [visible, setVisible] = useState(true)
-  const [displayedComponent, setDisplayedComponent] = useState<typeof Component>(Component)
-  const [displayedProps, setDisplayedProps] = useState(pageProps)
 
   useEffect(() => {
     const handleStart = () => setVisible(false)
-    const handleDone = () => {
-      setDisplayedComponent(() => Component)
-      setDisplayedProps(pageProps)
-      setVisible(true)
-    }
+    const handleDone = () => setVisible(true)
 
     router.events.on('routeChangeStart', handleStart)
     router.events.on('routeChangeComplete', handleDone)
@@ -26,13 +20,7 @@ export default function App({ Component, pageProps }: AppProps) {
       router.events.off('routeChangeComplete', handleDone)
       router.events.off('routeChangeError', handleDone)
     }
-  }, [router, Component, pageProps])
-
-  // Sync on initial load
-  useEffect(() => {
-    setDisplayedComponent(() => Component)
-    setDisplayedProps(pageProps)
-  }, [Component, pageProps])
+  }, [router])
 
   return (
     <>
@@ -47,7 +35,7 @@ export default function App({ Component, pageProps }: AppProps) {
           height: '100%',
         }}
       >
-        {(() => { const C = displayedComponent; return <C {...displayedProps} /> })()}
+        <Component {...pageProps} />
       </div>
     </>
   )
