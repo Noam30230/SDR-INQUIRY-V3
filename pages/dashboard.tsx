@@ -133,7 +133,7 @@ export default function DashboardPage() {
             minHeight: 0,
             display: 'grid',
             gridTemplateColumns: 'repeat(12, 1fr)',
-            gridTemplateRows: '3fr 2fr 5fr 4fr',
+            gridTemplateRows: '3fr 3fr 5fr 4fr',
             gap: GAP,
             padding: GAP,
             boxSizing: 'border-box',
