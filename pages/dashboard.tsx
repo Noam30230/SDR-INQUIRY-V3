@@ -390,8 +390,9 @@ export default function DashboardPage() {
                   <p style={{ color: 'var(--text-muted)', fontSize: 13 }}>No funding data yet</p>
                 </div>
               : (
-                <div style={{ flex: 1, display: 'flex', alignItems: 'center', gap: 16, minHeight: 0, overflow: 'hidden' }}>
-                  <div style={{ flexShrink: 0 }}>
+                <div style={{ flex: 1, display: 'flex', alignItems: 'stretch', gap: 16, minHeight: 0, overflow: 'hidden' }}>
+                  {/* Pie chart — centered vertically in its wrapper */}
+                  <div style={{ flexShrink: 0, display: 'flex', alignItems: 'center' }}>
                     <PieChart width={100} height={100}>
                       <Pie data={stats.fundingData} cx={45} cy={45} innerRadius={26} outerRadius={44} dataKey="count" paddingAngle={3}>
                         {stats.fundingData.map((_, idx) => (
@@ -400,7 +401,8 @@ export default function DashboardPage() {
                       </Pie>
                     </PieChart>
                   </div>
-                  <div style={{ flex: 1, overflowY: 'auto', display: 'flex', flexDirection: 'column', gap: 6 }}>
+                  {/* Scrollable legend — takes full height so overflow-y works */}
+                  <div style={{ flex: 1, minHeight: 0, overflowY: 'auto', display: 'flex', flexDirection: 'column', gap: 6 }}>
                     {stats.fundingData.map(({ name, count }, idx) => (
                       <div key={name} style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
                         <span style={{ width: 8, height: 8, borderRadius: '50%', background: FUNDING_COLORS[idx % FUNDING_COLORS.length], flexShrink: 0 }} />
