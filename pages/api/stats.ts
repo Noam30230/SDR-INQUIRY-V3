@@ -143,8 +143,26 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
         fundingCount[f] = (fundingCount[f] || 0) + 1
       }
     })
+    // Sort by funding stage progression, not by count
+    const FUNDING_ORDER = [
+      'pre-seed', 'pre seed', 'preseed',
+      'seed',
+      'series a', 'serie a',
+      'series b', 'serie b',
+      'series c', 'series c+', 'serie c',
+      'series d', 'serie d',
+      'series e', 'serie e',
+      'series f', 'serie f',
+      'series g', 'series h',
+      'growth', 'late stage', 'ipo', 'public',
+    ]
+    function fundingRank(name: string): number {
+      const n = name.toLowerCase()
+      const idx = FUNDING_ORDER.findIndex(s => n.includes(s) || s.includes(n))
+      return idx === -1 ? 999 : idx
+    }
     const fundingData = Object.entries(fundingCount)
-      .sort((a, b) => b[1] - a[1])
+      .sort((a, b) => fundingRank(a[0]) - fundingRank(b[0]))
       .map(([name, count]) => ({ name, count }))
 
     return res.status(200).json({
