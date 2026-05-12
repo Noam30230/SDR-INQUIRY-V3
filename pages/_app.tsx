@@ -47,7 +47,7 @@ export default function App({ Component, pageProps }: AppProps) {
           height: '100%',
         }}
       >
-        <displayedComponent {...displayedProps} />
+        {(() => { const C = displayedComponent; return <C {...displayedProps} /> })()}
       </div>
     </>
   )
