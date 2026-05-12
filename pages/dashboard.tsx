@@ -81,10 +81,8 @@ const labelStyle: React.CSSProperties = {
   marginBottom: 8,
 }
 
-function BigNumber({ value, suffix = '', color = 'white', h = 2 }: { value: string | number; suffix?: string; color?: string; h?: number }) {
-  // rowHeight=60, margin=12 → pixel height = h*60 + (h-1)*12 = h*72 - 12
-  const pixelHeight = h * 72 - 12
-  const fontSize = Math.max(28, (pixelHeight - 40) * 0.38)
+function BigNumber({ value, suffix = '', color = 'white', pixelH = 120 }: { value: string | number; suffix?: string; color?: string; pixelH?: number }) {
+  const fontSize = Math.max(24, (pixelH - 50) * 0.38)
   return (
     <div className="flex-1 flex items-center justify-center">
       <span style={{ fontSize, fontWeight: 700, color, lineHeight: 1 }}>
@@ -102,16 +100,26 @@ export default function DashboardPage() {
   const [visibleWidgets, setVisibleWidgets] = useState<Set<string>>(new Set(ALL_WIDGETS.map(w => w.id)))
   const [showWidgetMenu, setShowWidgetMenu] = useState(false)
   const [containerWidth, setContainerWidth] = useState(1200)
+  const [rowHeight, setRowHeight] = useState(60)
+  const MARGIN = 12
+
+  // Calculate rowHeight so grid fills 100% of available height
+  const calcRowHeight = useCallback(() => {
+    const el = document.getElementById('dashboard-grid')
+    if (!el) return
+    const containerH = el.offsetHeight
+    setContainerWidth(el.offsetWidth)
+    const vl = layout.filter(l => visibleWidgets.has(l.i))
+    const numRows = vl.length ? Math.max(...vl.map(l => l.y + l.h)) : 10
+    const rh = Math.max(40, (containerH - (numRows + 1) * MARGIN) / numRows)
+    setRowHeight(rh)
+  }, [layout, visibleWidgets])
 
   useEffect(() => {
-    const updateWidth = () => {
-      const el = document.getElementById('dashboard-grid')
-      if (el) setContainerWidth(el.offsetWidth)
-    }
-    updateWidth()
-    window.addEventListener('resize', updateWidth)
-    return () => window.removeEventListener('resize', updateWidth)
-  }, [])
+    calcRowHeight()
+    window.addEventListener('resize', calcRowHeight)
+    return () => window.removeEventListener('resize', calcRowHeight)
+  }, [calcRowHeight])
 
   // Load saved layout
   useEffect(() => {
@@ -179,6 +187,7 @@ export default function DashboardPage() {
   function renderWidget(id: string) {
     const layoutItem = visibleLayout.find(l => l.i === id)
     const h = layoutItem?.h ?? 2
+    const pixelH = h * rowHeight + (h - 1) * MARGIN
 
     if (!stats) return <div style={cardStyle}><div style={labelStyle}>{id}</div><div style={{ flex: 1, display: 'flex', alignItems: 'center', justifyContent: 'center' }}><div className="w-5 h-5 border-2 border-t-transparent rounded-full animate-spin" style={{ borderColor: '#7c3aed', borderTopColor: 'transparent' }} /></div></div>
 
@@ -187,25 +196,24 @@ export default function DashboardPage() {
         return (
           <div style={cardStyle}>
             <div style={labelStyle}>Total scored</div>
-            <BigNumber value={stats.total} color="#a78bfa" h={h} />
+            <BigNumber value={stats.total} color="#a78bfa" pixelH={pixelH} />
           </div>
         )
       case 'avg':
         return (
           <div style={cardStyle}>
             <div style={labelStyle}>Average score</div>
-            <BigNumber value={stats.avgScore} suffix="/100" color="#10b981" h={h} />
+            <BigNumber value={stats.avgScore} suffix="/100" color="#10b981" pixelH={pixelH} />
           </div>
         )
       case 'dqrate':
         return (
           <div style={cardStyle}>
             <div style={labelStyle}>DQ rate</div>
-            <BigNumber value={stats.dqRate} suffix="%" color="#ef4444" h={h} />
+            <BigNumber value={stats.dqRate} suffix="%" color="#ef4444" pixelH={pixelH} />
           </div>
         )
       case 'tiers': {
-        const pixelH = h * 72 - 12
         const tierFontSize = Math.max(16, (pixelH - 50) * 0.3)
         return (
           <div style={cardStyle}>
@@ -405,16 +413,16 @@ export default function DashboardPage() {
           </div>
 
           {/* Grid */}
-          <div className="flex-1 overflow-auto p-4" id="dashboard-grid">
+          <div className="flex-1 overflow-hidden p-3" id="dashboard-grid" style={{ height: '100%' }}>
             <GridLayout
               className="layout"
               layout={visibleLayout}
               cols={12}
-              rowHeight={60}
-              width={containerWidth - 32}
+              rowHeight={rowHeight}
+              width={containerWidth - 24}
               onLayoutChange={handleLayoutChange}
               draggableHandle=".drag-handle"
-              margin={[12, 12]}
+              margin={[MARGIN, MARGIN]}
               compactType="vertical"
               preventCollision={false}
             >
