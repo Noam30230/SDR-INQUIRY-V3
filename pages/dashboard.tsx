@@ -121,12 +121,19 @@ export default function DashboardPage() {
   }, [])
 
   const fetchStats = useCallback(async () => {
-    const token = await getToken()
-    const res = await fetch('/api/stats', {
-      headers: { Authorization: `Bearer ${token}` },
-    })
-    if (res.ok) setStats(await res.json())
-    setLoading(false)
+    try {
+      const token = await getToken()
+      const res = await fetch('/api/stats', {
+        headers: { Authorization: `Bearer ${token}` },
+      })
+      if (res.ok) {
+        setStats(await res.json())
+      }
+    } catch (e) {
+      console.error('Dashboard fetch error:', e)
+    } finally {
+      setLoading(false)
+    }
   }, [])
 
   useEffect(() => { fetchStats() }, [fetchStats])
