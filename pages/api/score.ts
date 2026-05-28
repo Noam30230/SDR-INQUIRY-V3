@@ -28,12 +28,13 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
   if (!user) return res.status(401).json({ error: 'Non authentifié' })
 
   const { companyName: inputName, domain: inputDomain, salesforceId, searchDepth } = req.body as {
-    companyName: string; domain?: string; salesforceId?: string; searchDepth?: 'standard' | 'deep'
+    companyName?: string; domain?: string; salesforceId?: string; searchDepth?: 'standard' | 'deep'
   }
-  if (!inputName?.trim()) return res.status(400).json({ error: 'Company name required' })
 
-  const companyName = inputName.trim()
   const domain = (inputDomain || '').trim().replace(/^https?:\/\//i, '').replace(/^www\./i, '').replace(/\/.*$/, '').toLowerCase()
+  // Fall back to domain root if no company name provided (e.g. CSV with domain-only column)
+  const companyName = inputName?.trim() || domain.split('.')[0] || ''
+  if (!companyName) return res.status(400).json({ error: 'Company name or domain required' })
 
   // Duplicate check — same domain already scored for this user
   if (domain) {

@@ -9,7 +9,8 @@ export interface ParsedRow {
 
 const NAME_PATTERNS = [
   /^account.?name$/i, /^company.?name$/i, /^company$/i, /^account$/i,
-  /^name$/i, /^nom$/i, /^entreprise$/i, /^organization$/i, /^org$/i,
+  /^name$/i, /^nom.?entreprise$/i, /^nom.?société$/i, /^nom.?de.?la.?société$/i,
+  /^nom$/i, /^entreprise$/i, /^organization$/i, /^org$/i,
   /^client$/i, /^prospect$/i, /^raison.?sociale$/i, /^société$/i,
   /^business.?name$/i, /^firm$/i, /^entity$/i,
 ]
