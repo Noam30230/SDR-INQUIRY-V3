@@ -109,6 +109,21 @@ export default function DashboardPage() {
       userIdRef.current = data.session?.user?.id || ''
       fetchStats()
     })
+
+    // Realtime: re-fetch stats whenever any account row changes
+    let realtimeTimer: ReturnType<typeof setTimeout>
+    const channel = supabaseBrowser
+      .channel('dashboard-realtime')
+      .on('postgres_changes', { event: '*', schema: 'public', table: 'accounts' }, () => {
+        clearTimeout(realtimeTimer)
+        realtimeTimer = setTimeout(() => fetchStats(), 800)
+      })
+      .subscribe()
+
+    return () => {
+      clearTimeout(realtimeTimer)
+      supabaseBrowser.removeChannel(channel)
+    }
   }, [fetchStats])
 
   const tierData = stats ? Object.entries(stats.tiers).map(([name, value]) => ({ name, value })) : []

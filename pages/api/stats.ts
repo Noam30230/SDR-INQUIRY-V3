@@ -135,12 +135,13 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
         pct: Math.round((count / maxCount) * 100),
       }))
 
-    // Funding breakdown
+    // Funding breakdown — normalize "Series B · €15M" → "Series B" for grouping
     const fundingCount: Record<string, number> = {}
     accounts.forEach(a => {
       const f = (a.raw_data as Record<string, unknown>)?.funding as string
       if (f && f !== 'unknown' && f !== 'bootstrapped') {
-        fundingCount[f] = (fundingCount[f] || 0) + 1
+        const stage = f.includes('·') ? f.split('·')[0].trim() : f
+        fundingCount[stage] = (fundingCount[stage] || 0) + 1
       }
     })
     // Sort by funding stage progression, not by count

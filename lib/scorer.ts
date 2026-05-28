@@ -38,7 +38,7 @@ SCORE (0-100):
 - 0-34: Clearly DQ, no tech signals, or pure services
 - Any confirmed funding round (pre-seed/seed/Series A/B/C+) adds +8 to the score
 
-FUNDING: Identify the funding stage from search results. Use one of: "pre-seed", "seed", "Series A", "Series B", "Series C+", "bootstrapped", "unknown".
+FUNDING: Identify the funding stage and amount from search results. Format: "Stage · Amount" if the amount is known (e.g. "Series B · €15M", "Seed · $2M", "Series A · €8M"). If no amount found, just the stage alone (e.g. "Series B"). Use one of these stages: "pre-seed", "seed", "Series A", "Series B", "Series C+", "bootstrapped", "unknown". Only include an amount if you find it explicitly in search results — do not guess.
 
 CALL ANGLE: Write ONE short sentence in English (max 15 words) for the SDR's opening angle. Use the strongest signal found. Examples:
 - "Just raised Series B — perfect timing to pitch observability as they scale"
@@ -114,7 +114,7 @@ function buildPrompt(data: AggregatedData): string {
   lines.push(`{`)
   lines.push(`  "tier": "T1" | "T2" | "T3" | "DQ",`)
   lines.push(`  "score": <0-100>,`)
-  lines.push(`  "funding": "pre-seed" | "seed" | "Series A" | "Series B" | "Series C+" | "bootstrapped" | "unknown",`)
+  lines.push(`  "funding": "Stage" or "Stage · Amount" — e.g. "Series B · €15M", "Seed · $2M", "Series A". Only include amount if explicitly found in search results.`)
   lines.push(`  "is_existing_customer": true | false,`)
   lines.push(`  "call_angle": "One sentence SDR opening angle in English (max 15 words)",`)
   lines.push(`  "signals": {`)
