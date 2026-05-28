@@ -2,12 +2,35 @@ import type { AppProps } from 'next/app'
 import Head from 'next/head'
 import { useRouter } from 'next/router'
 import { useEffect, useState } from 'react'
+import { supabaseBrowser } from '@/lib/supabase'
 import '@/styles/globals.css'
+
+// Clears all session-scoped localStorage caches (called on every sign-out)
+function clearSessionCaches() {
+  try {
+    for (const key of Object.keys(localStorage)) {
+      if (key.startsWith('inquiry_accounts_cache') || key.startsWith('inquiry_stats_cache')) {
+        localStorage.removeItem(key)
+      }
+    }
+  } catch {}
+}
 
 export default function App({ Component, pageProps }: AppProps) {
   const router = useRouter()
   const [progress, setProgress] = useState(0)
   const [visible, setVisible] = useState(false)
+
+  // Global auth guard: wipe all caches whenever any sign-out occurs
+  // (manual logout, session expiry, logout from another tab, token revocation)
+  useEffect(() => {
+    const { data: { subscription } } = supabaseBrowser.auth.onAuthStateChange((event) => {
+      if (event === 'SIGNED_OUT') {
+        clearSessionCaches()
+      }
+    })
+    return () => subscription.unsubscribe()
+  }, [])
 
   useEffect(() => {
     let timer: ReturnType<typeof setTimeout>

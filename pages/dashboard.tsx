@@ -1,4 +1,4 @@
-import { useEffect, useState, useCallback } from 'react'
+import { useEffect, useState, useCallback, useRef } from 'react'
 import AuthGuard from '@/components/layout/AuthGuard'
 import { supabaseBrowser } from '@/lib/supabase'
 import {
@@ -79,10 +79,13 @@ function BigNumber({ value, suffix = '', color = 'white' }: {
 export default function DashboardPage() {
   const [stats, setStats] = useState<Stats | null>(null)
   const [loading, setLoading] = useState(true)
+  // Ref so fetchStats always uses the current user's cache key without needing it as a dep
+  const userIdRef = useRef('')
 
   const fetchStats = useCallback(async () => {
+    const cacheKey = `inquiry_stats_cache_${userIdRef.current}`
     try {
-      const cached = localStorage.getItem('inquiry_stats_cache')
+      const cached = localStorage.getItem(cacheKey)
       if (cached) { setStats(JSON.parse(cached)); setLoading(false) }
     } catch {}
     try {
@@ -91,7 +94,7 @@ export default function DashboardPage() {
       if (res.ok) {
         const data = await res.json()
         setStats(data)
-        localStorage.setItem('inquiry_stats_cache', JSON.stringify(data))
+        try { localStorage.setItem(cacheKey, JSON.stringify(data)) } catch {}
       }
     } catch (e) {
       console.error('Dashboard fetch error:', e)
@@ -100,7 +103,13 @@ export default function DashboardPage() {
     }
   }, [])
 
-  useEffect(() => { fetchStats() }, [fetchStats])
+  useEffect(() => {
+    // Get session first so the cache key is scoped to the right user before any read
+    supabaseBrowser.auth.getSession().then(({ data }) => {
+      userIdRef.current = data.session?.user?.id || ''
+      fetchStats()
+    })
+  }, [fetchStats])
 
   const tierData = stats ? Object.entries(stats.tiers).map(([name, value]) => ({ name, value })) : []
 

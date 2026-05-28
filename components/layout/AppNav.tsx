@@ -60,7 +60,17 @@ export default function AppNav() {
   const displayName = getDisplayName(email)
   const initial = displayName ? displayName[0].toUpperCase() : '?'
 
-  function handleLogout() {
+  async function handleLogout() {
+    // Eagerly clear caches before signing out so the next user sees a blank slate instantly
+    const { data } = await supabaseBrowser.auth.getSession()
+    const uid = data.session?.user?.id || ''
+    try {
+      localStorage.removeItem(`inquiry_accounts_cache_${uid}`)
+      localStorage.removeItem(`inquiry_stats_cache_${uid}`)
+      // Also wipe any legacy generic keys left over from older sessions
+      localStorage.removeItem('inquiry_accounts_cache')
+      localStorage.removeItem('inquiry_stats_cache')
+    } catch {}
     supabaseBrowser.auth.signOut()
     setProfileOpen(false)
   }

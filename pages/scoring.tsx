@@ -132,11 +132,15 @@ export default function ScoringPage() {
   const [showOnboarding, setShowOnboarding] = useState(false)
   const [userId, setUserId] = useState('')
   const stopRef = useRef(false)
+  // Ref so loadAccounts always uses the current user's cache key without needing it as a dep
+  const userIdRef = useRef('')
 
   const loadAccounts = useCallback(async () => {
     // Stale-while-revalidate: render immediately from cache, then update with fresh data
+    // Cache is scoped to the current user — never leaks between accounts
+    const cacheKey = `inquiry_accounts_cache_${userIdRef.current}`
     try {
-      const cached = localStorage.getItem('inquiry_accounts_cache')
+      const cached = localStorage.getItem(cacheKey)
       if (cached) {
         setAccounts(JSON.parse(cached) as Account[])
         setIsLoading(false)
@@ -146,22 +150,26 @@ export default function ScoringPage() {
     if (res.ok) {
       const data = await res.json() as Account[]
       setAccounts(data)
-      try { localStorage.setItem('inquiry_accounts_cache', JSON.stringify(data)) } catch {}
+      try { localStorage.setItem(cacheKey, JSON.stringify(data)) } catch {}
     }
     setIsLoading(false)
   }, [])
 
   useEffect(() => {
-    loadAccounts()
-
+    // Get session first so the cache key is scoped to the right user before any read
     supabaseBrowser.auth.getSession().then(({ data }) => {
       const user = data.session?.user
-      setUserId(user?.id || '')
+      const uid = user?.id || ''
+      userIdRef.current = uid
+      setUserId(uid)
+
+      // Load accounts now that userIdRef is set
+      loadAccounts()
+
       // Show onboarding only for brand-new accounts (signed up < 10 min ago)
       // Key is per-user so a new account on the same browser isn't blocked by a previous session
       const createdAt = user?.created_at
-      const userId = user?.id || ''
-      const onboardedKey = `inquiry_onboarded_${userId}`
+      const onboardedKey = `inquiry_onboarded_${uid}`
       const isNewUser = createdAt
         ? Date.now() - new Date(createdAt).getTime() < 10 * 60 * 1000
         : false
@@ -258,7 +266,7 @@ export default function ScoringPage() {
     await authFetch(`/api/accounts/${id}`, { method: 'DELETE' })
     setAccounts(prev => {
       const next = prev.filter(a => a.id !== id)
-      try { localStorage.setItem('inquiry_accounts_cache', JSON.stringify(next)) } catch {}
+      try { localStorage.setItem(`inquiry_accounts_cache_${userIdRef.current}`, JSON.stringify(next)) } catch {}
       return next
     })
   }
@@ -268,11 +276,11 @@ export default function ScoringPage() {
     await authFetch(`/api/accounts${param}`, { method: 'DELETE' })
     if (tier === 'all') {
       setAccounts([])
-      try { localStorage.removeItem('inquiry_accounts_cache') } catch {}
+      try { localStorage.removeItem(`inquiry_accounts_cache_${userIdRef.current}`) } catch {}
     } else {
       setAccounts(prev => {
         const next = prev.filter(a => a.tier !== tier)
-        try { localStorage.setItem('inquiry_accounts_cache', JSON.stringify(next)) } catch {}
+        try { localStorage.setItem(`inquiry_accounts_cache_${userIdRef.current}`, JSON.stringify(next)) } catch {}
         return next
       })
     }
