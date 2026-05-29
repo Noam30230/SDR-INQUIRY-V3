@@ -1,23 +1,17 @@
 import type { NextApiRequest, NextApiResponse } from 'next'
-import { createClient } from '@supabase/supabase-js'
+import { supabaseAdmin } from '@/lib/supabase-admin'
 
 export default async function handler(req: NextApiRequest, res: NextApiResponse) {
   const token = req.headers.authorization?.replace('Bearer ', '')
   if (!token) return res.status(401).json({ error: 'Non authentifié' })
 
-  const supabase = createClient(
-    process.env.NEXT_PUBLIC_SUPABASE_URL!,
-    process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!,
-    { global: { headers: { Authorization: `Bearer ${token}` } } }
-  )
-
-  const { data: { user } } = await supabase.auth.getUser(token)
+  const { data: { user } } = await supabaseAdmin.auth.getUser(token)
   if (!user) return res.status(401).json({ error: 'Non authentifié' })
 
   const { id } = req.query as { id: string }
 
   if (req.method === 'DELETE') {
-    const { error } = await supabase
+    const { error } = await supabaseAdmin
       .from('accounts')
       .delete()
       .eq('id', id)
@@ -27,10 +21,11 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
   }
 
   if (req.method === 'GET') {
-    const { data, error } = await supabase
+    const { data, error } = await supabaseAdmin
       .from('accounts')
       .select('*')
       .eq('id', id)
+      .eq('user_id', user.id)
       .single()
     if (error) return res.status(404).json({ error: 'Compte non trouvé' })
     return res.status(200).json(data)

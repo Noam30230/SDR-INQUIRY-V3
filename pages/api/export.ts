@@ -1,5 +1,5 @@
 import type { NextApiRequest, NextApiResponse } from 'next'
-import { createClient } from '@supabase/supabase-js'
+import { supabaseAdmin } from '@/lib/supabase-admin'
 import type { Account, TechStack } from '@/types'
 
 function flattenTechStack(stack: TechStack): string {
@@ -15,17 +15,11 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
   const token = req.headers.authorization?.replace('Bearer ', '')
   if (!token) return res.status(401).json({ error: 'Non authentifié' })
 
-  const supabase = createClient(
-    process.env.NEXT_PUBLIC_SUPABASE_URL!,
-    process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!,
-    { global: { headers: { Authorization: `Bearer ${token}` } } }
-  )
-
-  const { data: { user } } = await supabase.auth.getUser(token)
+  const { data: { user } } = await supabaseAdmin.auth.getUser(token)
   if (!user) return res.status(401).json({ error: 'Non authentifié' })
 
   const { tier, ids } = req.query
-  let query = supabase.from('accounts').select('*').eq('status', 'done').order('score', { ascending: false })
+  let query = supabaseAdmin.from('accounts').select('*').eq('user_id', user.id).eq('status', 'done').order('score', { ascending: false })
   if (ids) {
     const idList = (ids as string).split(',').filter(Boolean)
     query = query.in('id', idList)

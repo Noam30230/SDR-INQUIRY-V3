@@ -1,6 +1,5 @@
 import type { NextApiRequest, NextApiResponse } from 'next'
 import Stripe from 'stripe'
-import { createClient } from '@supabase/supabase-js'
 import { supabaseAdmin } from '@/lib/supabase-admin'
 
 const stripe = new Stripe(process.env.STRIPE_SECRET_KEY!)
@@ -11,12 +10,7 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
   const token = req.headers.authorization?.replace('Bearer ', '')
   if (!token) return res.status(401).json({ error: 'Unauthorized' })
 
-  const supabase = createClient(
-    process.env.NEXT_PUBLIC_SUPABASE_URL!,
-    process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!,
-    { global: { headers: { Authorization: `Bearer ${token}` } } }
-  )
-  const { data: { user } } = await supabase.auth.getUser(token)
+  const { data: { user } } = await supabaseAdmin.auth.getUser(token)
   if (!user) return res.status(401).json({ error: 'Unauthorized' })
 
   const { data: profile } = await supabaseAdmin
