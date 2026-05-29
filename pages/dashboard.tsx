@@ -75,8 +75,22 @@ function BigNumber({ value, suffix = '', color = 'white' }: {
   )
 }
 
+const EMPTY_STATS: Stats = {
+  total: 0,
+  tiers: { T1: 0, T2: 0, T3: 0, DQ: 0 },
+  avgScore: 0,
+  dqRate: 0,
+  topTechs: [],
+  activityData: Array.from({ length: 14 }, (_, i) => {
+    const d = new Date()
+    d.setDate(d.getDate() - (13 - i))
+    return { date: d.toISOString().split('T')[0].slice(5).replace('-', '/'), count: 0 }
+  }),
+  fundingData: [],
+}
+
 export default function DashboardPage() {
-  const [stats, setStats] = useState<Stats | null>(null)
+  const [stats, setStats] = useState<Stats>(EMPTY_STATS)
   const [loading, setLoading] = useState(true)
   // Ref so fetchStats always uses the current user's cache key without needing it as a dep
   const userIdRef = useRef('')
@@ -125,14 +139,7 @@ export default function DashboardPage() {
     }
   }, [fetchStats])
 
-  const tierData = stats ? Object.entries(stats.tiers).map(([name, value]) => ({ name, value })) : []
-
-  const spinner = (
-    <div style={{ flex: 1, display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
-      <div className="w-5 h-5 border-2 border-t-transparent rounded-full animate-spin"
-        style={{ borderColor: '#7c3aed', borderTopColor: 'transparent' }} />
-    </div>
-  )
+  const tierData = Object.entries(stats.tiers).map(([name, value]) => ({ name, value }))
 
   return (
     <AuthGuard>
@@ -166,19 +173,19 @@ export default function DashboardPage() {
             <div style={{ gridColumn: 'span 4', minHeight: 0 }}>
               <div style={cardStyle}>
                 <div style={labelStyle}>Total scored</div>
-                {!stats ? spinner : <BigNumber value={stats.total} color="#a78bfa" />}
+                {<BigNumber value={stats.total} color="#a78bfa" />}
               </div>
             </div>
             <div style={{ gridColumn: 'span 4', minHeight: 0 }}>
               <div style={cardStyle}>
                 <div style={labelStyle}>DQ rate</div>
-                {!stats ? spinner : <BigNumber value={stats.dqRate} suffix="%" color={dqRateColor(stats.dqRate)} />}
+                {<BigNumber value={stats.dqRate} suffix="%" color={dqRateColor(stats.dqRate)} />}
               </div>
             </div>
             <div style={{ gridColumn: 'span 4', minHeight: 0 }}>
               <div style={cardStyle}>
                 <div style={labelStyle}>Average score</div>
-                {!stats ? spinner : <BigNumber value={stats.avgScore} suffix="/100" color={avgScoreColor(stats.avgScore)} />}
+                {<BigNumber value={stats.avgScore} suffix="/100" color={avgScoreColor(stats.avgScore)} />}
               </div>
             </div>
 
@@ -186,7 +193,7 @@ export default function DashboardPage() {
             <div style={{ gridColumn: 'span 12', minHeight: 0 }}>
               <div style={cardStyle}>
                 <div style={labelStyle}>Tier breakdown</div>
-                {!stats ? spinner : (
+                {(
                   <div style={{ flex: 1, display: 'flex', alignItems: 'stretch', gap: 8, minHeight: 0 }}>
                     {tierData.map(({ name, value }) => (
                       <div key={name} style={{
@@ -209,7 +216,7 @@ export default function DashboardPage() {
             <div style={{ gridColumn: 'span 7', minHeight: 0 }}>
               <div style={cardStyle}>
                 <div style={labelStyle}>Activity — last 14 days</div>
-                {!stats ? spinner : (
+                {(
                   <div style={{ flex: 1, minHeight: 0 }}>
                     <ResponsiveContainer width="100%" height="100%">
                       <LineChart data={stats.activityData} margin={{ top: 4, right: 8, left: -20, bottom: 0 }}>
@@ -230,7 +237,7 @@ export default function DashboardPage() {
             <div style={{ gridColumn: 'span 5', minHeight: 0 }}>
               <div style={cardStyle}>
                 <div style={labelStyle}>Top cloud providers</div>
-                {!stats ? spinner : (() => {
+                {(() => {
                   const maxCount = Math.max(...stats.topTechs.map(t => t.count), 1)
                   return (
                     <div style={{ flex: 1, overflowY: 'auto', display: 'flex', flexDirection: 'column', gap: 10 }}>
@@ -261,7 +268,7 @@ export default function DashboardPage() {
             <div style={{ gridColumn: 'span 12', minHeight: 0 }}>
               <div style={cardStyle}>
                 <div style={labelStyle}>Funding detected</div>
-                {!stats ? spinner : stats.fundingData.length === 0
+                {stats.fundingData.length === 0
                   ? <div style={{ flex: 1, display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
                       <p style={{ color: 'var(--text-muted)', fontSize: 13 }}>No funding data yet</p>
                     </div>
