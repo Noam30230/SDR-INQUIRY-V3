@@ -79,18 +79,6 @@ function buildTechStack(wappalyzer?: WappalyzerData, githubLanguages?: string[],
   return stack
 }
 
-// Détecte le domaine d'une entreprise depuis les données collectées
-export function resolveDomain(companyName: string, braveResults?: string[]): string {
-  if (!braveResults) return ''
-  // Cherche des URLs dans les résultats
-  const domainPattern = /(?:https?:\/\/)?(?:www\.)?([a-zA-Z0-9-]+\.[a-zA-Z]{2,})/
-  for (const result of braveResults) {
-    const match = result.match(domainPattern)
-    if (match) return match[1]
-  }
-  return ''
-}
-
 export function aggregate(data: AggregatedData): {
   techStack: TechStack
   extraTechs: string[]

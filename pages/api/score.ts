@@ -4,6 +4,16 @@ import { supabaseAdmin } from '@/lib/supabase-admin'
 import { scoreAccount } from '@/lib/scorer'
 import type { AggregatedData } from '@/types'
 
+function extractCompanyName(website: string): string {
+  const clean = website.trim().replace(/^https?:\/\//i, '').replace(/^www\./i, '')
+  const part = clean.split('/')[0].split('.')[0]
+  return part.charAt(0).toUpperCase() + part.slice(1).toLowerCase()
+}
+
+function extractCompanyDomain(website: string): string {
+  return website.trim().replace(/^https?:\/\//i, '').replace(/^www\./i, '').split('/')[0].split('.')[0].toLowerCase()
+}
+
 async function safeCollect<T>(fn: () => Promise<T>): Promise<T | null> {
   try {
     return await fn()
@@ -27,12 +37,22 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
   const { data: { user } } = await supabase.auth.getUser()
   if (!user) return res.status(401).json({ error: 'Non authentifié' })
 
+  // Fetch user profile to get their company (used for existing-customer DQ)
+  const { data: profile } = await supabaseAdmin
+    .from('profiles')
+    .select('company_website')
+    .eq('id', user.id)
+    .single()
+
+  const clientCompany = profile?.company_website
+    ? { name: extractCompanyName(profile.company_website), domain: extractCompanyDomain(profile.company_website) }
+    : { name: 'your company', domain: '' }
+
   const { companyName: inputName, domain: inputDomain, salesforceId, searchDepth } = req.body as {
     companyName?: string; domain?: string; salesforceId?: string; searchDepth?: 'standard' | 'deep'
   }
 
   const domain = (inputDomain || '').trim().replace(/^https?:\/\//i, '').replace(/^www\./i, '').replace(/\/.*$/, '').toLowerCase()
-  // Fall back to domain root if no company name provided (e.g. CSV with domain-only column)
   const companyName = inputName?.trim() || domain.split('.')[0] || ''
   if (!companyName) return res.status(400).json({ error: 'Company name or domain required' })
 
@@ -84,7 +104,6 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
     }
   }
 
-  // Crée le compte
   const { data: account, error: insertError } = await supabaseAdmin
     .from('accounts')
     .insert({
@@ -100,11 +119,9 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
   if (insertError || !account) return res.status(500).json({ error: 'Erreur création compte' })
 
   try {
-    // Collecte parallèle — chaque collecteur a 5s max, tout le bloc 7s max
     const timeout = <T>(p: Promise<T | null>): Promise<T | null> =>
       Promise.race([p, new Promise<null>(r => setTimeout(() => r(null), 5000))])
 
-    // Try Pappers for all companies — it returns null gracefully if not found
     const [github, wappalyzer, siteQuality, pappers] = await Promise.all([
       timeout(safeCollect(() => import('@/lib/collectors/github').then(m => m.collectGitHub(companyName, domain)))),
       timeout(safeCollect(() => domain ? import('@/lib/collectors/wappalyzer').then(m => m.collectWappalyzer(domain)) : Promise.resolve(null))),
@@ -123,18 +140,24 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
 
     const EMPTY_STACK = { Cloud: [], Monitoring: [], DevOps: [], Languages: [], Data: [], AI: [], Security: [], Other: [] }
 
-    // Hard DQ rule: already a Datadog customer
-    const datadogInWappalyzer = wappalyzer?.technologies?.some(t => t.name.toLowerCase() === 'datadog')
-    const datadogInGitHub = github?.techSignals?.some(t => t.toLowerCase().includes('datadog'))
-    if (datadogInWappalyzer || datadogInGitHub) {
+    // Hard DQ: already a customer of the user's company (detected in tech stack)
+    const clientDomain = clientCompany.domain
+    const existingCustomerInWappalyzer = clientDomain
+      ? wappalyzer?.technologies?.some(t => t.name.toLowerCase().includes(clientDomain))
+      : false
+    const existingCustomerInGitHub = clientDomain
+      ? github?.techSignals?.some(t => t.toLowerCase().includes(clientDomain))
+      : false
+
+    if (existingCustomerInWappalyzer || existingCustomerInGitHub) {
       await supabaseAdmin.from('accounts').update({
         tier: 'DQ',
         score: 0,
-        signals: { positive: [], negative: ['Already a Datadog customer — no outbound needed'] },
+        signals: { positive: [], negative: [`Already a ${clientCompany.name} customer — no outbound needed`] },
         tech_stack: EMPTY_STACK,
         web_quality: null,
         press_signals: { articles: [] },
-        reasoning: 'Datadog detected in this company\'s tech stack. They are already a customer — skip outbound.',
+        reasoning: `${clientCompany.name} detected in this company's tech stack. They are already a customer — skip outbound.`,
         raw_data: { pappers: pappers ?? null, alreadyCustomer: true },
         status: 'done',
         domain: domain || null,
@@ -142,7 +165,7 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
       return res.status(200).json({ id: account.id, status: 'done' })
     }
 
-    // Hard DQ rule: ESN/IT consulting NAF code, BUT override if website shows SaaS signals
+    // Hard DQ: ESN/IT consulting NAF code, unless website shows SaaS signals
     if (pappers?.isDQCandidate) {
       const sq = siteQuality
       const hasSaaSSignals = !!(sq?.hasPricing || sq?.hasSignup || sq?.hasDemo || sq?.hasLogin || sq?.hasApi)
@@ -157,29 +180,28 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
           tech_stack: EMPTY_STACK,
           web_quality: null,
           press_signals: { articles: [] },
-          reasoning: `Automatically disqualified: NAF code ${pappers.naf} indicates an IT services / consulting firm (ESN). Datadog targets software product companies, not service providers.`,
+          reasoning: `Automatically disqualified: NAF code ${pappers.naf} indicates an IT services / consulting firm (ESN). Targets software product companies, not service providers.`,
           raw_data: { pappers: pappers ?? null },
           status: 'done',
           domain: domain || null,
         }).eq('id', account.id)
         return res.status(200).json({ id: account.id, status: 'done' })
       }
-      // SaaS signals found despite ESN NAF — let GPT decide, flag it in aggregated data
       aggregated.pappers = { ...pappers, isDQCandidate: false }
     }
 
-    const scored = await scoreAccount(aggregated, searchDepth ?? 'standard')
+    const scored = await scoreAccount(aggregated, searchDepth ?? 'standard', clientCompany)
 
-    // Hard DQ override: Claude confirmed existing Datadog customer via web search
+    // Hard DQ override: Claude confirmed existing customer via web search
     if (scored.is_existing_customer) {
       await supabaseAdmin.from('accounts').update({
         tier: 'DQ',
         score: 0,
-        signals: { positive: [], negative: ['Already a Datadog customer — no outbound needed'] },
+        signals: { positive: [], negative: [`Already a ${clientCompany.name} customer — no outbound needed`] },
         tech_stack: EMPTY_STACK,
         web_quality: null,
         press_signals: { articles: [] },
-        reasoning: 'Confirmed Datadog customer via web search. They are already a customer — skip outbound.',
+        reasoning: `Confirmed ${clientCompany.name} customer via web search. They are already a customer — skip outbound.`,
         raw_data: { pappers: pappers ?? null, is_existing_customer: true },
         status: 'done',
         domain: domain || null,

@@ -21,7 +21,6 @@ interface Stats {
   dqRate: number
   topTechs: { name: string; count: number }[]
   activityData: { date: string; count: number }[]
-  topUsers: { name: string; count: number; pct: number }[]
   fundingData: { name: string; count: number }[]
 }
 
@@ -258,38 +257,8 @@ export default function DashboardPage() {
               </div>
             </div>
 
-            {/* Row 4 — Top users + Funding */}
-            <div style={{ gridColumn: 'span 6', minHeight: 0 }}>
-              <div style={cardStyle}>
-                <div style={labelStyle}>Top users</div>
-                {!stats ? spinner : (
-                  <div style={{ flex: 1, overflowY: 'auto', display: 'flex', flexDirection: 'column', gap: 4 }}>
-                    {stats.topUsers.length === 0
-                      ? <p style={{ color: 'var(--text-muted)', fontSize: 13, textAlign: 'center', marginTop: 16 }}>No data yet</p>
-                      : stats.topUsers.map(({ name }, i) => (
-                          <div key={i} style={{ display: 'flex', alignItems: 'center', gap: 10, padding: '5px 0', borderBottom: i < stats.topUsers.length - 1 ? '1px solid rgba(255,255,255,0.04)' : 'none' }}>
-                            <span style={{ fontSize: 11, color: 'var(--text-muted)', width: 14, textAlign: 'right', flexShrink: 0 }}>{i + 1}</span>
-                            <div style={{
-                              width: 28, height: 28, borderRadius: '50%', flexShrink: 0,
-                              background: i === 0 ? 'rgba(124,58,237,0.2)' : 'rgba(255,255,255,0.05)',
-                              border: `1px solid ${i === 0 ? 'rgba(124,58,237,0.4)' : 'rgba(255,255,255,0.07)'}`,
-                              display: 'flex', alignItems: 'center', justifyContent: 'center',
-                              fontSize: 11, fontWeight: 700,
-                              color: i === 0 ? '#a78bfa' : 'var(--text-muted)',
-                            }}>
-                              {name[0]}
-                            </div>
-                            <span style={{ fontSize: 13, fontWeight: i === 0 ? 600 : 400, color: i === 0 ? 'white' : 'rgba(255,255,255,0.7)' }}>
-                              {name}
-                            </span>
-                          </div>
-                        ))
-                    }
-                  </div>
-                )}
-              </div>
-            </div>
-            <div style={{ gridColumn: 'span 6', minHeight: 0 }}>
+            {/* Row 4 — Funding */}
+            <div style={{ gridColumn: 'span 12', minHeight: 0 }}>
               <div style={cardStyle}>
                 <div style={labelStyle}>Funding detected</div>
                 {!stats ? spinner : stats.fundingData.length === 0

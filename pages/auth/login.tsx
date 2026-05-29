@@ -88,7 +88,7 @@ function DashboardIllustration() {
           <div className="w-2 h-2 rounded-full" style={{ background: '#10b981' }} />
           <div className="flex-1 mx-3">
             <div className="mx-auto w-40 h-3.5 rounded flex items-center justify-center" style={{ background: 'rgba(255,255,255,0.04)' }}>
-              <span className="text-[7px]" style={{ color: 'rgba(255,255,255,0.2)' }}>account-scorer.vercel.app</span>
+              <span className="text-[7px]" style={{ color: 'rgba(255,255,255,0.2)' }}>getinquiry.app</span>
             </div>
           </div>
         </div>
@@ -96,7 +96,7 @@ function DashboardIllustration() {
           <div className="shrink-0 flex flex-col px-3 py-3 gap-3" style={{ width: 200, background: '#060c18', borderRight: '1px solid rgba(255,255,255,0.05)' }}>
             <div className="flex items-center gap-1.5 mb-1">
               <div className="w-5 h-5 rounded flex items-center justify-center" style={{ background: 'rgba(124,58,237,0.2)', border: '1px solid rgba(124,58,237,0.4)' }}>
-                <span className="text-[8px]">🐶</span>
+                <InquiryLogo size={14} />
               </div>
               <span className="text-[9px] font-bold text-white">Inquiry</span>
             </div>
@@ -240,6 +240,10 @@ export default function LoginPage() {
   const [error, setError] = useState('')
   const [success, setSuccess] = useState('')
   const [scrolled, setScrolled] = useState(false)
+  const [firstName, setFirstName] = useState('')
+  const [lastName, setLastName] = useState('')
+  const [jobTitle, setJobTitle] = useState('')
+  const [companyWebsite, setCompanyWebsite] = useState('')
 
   useEffect(() => {
     const onScroll = () => setScrolled(window.scrollY > 40)
@@ -279,12 +283,24 @@ export default function LoginPage() {
         setError(error.message.includes('already registered')
           ? "This email already has an account. Click Log in."
           : error.message)
-      } else if (data.session) {
-        router.replace('/dashboard')
       } else {
-        setSuccess("Account created! You can now log in.")
-        setMode('signin')
-        setPassword('')
+        if (data.user) {
+          const website = companyWebsite.trim().replace(/^https?:\/\//i, '').replace(/\/$/, '')
+          await supabaseBrowser.from('profiles').insert({
+            id: data.user.id,
+            first_name: firstName.trim(),
+            last_name: lastName.trim(),
+            job_title: jobTitle,
+            company_website: website,
+          })
+        }
+        if (data.session) {
+          router.replace('/dashboard')
+        } else {
+          setSuccess("Account created! You can now log in.")
+          setMode('signin')
+          setPassword('')
+        }
       }
     }
     setLoading(false)
@@ -360,7 +376,7 @@ export default function LoginPage() {
           </div>
           {/* Right: Need help */}
           <div className="flex-1 flex justify-end">
-            <a href="https://mail.google.com/mail/?view=cm&to=noam.ramillon@datadoghq.com" target="_blank" rel="noopener noreferrer"
+            <a href="https://mail.google.com/mail/?view=cm&to=hello@getinquiry.app" target="_blank" rel="noopener noreferrer"
               className="px-4 py-1.5 rounded-full text-sm font-medium transition-opacity hover:opacity-80"
               style={{ border: '1px solid rgba(124,58,237,0.35)', color: '#a78bfa' }}>
               Need help?
@@ -495,7 +511,7 @@ export default function LoginPage() {
                   <div className="w-2.5 h-2.5 rounded-full" style={{ background: '#10b981' }} />
                   <div className="flex-1 mx-4">
                     <div className="mx-auto h-5 rounded flex items-center justify-center px-3" style={{ background: 'rgba(255,255,255,0.04)', maxWidth: 200 }}>
-                      <span className="text-[9px]" style={{ color: 'rgba(255,255,255,0.2)' }}>account-scorer.vercel.app/scoring</span>
+                      <span className="text-[9px]" style={{ color: 'rgba(255,255,255,0.2)' }}>getinquiry.app/scoring</span>
                     </div>
                   </div>
                 </div>
@@ -716,7 +732,7 @@ export default function LoginPage() {
                   {label}
                 </button>
               ))}
-              <a href="https://mail.google.com/mail/?view=cm&to=noam.ramillon@datadoghq.com" target="_blank" rel="noopener noreferrer"
+              <a href="https://mail.google.com/mail/?view=cm&to=hello@getinquiry.app" target="_blank" rel="noopener noreferrer"
                 className="text-xs transition-colors hover:text-white" style={{ color: 'var(--text-muted)' }}>
                 Contact
               </a>
@@ -763,10 +779,52 @@ export default function LoginPage() {
         </div>
 
         <form onSubmit={handleSubmit} className="space-y-3">
+
+          {mode === 'signup' && (
+            <>
+              <div className="flex gap-3">
+                <div className="flex-1">
+                  <label className="block text-sm font-medium text-white mb-1.5">First name</label>
+                  <input type="text" value={firstName} onChange={e => setFirstName(e.target.value)}
+                    placeholder="Alex" required
+                    className="w-full px-4 py-2.5 rounded-lg text-sm text-white placeholder-gray-600 outline-none"
+                    style={{ background: 'var(--bg-hover)', border: '1px solid var(--border)' }} />
+                </div>
+                <div className="flex-1">
+                  <label className="block text-sm font-medium text-white mb-1.5">Last name</label>
+                  <input type="text" value={lastName} onChange={e => setLastName(e.target.value)}
+                    placeholder="Martin" required
+                    className="w-full px-4 py-2.5 rounded-lg text-sm text-white placeholder-gray-600 outline-none"
+                    style={{ background: 'var(--bg-hover)', border: '1px solid var(--border)' }} />
+                </div>
+              </div>
+              <div>
+                <label className="block text-sm font-medium text-white mb-1.5">Job title</label>
+                <select value={jobTitle} onChange={e => setJobTitle(e.target.value)} required
+                  className="w-full px-4 py-2.5 rounded-lg text-sm text-white outline-none appearance-none"
+                  style={{ background: 'var(--bg-hover)', border: '1px solid var(--border)', color: jobTitle ? 'white' : 'var(--text-muted)' }}>
+                  <option value="" disabled>Select your role</option>
+                  <option value="SDR">SDR</option>
+                  <option value="BDR">BDR</option>
+                  <option value="AE">AE</option>
+                  <option value="Account Manager">Account Manager</option>
+                  <option value="Manager">Manager</option>
+                </select>
+              </div>
+              <div>
+                <label className="block text-sm font-medium text-white mb-1.5">Company website</label>
+                <input type="text" value={companyWebsite} onChange={e => setCompanyWebsite(e.target.value)}
+                  placeholder="datadog.com" required
+                  className="w-full px-4 py-2.5 rounded-lg text-sm text-white placeholder-gray-600 outline-none"
+                  style={{ background: 'var(--bg-hover)', border: '1px solid var(--border)' }} />
+              </div>
+            </>
+          )}
+
           <div>
             <label className="block text-sm font-medium text-white mb-1.5">Work email</label>
             <input type="email" value={email} onChange={e => setEmail(e.target.value)}
-              placeholder="you@datadoghq.com" required
+              placeholder="you@company.com" required
               className="w-full px-4 py-2.5 rounded-lg text-sm text-white placeholder-gray-600 outline-none"
               style={{ background: 'var(--bg-hover)', border: '1px solid var(--border)' }} />
           </div>
@@ -812,7 +870,7 @@ export default function LoginPage() {
             </div>
           )}
 
-          <button type="submit" disabled={loading || !email || !password}
+          <button type="submit" disabled={loading || !email || !password || (mode === 'signup' && (!firstName || !lastName || !jobTitle || !companyWebsite))}
             className="w-full py-2.5 rounded-full text-sm font-bold text-white transition-all disabled:opacity-50 hover:-translate-y-0.5 active:scale-[0.97]"
             style={{ background: 'linear-gradient(135deg, #7c3aed, #6d28d9)', boxShadow: '0 0 20px rgba(124,58,237,0.5)' }}>
             {loading
@@ -823,7 +881,7 @@ export default function LoginPage() {
 
         <p className="text-center text-xs mt-6" style={{ color: 'var(--text-muted)' }}>
           Built by <a href="https://www.linkedin.com/in/noamramillon/" target="_blank" rel="noopener noreferrer"
-            className="font-semibold transition-opacity hover:opacity-80" style={{ color: '#7c3aed' }}>Noam Ramillon</a> · Datadog SDR 🐶
+            className="font-semibold transition-opacity hover:opacity-80" style={{ color: '#7c3aed' }}>Noam Ramillon</a>
         </p>
       </div>
     </div>

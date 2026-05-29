@@ -4,15 +4,11 @@ import { aggregate } from './aggregator'
 
 const anthropic = new Anthropic({ apiKey: process.env.ANTHROPIC_API_KEY })
 
-const SYSTEM_PROMPT = `You are a B2B account qualification expert for Datadog.
+function buildSystemPrompt(clientName: string): string {
+  return `You are a B2B account qualification expert for ${clientName}.
 
-Datadog is a cloud monitoring platform (APM, logs, infrastructure, security, synthetics).
+${clientName} is a monitoring and observability platform.
 Your mission: search the web to find real signals about this company, then assign an SDR priority tier.
-
-SEARCH STRATEGY (do exactly 3 targeted searches):
-1. Search "[company name] SaaS product tech stack cloud AWS GCP Azure funding" — combines product model + infra signals + funding in one query
-2. Search "[company name] software engineers team size Crunchbase LinkedIn" — find team signals and any additional funding/growth data
-3. Search "[company name] Datadog customer OR case study OR uses Datadog OR powered by Datadog" — check if they are already a Datadog customer
 
 TIERING CRITERIA:
 - T1 (high priority): Confirmed SaaS or tech product company. A modern website with SaaS signals (pricing, login, signup, API, integrations) ALONE is sufficient for T1 if the product is clearly software. Cloud stack is a bonus, NOT a requirement. Active hiring is a bonus, NOT a requirement. A stable SaaS company that isn't actively recruiting can still be T1.
@@ -52,6 +48,19 @@ STRICT RULE — NO HALLUCINATION ON TECH STACK:
 - When in doubt about a technology, omit it entirely. Silence is better than a wrong tech signal.
 
 After searching, respond ONLY with valid JSON, no markdown, no surrounding text. All signals and reasoning must be in English.`
+}
+
+function buildSearchInstruction(clientName: string, searchDepth: 'standard' | 'deep'): string {
+  if (searchDepth === 'deep') {
+    return `SEARCH STRATEGY (do exactly 3 targeted searches):
+1. Search "[company name] SaaS product tech stack cloud AWS GCP Azure funding" — combines product model + infra signals + funding in one query
+2. Search "[company name] software engineers team size Crunchbase LinkedIn" — find team signals and any additional funding/growth data
+3. Search "[company name] ${clientName} customer OR case study OR uses ${clientName} OR powered by ${clientName}" — check if they are already a ${clientName} customer`
+  }
+  return `SEARCH STRATEGY (do exactly 2 targeted searches):
+1. Search "[company name] SaaS product tech stack cloud funding" — find product model, infra signals, and funding in one query
+2. Search "[company name] ${clientName} customer OR case study OR uses ${clientName}" — check if they are already a ${clientName} customer`
+}
 
 function buildPrompt(data: AggregatedData): string {
   const lines: string[] = [
@@ -131,23 +140,17 @@ const EMPTY_TECH_STACK: TechStack = {
   Cloud: [], Monitoring: [], DevOps: [], Languages: [], Data: [], AI: [], Security: [], Other: [],
 }
 
-export async function scoreAccount(data: AggregatedData, searchDepth: 'standard' | 'deep' = 'standard'): Promise<ScorerOutput> {
+export async function scoreAccount(
+  data: AggregatedData,
+  searchDepth: 'standard' | 'deep' = 'standard',
+  clientCompany: { name: string; domain: string } = { name: 'your company', domain: '' }
+): Promise<ScorerOutput> {
   const { techStack } = aggregate(data)
   const prompt = buildPrompt(data)
 
-  const searchInstruction = searchDepth === 'deep'
-    ? `SEARCH STRATEGY (do exactly 3 targeted searches):
-1. Search "[company name] SaaS product tech stack cloud AWS GCP Azure funding" — combines product model + infra signals + funding in one query
-2. Search "[company name] software engineers team size Crunchbase LinkedIn" — find team signals and any additional funding/growth data
-3. Search "[company name] Datadog customer OR case study OR uses Datadog OR powered by Datadog" — check if they are already a Datadog customer`
-    : `SEARCH STRATEGY (do exactly 2 targeted searches):
-1. Search "[company name] SaaS product tech stack cloud funding" — find product model, infra signals, and funding in one query
-2. Search "[company name] Datadog customer OR case study OR uses Datadog" — check if they are already a Datadog customer`
-
-  const systemPrompt = SYSTEM_PROMPT.replace(
-    /SEARCH STRATEGY[\s\S]*?(?=\nTIERING CRITERIA)/,
-    searchInstruction + '\n\n'
-  )
+  const searchInstruction = buildSearchInstruction(clientCompany.name, searchDepth)
+  const systemPrompt = buildSystemPrompt(clientCompany.name)
+    .replace('TIERING CRITERIA:', searchInstruction + '\n\nTIERING CRITERIA:')
 
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
   const response = await (anthropic.messages.create as any)({
@@ -165,7 +168,6 @@ export async function scoreAccount(data: AggregatedData, searchDepth: 'standard'
     .join('')
 
   try {
-    // Extract JSON from response (might be wrapped in text)
     const jsonMatch = finalText.match(/\{[\s\S]*\}/)
     const raw = jsonMatch ? jsonMatch[0] : '{}'
     const parsed = JSON.parse(raw)

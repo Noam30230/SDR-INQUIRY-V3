@@ -302,7 +302,7 @@ export default function ScoringPage() {
       const url = URL.createObjectURL(blob)
       const a = document.createElement('a')
       a.href = url
-      a.download = `account-scorer-${new Date().toISOString().split('T')[0]}.csv`
+      a.download = `inquiry-${new Date().toISOString().split('T')[0]}.csv`
       a.click()
       URL.revokeObjectURL(url)
     }

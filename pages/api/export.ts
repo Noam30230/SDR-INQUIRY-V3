@@ -59,6 +59,6 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
   ].join('\n')
 
   res.setHeader('Content-Type', 'text/csv; charset=utf-8')
-  res.setHeader('Content-Disposition', `attachment; filename="account-scorer-${new Date().toISOString().split('T')[0]}.csv"`)
+  res.setHeader('Content-Disposition', `attachment; filename="inquiry-${new Date().toISOString().split('T')[0]}.csv"`)
   return res.status(200).send('\uFEFF' + csv)
 }

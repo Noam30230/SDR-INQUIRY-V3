@@ -164,7 +164,7 @@ export interface AggregatedData {
   news?: NewsData
 }
 
-// Réponse du scorer GPT-4o
+// Réponse du scorer Claude
 export interface ScorerOutput {
   tier: Tier
   score: number

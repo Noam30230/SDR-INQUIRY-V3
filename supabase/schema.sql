@@ -63,3 +63,27 @@ create policy "Users can delete own accounts"
 
 -- Activer realtime pour les mises à jour live de l'UI
 alter publication supabase_realtime add table accounts;
+
+-- Profils utilisateurs (collectés à l'inscription)
+create table if not exists profiles (
+  id              uuid references auth.users primary key,
+  first_name      text not null,
+  last_name       text not null,
+  job_title       text not null check (job_title in ('SDR', 'BDR', 'AE', 'Account Manager', 'Manager')),
+  company_website text not null,
+  created_at      timestamptz default now()
+);
+
+alter table profiles enable row level security;
+
+create policy "Users can view own profile"
+  on profiles for select
+  using (auth.uid() = id);
+
+create policy "Users can insert own profile"
+  on profiles for insert
+  with check (auth.uid() = id);
+
+create policy "Users can update own profile"
+  on profiles for update
+  using (auth.uid() = id);
