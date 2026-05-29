@@ -56,18 +56,26 @@ const REASON_LABELS: Record<Reason, { title: string; subtitle: string }> = {
 
 export default function UpgradeModal({ reason, onClose }: UpgradeModalProps) {
   const [loading, setLoading] = useState<string | null>(null)
+  const [error, setError] = useState<string | null>(null)
 
   async function handleUpgrade(planId: string) {
     setLoading(planId)
+    setError(null)
     try {
       const { data } = await supabaseBrowser.auth.getSession()
       const token = data.session?.access_token || ''
       const res = await fetch(`/api/stripe/create-checkout?plan=${planId}`, {
         headers: { Authorization: `Bearer ${token}` },
       })
-      const { url } = await res.json()
-      if (url) window.location.href = url
-    } catch {
+      const body = await res.json()
+      if (body.url) {
+        window.location.href = body.url
+      } else {
+        setError(body.error || 'Stripe error — check Vercel env vars (STRIPE_SECRET_KEY, STRIPE_PRICE_PRO…)')
+        setLoading(null)
+      }
+    } catch (e) {
+      setError(e instanceof Error ? e.message : 'Network error')
       setLoading(null)
     }
   }
@@ -88,6 +96,13 @@ export default function UpgradeModal({ reason, onClose }: UpgradeModalProps) {
             <button onClick={onClose} className="text-sm transition-opacity hover:opacity-60 ml-4 mt-0.5" style={{ color: 'var(--text-muted)' }}>✕</button>
           </div>
         </div>
+
+        {/* Error */}
+        {error && (
+          <div className="mx-7 mb-4 px-4 py-3 rounded-lg text-sm" style={{ background: 'rgba(239,68,68,0.1)', border: '1px solid rgba(239,68,68,0.25)', color: '#fca5a5' }}>
+            {error}
+          </div>
+        )}
 
         {/* Plans */}
         <div className="px-7 pb-7 grid grid-cols-3 gap-4">
