@@ -1,5 +1,6 @@
 import type { NextApiRequest, NextApiResponse } from 'next'
 import { supabaseAdmin } from '@/lib/supabase-admin'
+import { getUserFromToken } from '@/lib/auth-server'
 
 export default async function handler(req: NextApiRequest, res: NextApiResponse) {
   if (req.method !== 'GET' && req.method !== 'DELETE') return res.status(405).json({ error: 'Method not allowed' })
@@ -7,8 +8,8 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
   const token = req.headers.authorization?.replace('Bearer ', '')
   if (!token) return res.status(401).json({ error: 'Non authentifié' })
 
-  const { data: { user }, error: authError } = await supabaseAdmin.auth.getUser(token)
-  if (!user) return res.status(401).json({ error: 'Non authentifié', detail: authError?.message })
+  const user = await getUserFromToken(token)
+  if (!user) return res.status(401).json({ error: 'Non authentifié' })
 
   if (req.method === 'DELETE') {
     const { tier } = req.query

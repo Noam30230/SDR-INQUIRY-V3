@@ -1,5 +1,6 @@
 import type { NextApiRequest, NextApiResponse } from 'next'
 import { supabaseAdmin } from '@/lib/supabase-admin'
+import { getUserFromToken } from '@/lib/auth-server'
 
 async function fetchAllAccounts(userId: string) {
   const PAGE = 1000
@@ -25,7 +26,7 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
   const token = req.headers.authorization?.replace('Bearer ', '')
   if (!token) return res.status(401).json({ error: 'Unauthorized' })
 
-  const { data: { user } } = await supabaseAdmin.auth.getUser(token)
+  const user = await getUserFromToken(token)
   if (!user) return res.status(401).json({ error: 'Unauthorized' })
 
   try {

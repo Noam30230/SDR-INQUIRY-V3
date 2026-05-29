@@ -1,6 +1,7 @@
 import type { NextApiRequest, NextApiResponse } from 'next'
 import Stripe from 'stripe'
 import { supabaseAdmin } from '@/lib/supabase-admin'
+import { getUserFromToken } from '@/lib/auth-server'
 import { STRIPE_PRICE_IDS, type PlanId } from '@/lib/subscription'
 
 const stripe = new Stripe(process.env.STRIPE_SECRET_KEY!)
@@ -11,7 +12,7 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
   const token = req.headers.authorization?.replace('Bearer ', '')
   if (!token) return res.status(401).json({ error: 'Unauthorized' })
 
-  const { data: { user } } = await supabaseAdmin.auth.getUser(token)
+  const user = await getUserFromToken(token)
   if (!user) return res.status(401).json({ error: 'Unauthorized' })
 
   const { plan } = req.query as { plan: PlanId }

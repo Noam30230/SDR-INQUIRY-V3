@@ -1,5 +1,6 @@
 import type { NextApiRequest, NextApiResponse } from 'next'
 import { supabaseAdmin } from '@/lib/supabase-admin'
+import { getUserFromToken } from '@/lib/auth-server'
 import { scoreAccount } from '@/lib/scorer'
 import type { AggregatedData } from '@/types'
 
@@ -27,7 +28,7 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
   const token = req.headers.authorization?.replace('Bearer ', '')
   if (!token) return res.status(401).json({ error: 'Non authentifié' })
 
-  const { data: { user } } = await supabaseAdmin.auth.getUser(token)
+  const user = await getUserFromToken(token)
   if (!user) return res.status(401).json({ error: 'Non authentifié' })
 
   // Fetch user profile: company info + subscription/usage
