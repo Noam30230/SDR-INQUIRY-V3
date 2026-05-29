@@ -36,16 +36,10 @@ const NAV_ITEMS = [
   { path: '/scoring',   label: 'Scoring',   Icon: IconScoring },
 ]
 
-function getDisplayName(email: string): string {
-  if (!email) return ''
-  const local = email.split('@')[0]
-  const first = local.split('.')[0]
-  return first.charAt(0).toUpperCase() + first.slice(1).toLowerCase()
-}
-
 export default function AppNav() {
   const router = useRouter()
   const [email, setEmail] = useState('')
+  const [displayName, setDisplayName] = useState('')
   const [profileOpen, setProfileOpen] = useState(false)
   const profileRef = useRef<HTMLDivElement>(null)
   const [usage, setUsage] = useState<UsageInfo | null>(null)
@@ -57,10 +51,13 @@ export default function AppNav() {
       if (!uid) return
       const { data: profile } = await supabaseBrowser
         .from('profiles')
-        .select('analyses_used, analyses_limit, subscription_status, subscription_plan, trial_ends_at')
+        .select('first_name, last_name, analyses_used, analyses_limit, subscription_status, subscription_plan, trial_ends_at')
         .eq('id', uid)
         .single()
       if (profile) {
+        const first = profile.first_name || ''
+        const last = (profile.last_name || '').toUpperCase()
+        if (first || last) setDisplayName(`${first} ${last}`.trim())
         setUsage({
           analysesUsed: profile.analyses_used ?? 0,
           analysesLimit: profile.analyses_limit ?? 30,
@@ -83,8 +80,8 @@ export default function AppNav() {
     return () => document.removeEventListener('mousedown', handleClick)
   }, [])
 
-  const displayName = getDisplayName(email)
-  const initial = displayName ? displayName[0].toUpperCase() : '?'
+  const nameToShow = displayName || email.split('@')[0]
+  const initial = nameToShow ? nameToShow[0].toUpperCase() : '?'
 
   async function handleBillingPortal() {
     setProfileOpen(false)
@@ -317,7 +314,7 @@ export default function AppNav() {
           </div>
           <div style={{ minWidth: 0, textAlign: 'left', flex: 1 }}>
             <div style={{ fontSize: 13, fontWeight: 600, color: 'white', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
-              {displayName || 'User'}
+              {nameToShow || 'User'}
             </div>
             <div style={{ fontSize: 10, color: 'var(--text-muted)', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }} title={email}>
               {email.length > 22 ? email.slice(0, 19) + '…' : email}
