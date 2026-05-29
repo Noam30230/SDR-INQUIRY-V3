@@ -1,7 +1,7 @@
 import { useState } from 'react'
 import { supabaseBrowser } from '@/lib/supabase'
 
-type Reason = 'trial_expired' | 'usage_limit_reached' | 'subscription_inactive'
+type Reason = 'trial_expired' | 'usage_limit_reached' | 'subscription_inactive' | 'voluntary'
 
 interface UpgradeModalProps {
   reason: Reason
@@ -47,6 +47,10 @@ const REASON_LABELS: Record<Reason, { title: string; subtitle: string }> = {
   subscription_inactive: {
     title: 'Subscription inactive',
     subtitle: 'Your subscription is no longer active. Reactivate to keep scoring.',
+  },
+  voluntary: {
+    title: 'Upgrade your plan',
+    subtitle: 'More analyses, more features. Choose the plan that fits your team.',
   },
 }
 

@@ -2,6 +2,7 @@ import { useEffect, useState, useRef } from 'react'
 import { useRouter } from 'next/router'
 import { supabaseBrowser } from '@/lib/supabase'
 import { PLAN_LABELS } from '@/lib/subscription'
+import UpgradeModal from '@/components/ui/UpgradeModal'
 
 interface UsageInfo {
   analysesUsed: number
@@ -43,6 +44,7 @@ export default function AppNav() {
   const [profileOpen, setProfileOpen] = useState(false)
   const profileRef = useRef<HTMLDivElement>(null)
   const [usage, setUsage] = useState<UsageInfo | null>(null)
+  const [showUpgradeModal, setShowUpgradeModal] = useState(false)
 
   useEffect(() => {
     supabaseBrowser.auth.getSession().then(async ({ data }) => {
@@ -215,7 +217,7 @@ export default function AppNav() {
           {/* Upgrade button for trial users or near-limit */}
           {(usage.subscriptionStatus === 'trial' || usage.subscriptionStatus === 'canceled') && (
             <button
-              onClick={() => router.push('/?pricing=1')}
+              onClick={() => setShowUpgradeModal(true)}
               style={{
                 marginTop: 8, width: '100%', padding: '5px 0',
                 borderRadius: 6, fontSize: 10, fontWeight: 700,
@@ -332,5 +334,10 @@ export default function AppNav() {
         </button>
       </div>
     </aside>
+
+    {showUpgradeModal && (
+      <UpgradeModal reason="voluntary" onClose={() => setShowUpgradeModal(false)} />
+    )}
+  </>
   )
 }
