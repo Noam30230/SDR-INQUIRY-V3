@@ -46,18 +46,23 @@ export default function AppNav() {
 
   useEffect(() => {
     supabaseBrowser.auth.getSession().then(async ({ data }) => {
-      setEmail(data.session?.user?.email || '')
-      const uid = data.session?.user?.id
+      const user = data.session?.user
+      setEmail(user?.email || '')
+
+      // Name from user_metadata (always available in JWT)
+      const meta = user?.user_metadata || {}
+      const first = (meta.first_name || '').trim()
+      const last = (meta.last_name || '').trim().toUpperCase()
+      if (first || last) setDisplayName(`${first} ${last}`.trim())
+
+      const uid = user?.id
       if (!uid) return
       const { data: profile } = await supabaseBrowser
         .from('profiles')
-        .select('first_name, last_name, analyses_used, analyses_limit, subscription_status, subscription_plan, trial_ends_at')
+        .select('analyses_used, analyses_limit, subscription_status, subscription_plan, trial_ends_at')
         .eq('id', uid)
         .single()
       if (profile) {
-        const first = profile.first_name || ''
-        const last = (profile.last_name || '').toUpperCase()
-        if (first || last) setDisplayName(`${first} ${last}`.trim())
         setUsage({
           analysesUsed: profile.analyses_used ?? 0,
           analysesLimit: profile.analyses_limit ?? 30,
