@@ -216,7 +216,7 @@ const PLANS = [
     name: 'Solo',
     price: '€19',
     analyses: '250 analyses / month',
-    subline: '~12 accounts/day · 1 user',
+    subline: '',
     features: ['T1/T2/T3/DQ scoring', 'AI call angle per account', 'Tech stack & funding signals', 'Standard & Deep search', 'CSV export'],
     popular: false,
   },
@@ -225,7 +225,7 @@ const PLANS = [
     name: 'Pro',
     price: '€49',
     analyses: '750 analyses / month',
-    subline: '3–5 SDRs · shared workspace',
+    subline: '',
     features: ['Everything in Solo', 'Up to 5 users', 'Shared workspace & results', 'Cross-team caching', 'Priority support'],
     popular: true,
   },
@@ -234,7 +234,7 @@ const PLANS = [
     name: 'Growth',
     price: '€129',
     analyses: '2,500 analyses / month',
-    subline: '10+ SDRs · intensive use',
+    subline: '',
     features: ['Everything in Pro', 'Unlimited users', 'Multi-team workspace', 'Dedicated onboarding', 'SLA guarantee'],
     popular: false,
   },
@@ -787,8 +787,7 @@ export default function LoginPage() {
 
                   <div style={{ height: 1, background: 'rgba(255,255,255,0.07)', margin: '16px 0' }} />
 
-                  <p className="text-sm font-semibold text-white mb-0.5">{plan.analyses}</p>
-                  <p className="text-xs mb-5" style={{ color: 'var(--text-muted)' }}>{plan.subline}</p>
+                  <p className="text-sm font-semibold text-white mb-5">{plan.analyses}</p>
 
                   <ul className="space-y-2.5 mb-8 flex-1">
                     {plan.features.map(f => (
