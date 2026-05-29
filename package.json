@@ -17,6 +17,7 @@
     "react": "^18",
     "react-dom": "^18",
     "recharts": "^2.12.7",
+    "stripe": "^22.2.0",
     "wappalyzer": "^6.10.66"
   },
   "devDependencies": {

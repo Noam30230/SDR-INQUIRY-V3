@@ -308,7 +308,17 @@ export default function LoginPage() {
         router.replace('/dashboard')
       }
     } else {
-      const { data, error } = await supabaseBrowser.auth.signUp({ email, password })
+      const { data, error } = await supabaseBrowser.auth.signUp({
+        email,
+        password,
+        options: {
+          data: {
+            full_name: `${firstName.trim()} ${lastName.trim()}`,
+            first_name: firstName.trim(),
+            last_name: lastName.trim(),
+          },
+        },
+      })
       if (error) {
         setError(error.message.includes('already registered')
           ? "This email already has an account. Click Log in."
@@ -327,9 +337,15 @@ export default function LoginPage() {
         if (data.session) {
           router.replace('/dashboard')
         } else {
-          setSuccess("Account created! You can now log in.")
-          setMode('signin')
-          setPassword('')
+          // Email confirmation required — auto-login with same credentials
+          const { error: signInError } = await supabaseBrowser.auth.signInWithPassword({ email, password })
+          if (signInError) {
+            setSuccess("Account created! You can now log in.")
+            setMode('signin')
+            setPassword('')
+          } else {
+            router.replace('/dashboard')
+          }
         }
       }
     }

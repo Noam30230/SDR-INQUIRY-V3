@@ -37,12 +37,33 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
   const { data: { user } } = await supabase.auth.getUser()
   if (!user) return res.status(401).json({ error: 'Non authentifié' })
 
-  // Fetch user profile to get their company (used for existing-customer DQ)
+  // Fetch user profile: company info + subscription/usage
   const { data: profile } = await supabaseAdmin
     .from('profiles')
-    .select('company_website')
+    .select('company_website, subscription_status, subscription_plan, trial_ends_at, analyses_used, analyses_limit')
     .eq('id', user.id)
     .single()
+
+  // ── Usage enforcement ──────────────────────────────────────────────────────
+  if (profile) {
+    const { subscription_status, trial_ends_at, analyses_used, analyses_limit } = profile
+
+    // Trial expired
+    if (subscription_status === 'trial' && trial_ends_at && new Date() > new Date(trial_ends_at)) {
+      return res.status(402).json({ error: 'trial_expired' })
+    }
+
+    // Subscription inactive
+    if (subscription_status === 'canceled') {
+      return res.status(402).json({ error: 'subscription_inactive' })
+    }
+
+    // Monthly quota reached
+    if ((analyses_used ?? 0) >= (analyses_limit ?? 30)) {
+      return res.status(402).json({ error: 'usage_limit_reached' })
+    }
+  }
+  // ──────────────────────────────────────────────────────────────────────────
 
   const clientCompany = profile?.company_website
     ? { name: extractCompanyName(profile.company_website), domain: extractCompanyDomain(profile.company_website) }
@@ -250,6 +271,13 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
         domain: domain || null,
       })
       .eq('id', account.id)
+
+    // Increment usage counter
+    if (profile) {
+      await supabaseAdmin.from('profiles')
+        .update({ analyses_used: (profile.analyses_used ?? 0) + 1 })
+        .eq('id', user.id)
+    }
 
     return res.status(200).json({ id: account.id, status: 'done', tier: scored.tier, score: scored.score })
 

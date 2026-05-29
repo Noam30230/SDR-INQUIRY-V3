@@ -1,6 +1,15 @@
 import { useEffect, useState, useRef } from 'react'
 import { useRouter } from 'next/router'
 import { supabaseBrowser } from '@/lib/supabase'
+import { PLAN_LABELS } from '@/lib/subscription'
+
+interface UsageInfo {
+  analysesUsed: number
+  analysesLimit: number
+  subscriptionStatus: string
+  subscriptionPlan: string | null
+  trialEndsAt: string | null
+}
 
 const InquiryLogo = ({ size = 24 }: { size?: number }) => (
   <svg width={size} height={size} viewBox="0 0 64 64" fill="none" xmlns="http://www.w3.org/2000/svg">
@@ -39,10 +48,27 @@ export default function AppNav() {
   const [email, setEmail] = useState('')
   const [profileOpen, setProfileOpen] = useState(false)
   const profileRef = useRef<HTMLDivElement>(null)
+  const [usage, setUsage] = useState<UsageInfo | null>(null)
 
   useEffect(() => {
-    supabaseBrowser.auth.getSession().then(({ data }) => {
+    supabaseBrowser.auth.getSession().then(async ({ data }) => {
       setEmail(data.session?.user?.email || '')
+      const uid = data.session?.user?.id
+      if (!uid) return
+      const { data: profile } = await supabaseBrowser
+        .from('profiles')
+        .select('analyses_used, analyses_limit, subscription_status, subscription_plan, trial_ends_at')
+        .eq('id', uid)
+        .single()
+      if (profile) {
+        setUsage({
+          analysesUsed: profile.analyses_used ?? 0,
+          analysesLimit: profile.analyses_limit ?? 30,
+          subscriptionStatus: profile.subscription_status ?? 'trial',
+          subscriptionPlan: profile.subscription_plan ?? null,
+          trialEndsAt: profile.trial_ends_at ?? null,
+        })
+      }
     })
   }, [])
 
@@ -59,6 +85,15 @@ export default function AppNav() {
 
   const displayName = getDisplayName(email)
   const initial = displayName ? displayName[0].toUpperCase() : '?'
+
+  async function handleBillingPortal() {
+    setProfileOpen(false)
+    const { data } = await supabaseBrowser.auth.getSession()
+    const token = data.session?.access_token || ''
+    const res = await fetch('/api/stripe/portal', { headers: { Authorization: `Bearer ${token}` } })
+    const { url } = await res.json()
+    if (url) window.location.href = url
+  }
 
   async function handleLogout() {
     // Eagerly clear caches before signing out so the next user sees a blank slate instantly
@@ -150,6 +185,51 @@ export default function AppNav() {
         })}
       </nav>
 
+      {/* Usage widget */}
+      {usage && (
+        <div style={{ margin: '8px 10px', padding: '10px 12px', borderRadius: 10, background: 'rgba(255,255,255,0.03)', border: '1px solid rgba(255,255,255,0.06)' }}>
+          <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: 6 }}>
+            <span style={{ fontSize: 10, fontWeight: 700, color: usage.subscriptionStatus === 'trial' ? '#fbbf24' : '#a78bfa', textTransform: 'uppercase', letterSpacing: '0.04em' }}>
+              {PLAN_LABELS[usage.subscriptionPlan ?? usage.subscriptionStatus] ?? 'Trial'}
+            </span>
+            <span style={{ fontSize: 10, color: 'var(--text-muted)' }}>
+              {usage.analysesUsed}/{usage.analysesLimit}
+            </span>
+          </div>
+          {/* Progress bar */}
+          <div style={{ height: 3, borderRadius: 2, background: 'rgba(255,255,255,0.07)', overflow: 'hidden' }}>
+            <div style={{
+              height: '100%',
+              borderRadius: 2,
+              width: `${Math.min(100, (usage.analysesUsed / (usage.analysesLimit || 1)) * 100)}%`,
+              background: usage.analysesUsed >= usage.analysesLimit
+                ? '#ef4444'
+                : usage.subscriptionStatus === 'trial'
+                ? 'linear-gradient(90deg, #f59e0b, #fbbf24)'
+                : 'linear-gradient(90deg, #7c3aed, #a78bfa)',
+              transition: 'width 0.3s ease',
+            }} />
+          </div>
+          {/* Upgrade button for trial users or near-limit */}
+          {(usage.subscriptionStatus === 'trial' || usage.subscriptionStatus === 'canceled') && (
+            <button
+              onClick={() => router.push('/?pricing=1')}
+              style={{
+                marginTop: 8, width: '100%', padding: '5px 0',
+                borderRadius: 6, fontSize: 10, fontWeight: 700,
+                background: 'linear-gradient(135deg, #7c3aed, #6d28d9)',
+                color: 'white', border: 'none', cursor: 'pointer',
+                transition: 'opacity 0.12s',
+              }}
+              onMouseEnter={e => (e.currentTarget.style.opacity = '0.85')}
+              onMouseLeave={e => (e.currentTarget.style.opacity = '1')}
+            >
+              Upgrade →
+            </button>
+          )}
+        </div>
+      )}
+
       {/* Profile section — clickable, opens dropdown */}
       <div ref={profileRef} style={{ position: 'relative', borderTop: '1px solid var(--border)', marginTop: 8 }}>
         {/* Dropdown (opens upward) */}
@@ -166,6 +246,22 @@ export default function AppNav() {
             border: '1px solid var(--border)',
             boxShadow: '0 -8px 24px rgba(0,0,0,0.4)',
           }}>
+            {usage?.subscriptionStatus === 'active' && (
+              <button
+                onClick={handleBillingPortal}
+                style={{
+                  width: '100%', textAlign: 'left', padding: '9px 14px',
+                  fontSize: 12, color: 'var(--text-muted)', background: 'none',
+                  border: 'none', cursor: 'pointer', display: 'flex', alignItems: 'center', gap: 8,
+                }}
+                onMouseEnter={e => (e.currentTarget.style.background = 'rgba(255,255,255,0.04)')}
+                onMouseLeave={e => (e.currentTarget.style.background = 'none')}
+              >
+                <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                  <rect x="1" y="4" width="22" height="16" rx="2"/><line x1="1" y1="10" x2="23" y2="10"/>
+                </svg> Manage billing
+              </button>
+            )}
             {router.pathname === '/scoring' && (
               <button
                 onClick={handleReplayTour}

@@ -4,6 +4,7 @@ import AppNav from '@/components/layout/AppNav'
 import Sidebar from '@/components/layout/Sidebar'
 import AccountList from '@/components/accounts/AccountList'
 import OnboardingModal from '@/components/ui/OnboardingModal'
+import UpgradeModal from '@/components/ui/UpgradeModal'
 import { supabaseBrowser } from '@/lib/supabase'
 import type { Account, Tier } from '@/types'
 
@@ -131,6 +132,7 @@ export default function ScoringPage() {
   const [selectedIds, setSelectedIds] = useState<Set<string>>(new Set())
   const [showOnboarding, setShowOnboarding] = useState(false)
   const [userId, setUserId] = useState('')
+  const [upgradeRequired, setUpgradeRequired] = useState<'trial_expired' | 'usage_limit_reached' | 'subscription_inactive' | null>(null)
   const stopRef = useRef(false)
   // Ref so loadAccounts always uses the current user's cache key without needing it as a dep
   const userIdRef = useRef('')
@@ -233,6 +235,14 @@ export default function ScoringPage() {
       })
       // Remove the optimistic entry once the real result is coming
       setAccounts(prev => prev.filter(a => a.id !== tempId))
+      if (res.status === 402) {
+        const { error } = await res.json()
+        stopRef.current = true
+        setIsScoring(false)
+        setRemainingCount(0)
+        setUpgradeRequired(error as 'trial_expired' | 'usage_limit_reached' | 'subscription_inactive')
+        break
+      }
       if (res.status === 409) {
         const label = item.name || item.domain
         setToast(`"${label}" already scored`)
@@ -373,6 +383,7 @@ export default function ScoringPage() {
         </main>
 
         {showOnboarding && <OnboardingModal userId={userId} onDone={() => setShowOnboarding(false)} />}
+        {upgradeRequired && <UpgradeModal reason={upgradeRequired} onClose={() => setUpgradeRequired(null)} />}
 
         {/* Fix #5: toast for already-scored duplicates */}
         {toast && (
