@@ -13,8 +13,8 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
     { global: { headers: { Authorization: `Bearer ${token}` } } }
   )
 
-  const { data: { user } } = await supabase.auth.getUser(token)
-  if (!user) return res.status(401).json({ error: 'Non authentifié' })
+  const { data: { user }, error: authError } = await supabase.auth.getUser(token)
+  if (!user) return res.status(401).json({ error: 'Non authentifié', detail: authError?.message, url: process.env.NEXT_PUBLIC_SUPABASE_URL })
 
   if (req.method === 'DELETE') {
     const { tier } = req.query
