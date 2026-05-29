@@ -120,6 +120,7 @@ export default function AppNav() {
   }
 
   return (
+    <>
     <aside
       style={{
         width: 200,
@@ -338,6 +339,6 @@ export default function AppNav() {
     {showUpgradeModal && (
       <UpgradeModal reason="voluntary" onClose={() => setShowUpgradeModal(false)} />
     )}
-  </>
+    </>
   )
 }
