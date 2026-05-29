@@ -210,6 +210,36 @@ const FEATURES = [
   },
 ]
 
+const PLANS = [
+  {
+    label: 'STARTER',
+    name: 'Solo',
+    price: '€19',
+    analyses: '250 analyses / month',
+    subline: '~12 accounts/day · 1 user',
+    features: ['T1/T2/T3/DQ scoring', 'AI call angle per account', 'Tech stack & funding signals', 'Standard & Deep search', 'CSV export'],
+    popular: false,
+  },
+  {
+    label: 'MOST POPULAR',
+    name: 'Pro',
+    price: '€49',
+    analyses: '750 analyses / month',
+    subline: '3–5 SDRs · shared workspace',
+    features: ['Everything in Solo', 'Up to 5 users', 'Shared workspace & results', 'Cross-team caching', 'Priority support'],
+    popular: true,
+  },
+  {
+    label: 'SCALE',
+    name: 'Growth',
+    price: '€129',
+    analyses: '2,500 analyses / month',
+    subline: '10+ SDRs · intensive use',
+    features: ['Everything in Pro', 'Unlimited users', 'Multi-team workspace', 'Dedicated onboarding', 'SLA guarantee'],
+    popular: false,
+  },
+]
+
 const STEPS = [
   {
     number: '01',
@@ -366,7 +396,7 @@ export default function LoginPage() {
           </div>
           {/* Center: nav links */}
           <div className="hidden md:flex items-center gap-8 flex-1 justify-center">
-            {[['Product', 'features'], ['How it works', 'how-it-works']].map(([label, id]) => (
+            {[['Product', 'features'], ['How it works', 'how-it-works'], ['Pricing', 'pricing']].map(([label, id]) => (
               <button key={id} onClick={() => scrollTo(id)}
                 className="text-sm transition-colors hover:text-white"
                 style={{ color: 'var(--text-muted)', background: 'none', border: 'none', cursor: 'pointer' }}>
@@ -711,6 +741,80 @@ export default function LoginPage() {
 
         </section>
 
+        {/* ── PRICING ── */}
+        <section id="pricing" className="px-6 py-24" style={{ background: 'var(--bg-base)' }}>
+          <div className="mx-auto" style={{ maxWidth: 1100 }}>
+            <div className="text-center mb-14">
+              <p className="text-xs font-semibold tracking-widest uppercase mb-4" style={{ color: '#7c3aed' }}>Pricing</p>
+              <h2 className="text-4xl font-bold text-white mb-6" style={{ letterSpacing: '-0.02em' }}>
+                Simple, transparent pricing.
+              </h2>
+              <div className="inline-flex items-center gap-2 px-4 py-2 rounded-full text-sm font-medium"
+                style={{ background: 'rgba(16,185,129,0.1)', border: '1px solid rgba(16,185,129,0.25)', color: '#6ee7b7' }}>
+                <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
+                  <polyline points="20 6 9 17 4 12"/>
+                </svg>
+                3-day free trial · 30 analyses · no credit card required
+              </div>
+            </div>
+
+            <div className="grid grid-cols-1 md:grid-cols-3 gap-6 items-stretch">
+              {PLANS.map(plan => (
+                <div key={plan.name} className="relative flex flex-col rounded-2xl p-7"
+                  style={{
+                    background: plan.popular ? 'rgba(124,58,237,0.08)' : 'rgba(255,255,255,0.03)',
+                    border: plan.popular ? '1.5px solid rgba(124,58,237,0.5)' : '1px solid rgba(255,255,255,0.08)',
+                    boxShadow: plan.popular ? '0 0 40px rgba(124,58,237,0.15)' : 'none',
+                  }}>
+
+                  {plan.popular && (
+                    <div className="absolute -top-3.5 left-1/2 -translate-x-1/2">
+                      <span className="px-4 py-1 rounded-full text-xs font-bold text-white"
+                        style={{ background: 'linear-gradient(135deg, #7c3aed, #6d28d9)' }}>
+                        Most popular
+                      </span>
+                    </div>
+                  )}
+
+                  <p className="text-[10px] font-bold tracking-widest uppercase mb-3" style={{ color: 'var(--text-muted)' }}>
+                    {plan.label}
+                  </p>
+                  <p className="text-2xl font-bold text-white mb-1">{plan.name}</p>
+                  <div className="flex items-baseline gap-1 mb-1">
+                    <span className="text-4xl font-bold text-white" style={{ letterSpacing: '-0.03em' }}>{plan.price}</span>
+                    <span className="text-sm" style={{ color: 'var(--text-muted)' }}>/month</span>
+                  </div>
+
+                  <div style={{ height: 1, background: 'rgba(255,255,255,0.07)', margin: '16px 0' }} />
+
+                  <p className="text-sm font-semibold text-white mb-0.5">{plan.analyses}</p>
+                  <p className="text-xs mb-5" style={{ color: 'var(--text-muted)' }}>{plan.subline}</p>
+
+                  <ul className="space-y-2.5 mb-8 flex-1">
+                    {plan.features.map(f => (
+                      <li key={f} className="flex items-center gap-2.5 text-sm" style={{ color: 'rgba(255,255,255,0.75)' }}>
+                        <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round" className="shrink-0" style={{ color: plan.popular ? '#a78bfa' : '#6b7280' }}>
+                          <polyline points="20 6 9 17 4 12"/>
+                        </svg>
+                        {f}
+                      </li>
+                    ))}
+                  </ul>
+
+                  <button onClick={() => openForm('signup')}
+                    className="w-full py-3 rounded-xl text-sm font-bold transition-all hover:-translate-y-0.5 active:scale-[0.97]"
+                    style={plan.popular
+                      ? { background: 'linear-gradient(135deg, #7c3aed, #6d28d9)', color: 'white', boxShadow: '0 0 24px rgba(124,58,237,0.4)' }
+                      : { background: 'rgba(255,255,255,0.06)', color: 'white', border: '1px solid rgba(255,255,255,0.12)' }
+                    }>
+                    Get started →
+                  </button>
+                </div>
+              ))}
+            </div>
+          </div>
+        </section>
+
         {/* ── FOOTER ── */}
         <footer className="flex flex-col items-center px-6 py-12" style={{ borderTop: '1px solid rgba(255,255,255,0.06)' }}>
           <div className="w-full flex flex-col md:flex-row items-center justify-between gap-6" style={{ maxWidth: 1100 }}>
@@ -725,7 +829,7 @@ export default function LoginPage() {
               </a>
             </div>
             <div className="flex items-center gap-6">
-              {[['Product', 'features'], ['How it works', 'how-it-works']].map(([label, id]) => (
+              {[['Product', 'features'], ['How it works', 'how-it-works'], ['Pricing', 'pricing']].map(([label, id]) => (
                 <button key={id} onClick={() => scrollTo(id)}
                   className="text-xs transition-colors hover:text-white"
                   style={{ color: 'var(--text-muted)', background: 'none', border: 'none', cursor: 'pointer' }}>
