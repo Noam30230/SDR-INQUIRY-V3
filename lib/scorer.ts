@@ -4,6 +4,48 @@ import { aggregate } from './aggregator'
 
 const anthropic = new Anthropic({ apiKey: process.env.ANTHROPIC_API_KEY })
 
+/**
+ * Dedicated customer check — separate focused API call before full scoring.
+ * Returns true if the company is already a client of clientName.
+ */
+export async function checkExistingCustomer(
+  companyName: string,
+  domain: string,
+  clientName: string
+): Promise<boolean> {
+  try {
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    const response = await (anthropic.messages.create as any)({
+      model: 'claude-sonnet-4-6',
+      max_tokens: 300,
+      tools: [{ type: 'web_search_20250305', name: 'web_search' }],
+      system: `You are checking whether a specific company is already a paying customer of ${clientName}.
+Search for: "${companyName} ${clientName}"
+Look for: case studies, customer stories, the company listed on ${clientName}'s website, blog posts, press releases, conference talks, G2/Gartner reviews, or any public mention of ${companyName} using ${clientName}.
+If you find ANY such evidence, answer {"is_customer": true}.
+If you find nothing, answer {"is_customer": false}.
+Respond ONLY with that JSON object, nothing else.`,
+      messages: [{
+        role: 'user',
+        content: `Is "${companyName}"${domain ? ` (website: ${domain})` : ''} a customer of ${clientName}?`,
+      }],
+    })
+
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    const text: string = (response.content as any[])
+      .filter((b: any) => b.type === 'text')
+      .map((b: any) => b.text as string)
+      .join('')
+
+    const match = text.match(/\{[\s\S]*?\}/)
+    if (match) {
+      const parsed = JSON.parse(match[0])
+      return parsed.is_customer === true
+    }
+  } catch { /* fail safe — never block scoring */ }
+  return false
+}
+
 function buildSystemPrompt(clientName: string): string {
   return `You are a B2B account qualification expert for ${clientName}.
 

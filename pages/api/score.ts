@@ -1,7 +1,7 @@
 import type { NextApiRequest, NextApiResponse } from 'next'
 import { supabaseAdmin } from '@/lib/supabase-admin'
 import { getUserFromToken } from '@/lib/auth-server'
-import { scoreAccount } from '@/lib/scorer'
+import { scoreAccount, checkExistingCustomer } from '@/lib/scorer'
 import type { AggregatedData } from '@/types'
 
 function extractCompanyName(website: string): string {
@@ -205,9 +205,36 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
       aggregated.pappers = { ...pappers, isDQCandidate: false }
     }
 
+    // ── Dedicated customer check (separate focused API call) ──────────────
+    const isExistingCustomer = clientCompany.name !== 'your company'
+      ? await checkExistingCustomer(companyName, domain, clientCompany.name)
+      : false
+
+    if (isExistingCustomer) {
+      await supabaseAdmin.from('accounts').update({
+        tier: 'DQ',
+        score: 0,
+        signals: { positive: [], negative: [`Already a ${clientCompany.name} customer — no outbound needed`] },
+        tech_stack: EMPTY_STACK,
+        web_quality: null,
+        press_signals: { articles: [] },
+        reasoning: `${clientCompany.name} customer confirmed via dedicated web search. Skip outbound.`,
+        raw_data: { pappers: pappers ?? null, is_existing_customer: true },
+        status: 'done',
+        domain: domain || null,
+      }).eq('id', account.id)
+      if (profile) {
+        await supabaseAdmin.from('profiles')
+          .update({ analyses_used: (profile.analyses_used ?? 0) + 1 })
+          .eq('id', user.id)
+      }
+      return res.status(200).json({ id: account.id, status: 'done', tier: 'DQ', score: 0 })
+    }
+    // ──────────────────────────────────────────────────────────────────────
+
     const scored = await scoreAccount(aggregated, searchDepth ?? 'standard', clientCompany)
 
-    // Hard DQ override: Claude confirmed existing customer via web search
+    // Hard DQ override: Claude confirmed existing customer via web search (in scorer)
     if (scored.is_existing_customer) {
       await supabaseAdmin.from('accounts').update({
         tier: 'DQ',
