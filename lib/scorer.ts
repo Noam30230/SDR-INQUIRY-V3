@@ -10,20 +10,29 @@ function buildSystemPrompt(clientName: string): string {
 ${clientName} is a monitoring and observability platform.
 Your mission: search the web to find real signals about this company, then assign an SDR priority tier.
 
-TIERING CRITERIA:
+⚠️ EXISTING CUSTOMER CHECK — TOP PRIORITY:
+Before anything else, search whether this company is already a ${clientName} customer.
+If you find ANY evidence — case study, blog post, customer story, conference talk, press release, social media post, or ANY mention of this company using ${clientName} — then:
+  → Set is_existing_customer: true
+  → Set tier: "DQ"
+  → Set score: 0
+  → Stop. Do not evaluate anything else.
+This overrides ALL other criteria. Even a T1 company must be DQ if they are already a ${clientName} customer.
+
+TIERING CRITERIA (apply only if NOT an existing customer):
 - T1 (high priority): Confirmed SaaS or tech product company. A modern website with SaaS signals (pricing, login, signup, API, integrations) ALONE is sufficient for T1 if the product is clearly software. Cloud stack is a bonus, NOT a requirement. Active hiring is a bonus, NOT a requirement. A stable SaaS company that isn't actively recruiting can still be T1.
 - T2 (medium priority): Likely software company but product model is unclear, OR traditional sector company with meaningful tech signals. Some SaaS signals but not conclusive.
 - T3 (low priority): Traditional sector, few or no tech signals, basic site or page builder, no SaaS indicators.
-- DQ (disqualified): Pure IT staff augmentation / ESN (sells human time only, no product), public institutions, NGOs. Do NOT DQ based on sector — legaltech, HR tech, fintech, AI, SaaS, AMOA tools, accounting software are T1/T2.
+- DQ (disqualified): (1) Already a ${clientName} customer — see above. (2) Pure IT staff augmentation / ESN (sells human time only, no product). (3) Public institutions, NGOs. Do NOT DQ based on sector — legaltech, HR tech, fintech, AI, SaaS, AMOA tools, accounting software are T1/T2.
 
-Key DQ question: "Does this company sell software as a product, or exclusively human services?"
+Key DQ question for non-customers: "Does this company sell software as a product, or exclusively human services?"
 
-STRICT DQ RULES — a company is DQ only when ALL of the following are true:
+STRICT DQ RULES for ESN/consulting — a company is DQ only when ALL of the following are true:
 1. No software product found (no login, no pricing, no SaaS signals on website)
 2. Web search confirms pure services/consulting model with no product
 3. Clear ESN/staff-aug signals: "régie", "portage salarial", "assistance technique", "IT staffing", or equivalent
 
-If the company has a login portal, pricing page, signup CTA, or any software product — it CANNOT be DQ. Assign T2 or T3 minimum.
+If the company has a login portal, pricing page, signup CTA, or any software product — it CANNOT be DQ for ESN reasons. Assign T2 or T3 minimum.
 Words like "accompagnement", "conseil", "consulting", "agence", "services" alone are NOT sufficient to DQ. Many software companies use these words to describe their support or onboarding offering.
 
 SCORE (0-100):
@@ -53,13 +62,13 @@ After searching, respond ONLY with valid JSON, no markdown, no surrounding text.
 function buildSearchInstruction(clientName: string, searchDepth: 'standard' | 'deep'): string {
   if (searchDepth === 'deep') {
     return `SEARCH STRATEGY (do exactly 3 targeted searches):
-1. Search "[company name] SaaS product tech stack cloud AWS GCP Azure funding" — combines product model + infra signals + funding in one query
-2. Search "[company name] software engineers team size Crunchbase LinkedIn" — find team signals and any additional funding/growth data
-3. Search "[company name] ${clientName} customer OR case study OR uses ${clientName} OR powered by ${clientName}" — check if they are already a ${clientName} customer`
+1. Search "[company name] ${clientName} customer case study uses ${clientName} site:${clientName.toLowerCase()}.com" — FIRST check if they are already a ${clientName} customer. If ANY result confirms they use ${clientName}, stop and return DQ immediately.
+2. Search "[company name] SaaS product tech stack cloud AWS GCP Azure funding" — combines product model + infra signals + funding in one query
+3. Search "[company name] software engineers team size Crunchbase LinkedIn" — find team signals and any additional funding/growth data`
   }
   return `SEARCH STRATEGY (do exactly 2 targeted searches):
-1. Search "[company name] SaaS product tech stack cloud funding" — find product model, infra signals, and funding in one query
-2. Search "[company name] ${clientName} customer OR case study OR uses ${clientName}" — check if they are already a ${clientName} customer`
+1. Search "[company name] ${clientName} customer case study uses ${clientName} site:${clientName.toLowerCase()}.com" — FIRST check if they are already a ${clientName} customer. If ANY result confirms they use ${clientName}, set is_existing_customer: true and tier: DQ immediately.
+2. Search "[company name] SaaS product tech stack cloud funding" — find product model, infra signals, and funding in one query`
 }
 
 function buildPrompt(data: AggregatedData): string {
