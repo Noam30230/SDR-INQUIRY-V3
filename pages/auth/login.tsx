@@ -326,13 +326,13 @@ export default function LoginPage() {
       } else {
         if (data.user) {
           const website = companyWebsite.trim().replace(/^https?:\/\//i, '').replace(/\/$/, '')
-          await supabaseBrowser.from('profiles').insert({
+          await supabaseBrowser.from('profiles').upsert({
             id: data.user.id,
             first_name: firstName.trim(),
             last_name: lastName.trim(),
             job_title: jobTitle,
             company_website: website,
-          })
+          }, { onConflict: 'id' })
         }
         if (data.session) {
           router.replace('/dashboard')
