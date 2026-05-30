@@ -1,4 +1,4 @@
-import { useState } from 'react'
+import { useState, useEffect } from 'react'
 import { supabaseBrowser } from '@/lib/supabase'
 
 type Reason = 'trial_expired' | 'usage_limit_reached' | 'subscription_inactive' | 'voluntary'
@@ -54,9 +54,22 @@ const REASON_LABELS: Record<Reason, { title: string; subtitle: string }> = {
   },
 }
 
+const Spinner = () => (
+  <svg className="animate-spin" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5">
+    <path d="M12 2v4M12 18v4M4.93 4.93l2.83 2.83M16.24 16.24l2.83 2.83M2 12h4M18 12h4M4.93 19.07l2.83-2.83M16.24 7.76l2.83-2.83" strokeLinecap="round"/>
+  </svg>
+)
+
 export default function UpgradeModal({ reason, onClose }: UpgradeModalProps) {
   const [loading, setLoading] = useState<string | null>(null)
   const [error, setError] = useState<string | null>(null)
+
+  // Reset loading if user comes back from Stripe without completing payment
+  useEffect(() => {
+    function onFocus() { setLoading(null) }
+    window.addEventListener('focus', onFocus)
+    return () => window.removeEventListener('focus', onFocus)
+  }, [])
 
   async function handleUpgrade(planId: string) {
     setLoading(planId)
@@ -106,53 +119,74 @@ export default function UpgradeModal({ reason, onClose }: UpgradeModalProps) {
 
         {/* Plans */}
         <div className="px-7 pb-7 grid grid-cols-3 gap-4">
-          {PLANS.map(plan => (
-            <div key={plan.id} className="relative flex flex-col rounded-xl p-5"
-              style={{
-                background: plan.popular ? 'rgba(124,58,237,0.08)' : 'rgba(255,255,255,0.03)',
-                border: plan.popular ? '1.5px solid rgba(124,58,237,0.45)' : '1px solid rgba(255,255,255,0.08)',
-              }}>
-              {plan.popular && (
-                <div className="absolute -top-3 left-1/2 -translate-x-1/2">
-                  <span className="px-3 py-0.5 rounded-full text-xs font-bold text-white" style={{ background: 'linear-gradient(135deg, #7c3aed, #6d28d9)' }}>
-                    Most popular
-                  </span>
-                </div>
-              )}
+          {PLANS.map(plan => {
+            const isLoading = loading === plan.id
+            const otherLoading = loading !== null && !isLoading
+            return (
+              <div key={plan.id} className="relative flex flex-col rounded-xl p-5"
+                style={{
+                  background: plan.popular ? 'rgba(124,58,237,0.08)' : 'rgba(255,255,255,0.03)',
+                  border: plan.popular ? '1.5px solid rgba(124,58,237,0.45)' : '1px solid rgba(255,255,255,0.08)',
+                  opacity: otherLoading ? 0.4 : 1,
+                  transition: 'opacity 0.2s',
+                }}>
+                {plan.popular && (
+                  <div className="absolute -top-3 left-1/2 -translate-x-1/2">
+                    <span className="px-3 py-0.5 rounded-full text-xs font-bold text-white" style={{ background: 'linear-gradient(135deg, #7c3aed, #6d28d9)' }}>
+                      Most popular
+                    </span>
+                  </div>
+                )}
 
-              <div className="mb-4">
-                <p className="text-sm font-bold text-white">{plan.name}</p>
-                <div className="flex items-baseline gap-1 mt-1">
-                  <span className="text-2xl font-bold text-white">{plan.price}</span>
-                  <span className="text-xs" style={{ color: 'var(--text-muted)' }}>/month</span>
+                <div className="mb-4">
+                  <p className="text-sm font-bold text-white">{plan.name}</p>
+                  <div className="flex items-baseline gap-1 mt-1">
+                    <span className="text-2xl font-bold text-white">{plan.price}</span>
+                    <span className="text-xs" style={{ color: 'var(--text-muted)' }}>/month</span>
+                  </div>
+                  <p className="text-xs mt-1 font-medium" style={{ color: plan.popular ? '#a78bfa' : 'var(--text-muted)' }}>{plan.analyses}</p>
                 </div>
-                <p className="text-xs mt-1 font-medium" style={{ color: plan.popular ? '#a78bfa' : 'var(--text-muted)' }}>{plan.analyses}</p>
+
+                <ul className="space-y-2 mb-5 flex-1">
+                  {plan.features.map(f => (
+                    <li key={f} className="flex items-center gap-2 text-xs" style={{ color: 'rgba(255,255,255,0.65)' }}>
+                      <svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round" className="shrink-0" style={{ color: plan.popular ? '#a78bfa' : '#6b7280' }}>
+                        <polyline points="20 6 9 17 4 12"/>
+                      </svg>
+                      {f}
+                    </li>
+                  ))}
+                </ul>
+
+                <button
+                  onClick={() => handleUpgrade(plan.id)}
+                  disabled={loading !== null}
+                  className="w-full py-2.5 rounded-lg text-sm font-bold transition-all flex items-center justify-center gap-2"
+                  style={{
+                    ...(plan.popular
+                      ? { background: isLoading ? 'rgba(124,58,237,0.6)' : 'linear-gradient(135deg, #7c3aed, #6d28d9)', color: 'white', boxShadow: isLoading ? 'none' : '0 0 20px rgba(124,58,237,0.35)' }
+                      : { background: 'rgba(255,255,255,0.06)', color: 'white', border: '1px solid rgba(255,255,255,0.1)' }
+                    ),
+                    cursor: loading !== null ? 'default' : 'pointer',
+                    transform: 'none',
+                  }}>
+                  {isLoading ? (
+                    <>
+                      <Spinner />
+                      Opening Stripe…
+                    </>
+                  ) : 'Get started →'}
+                </button>
               </div>
-
-              <ul className="space-y-2 mb-5 flex-1">
-                {plan.features.map(f => (
-                  <li key={f} className="flex items-center gap-2 text-xs" style={{ color: 'rgba(255,255,255,0.65)' }}>
-                    <svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round" className="shrink-0" style={{ color: plan.popular ? '#a78bfa' : '#6b7280' }}>
-                      <polyline points="20 6 9 17 4 12"/>
-                    </svg>
-                    {f}
-                  </li>
-                ))}
-              </ul>
-
-              <button
-                onClick={() => handleUpgrade(plan.id)}
-                disabled={loading === plan.id}
-                className="w-full py-2.5 rounded-lg text-sm font-bold transition-all disabled:opacity-50 hover:-translate-y-0.5"
-                style={plan.popular
-                  ? { background: 'linear-gradient(135deg, #7c3aed, #6d28d9)', color: 'white', boxShadow: '0 0 20px rgba(124,58,237,0.35)' }
-                  : { background: 'rgba(255,255,255,0.06)', color: 'white', border: '1px solid rgba(255,255,255,0.1)' }
-                }>
-                {loading === plan.id ? 'Redirecting...' : 'Get started →'}
-              </button>
-            </div>
-          ))}
+            )
+          })}
         </div>
+
+        {loading && (
+          <div className="px-7 pb-5 text-center text-xs" style={{ color: 'var(--text-muted)', marginTop: -8 }}>
+            You&apos;ll be redirected to Stripe. Come back here if you change your mind.
+          </div>
+        )}
       </div>
     </div>
   )
