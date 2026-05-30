@@ -31,26 +31,35 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
 
   let customerId = profile?.stripe_customer_id
   if (!customerId) {
-    const customer = await stripe.customers.create({
-      email: user.email!,
-      metadata: { userId: user.id },
-    })
-    customerId = customer.id
-    await supabaseAdmin.from('profiles').update({ stripe_customer_id: customerId }).eq('id', user.id)
+    try {
+      const customer = await stripe.customers.create({
+        email: user.email || undefined,
+        metadata: { userId: user.id },
+      })
+      customerId = customer.id
+      await supabaseAdmin.from('profiles').update({ stripe_customer_id: customerId }).eq('id', user.id)
+    } catch (err: any) {
+      return res.status(500).json({ error: `Stripe customer error: ${err?.message ?? err}` })
+    }
   }
 
-  const session = await stripe.checkout.sessions.create({
-    customer: customerId,
-    mode: 'subscription',
-    line_items: [{ price: priceId, quantity: 1 }],
-    metadata: { userId: user.id, plan },
-    subscription_data: {
+  let session
+  try {
+    session = await stripe.checkout.sessions.create({
+      customer: customerId,
+      mode: 'subscription',
+      line_items: [{ price: priceId, quantity: 1 }],
       metadata: { userId: user.id, plan },
-    },
-    success_url: `${appUrl}/scoring?upgraded=1`,
-    cancel_url: `${appUrl}/scoring`,
-    allow_promotion_codes: true,
-  })
+      subscription_data: {
+        metadata: { userId: user.id, plan },
+      },
+      success_url: `${appUrl}/scoring?upgraded=1`,
+      cancel_url: `${appUrl}/scoring`,
+      allow_promotion_codes: true,
+    })
+  } catch (err: any) {
+    return res.status(500).json({ error: err?.message ?? 'Stripe error' })
+  }
 
   return res.status(200).json({ url: session.url })
 }
