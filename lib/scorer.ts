@@ -60,15 +60,24 @@ After searching, respond ONLY with valid JSON, no markdown, no surrounding text.
 }
 
 function buildSearchInstruction(clientName: string, searchDepth: 'standard' | 'deep'): string {
+  const customerCheck = `STEP 0 — EXISTING CUSTOMER CHECK (mandatory before any search):
+First, use your training knowledge: do you know, from your training data, that this company uses or has ever used ${clientName}? Known customers, case studies, conference talks, press releases, or any public mention count.
+If YES → immediately set is_existing_customer: true, tier: "DQ", score: 0. Skip all other steps.
+If UNSURE → do ONE search: "${clientName} [company name] customer" and check results.
+If that search returns ANY evidence (case study page, customer story, blog, conference talk, G2/Gartner review mentioning ${clientName}) → is_existing_customer: true, tier: "DQ", score: 0. Stop.
+Only continue to qualification steps if you are confident they are NOT a ${clientName} customer.`
+
   if (searchDepth === 'deep') {
-    return `SEARCH STRATEGY (do exactly 3 targeted searches):
-1. Search "[company name] ${clientName} customer case study uses ${clientName} site:${clientName.toLowerCase()}.com" — FIRST check if they are already a ${clientName} customer. If ANY result confirms they use ${clientName}, stop and return DQ immediately.
-2. Search "[company name] SaaS product tech stack cloud AWS GCP Azure funding" — combines product model + infra signals + funding in one query
-3. Search "[company name] software engineers team size Crunchbase LinkedIn" — find team signals and any additional funding/growth data`
+    return `${customerCheck}
+
+SEARCH STRATEGY for qualification (only if NOT an existing customer — do exactly 2 searches):
+1. Search "[company name] SaaS product tech stack cloud AWS GCP Azure funding" — product model + infra signals + funding
+2. Search "[company name] software engineers team Crunchbase LinkedIn" — team signals and funding data`
   }
-  return `SEARCH STRATEGY (do exactly 2 targeted searches):
-1. Search "[company name] ${clientName} customer case study uses ${clientName} site:${clientName.toLowerCase()}.com" — FIRST check if they are already a ${clientName} customer. If ANY result confirms they use ${clientName}, set is_existing_customer: true and tier: DQ immediately.
-2. Search "[company name] SaaS product tech stack cloud funding" — find product model, infra signals, and funding in one query`
+  return `${customerCheck}
+
+SEARCH STRATEGY for qualification (only if NOT an existing customer — do exactly 1 search):
+1. Search "[company name] SaaS product tech stack cloud funding" — product model, infra signals, and funding`
 }
 
 function buildPrompt(data: AggregatedData): string {
