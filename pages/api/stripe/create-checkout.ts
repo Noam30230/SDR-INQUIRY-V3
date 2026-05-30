@@ -43,6 +43,12 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
     }
   }
 
+  const PLAN_NAMES: Record<PlanId, string> = {
+    solo: 'Solo — 250 analyses/month',
+    pro: 'Pro — 750 analyses/month',
+    growth: 'Growth — 2,500 analyses/month',
+  }
+
   let session
   try {
     session = await stripe.checkout.sessions.create({
@@ -56,6 +62,17 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
       success_url: `${appUrl}/scoring?upgraded=1`,
       cancel_url: `${appUrl}/scoring`,
       allow_promotion_codes: true,
+      locale: 'fr',
+      billing_address_collection: 'auto',
+      payment_method_types: ['card'],
+      custom_text: {
+        submit: {
+          message: 'Your subscription starts immediately. Cancel anytime from your billing portal.',
+        },
+        after_submit: {
+          message: 'You\'ll be redirected back to Inquiry right after payment.',
+        },
+      },
     })
   } catch (err: any) {
     return res.status(500).json({ error: err?.message ?? 'Stripe error' })
