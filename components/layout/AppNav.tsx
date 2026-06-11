@@ -32,9 +32,16 @@ const IconScoring = ({ active }: { active?: boolean }) => (
   </svg>
 )
 
+const IconIntelligence = ({ active }: { active?: boolean }) => (
+  <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={active ? 2.2 : 1.8} strokeLinecap="round" strokeLinejoin="round">
+    <path d="M12 2L9.5 9.5 2 12l7.5 2.5L12 22l2.5-7.5L22 12l-7.5-2.5z"/>
+  </svg>
+)
+
 const NAV_ITEMS = [
-  { path: '/dashboard', label: 'Dashboard', Icon: IconDashboard },
-  { path: '/scoring',   label: 'Scoring',   Icon: IconScoring },
+  { path: '/dashboard',    label: 'Dashboard',    Icon: IconDashboard },
+  { path: '/scoring',      label: 'Scoring',      Icon: IconScoring },
+  { path: '/intelligence', label: 'Intelligence', Icon: IconIntelligence },
 ]
 
 export default function AppNav() {
@@ -157,7 +164,7 @@ export default function AppNav() {
       {/* Nav items */}
       <nav style={{ flex: 1, padding: '0 8px', display: 'flex', flexDirection: 'column', gap: 2 }}>
         {NAV_ITEMS.map(({ path, label, Icon }) => {
-          const active = router.pathname === path
+          const active = router.pathname === path || router.pathname.startsWith(path + '/')
           return (
             <button
               key={path}
