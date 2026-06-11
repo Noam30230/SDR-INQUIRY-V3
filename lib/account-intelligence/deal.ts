@@ -11,6 +11,7 @@ export function getDeal(account: Account): DealData {
     contacts: deal.contacts ?? [],
     meetings: deal.meetings ?? [],
     facts: deal.facts ?? [],
+    language: deal.language,
     brief: deal.brief,
   }
 }
@@ -41,6 +42,12 @@ export function vendorFromWebsite(website: string | null | undefined): { name: s
   return { name, domain }
 }
 
+function formatName(first: string, last: string): string {
+  const f = first.trim()
+  const l = last.trim().toUpperCase()
+  return `${f.charAt(0).toUpperCase()}${f.slice(1)} ${l}`.trim()
+}
+
 export async function getPreparer(userId: string, fallbackEmail: string): Promise<{ name: string; website: string | null }> {
   const { data: profile } = await supabaseAdmin
     .from('profiles')
@@ -48,8 +55,22 @@ export async function getPreparer(userId: string, fallbackEmail: string): Promis
     .eq('id', userId)
     .single()
 
-  const first = (profile?.first_name ?? '').trim()
-  const last = (profile?.last_name ?? '').trim()
-  const name = (first || last) ? `${first} ${last}`.trim() : fallbackEmail.split('@')[0]
+  let first = (profile?.first_name ?? '').trim()
+  let last = (profile?.last_name ?? '').trim()
+
+  // Profile row may have NULL names (created by trigger before signup form saved them)
+  // → fall back to the auth user_metadata captured at signup
+  if (!first && !last) {
+    const { data } = await supabaseAdmin.auth.admin.getUserById(userId)
+    const meta = data?.user?.user_metadata ?? {}
+    first = (meta.first_name ?? '').trim()
+    last = (meta.last_name ?? '').trim()
+    // Backfill the profile so next time it's there
+    if (first || last) {
+      await supabaseAdmin.from('profiles').update({ first_name: first, last_name: last }).eq('id', userId)
+    }
+  }
+
+  const name = (first || last) ? formatName(first, last) : fallbackEmail.split('@')[0]
   return { name, website: profile?.company_website ?? null }
 }

@@ -55,19 +55,21 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
   const user = await getUserFromToken(token)
   if (!user) return res.status(401).json({ error: 'Unauthorized' })
 
-  const { accountId } = req.body as { accountId?: string }
+  const { accountId, language } = req.body as { accountId?: string; language?: 'fr' | 'en' }
   if (!accountId) return res.status(400).json({ error: 'accountId required' })
 
   const account = await fetchAccountForUser(accountId, user.id)
   if (!account) return res.status(404).json({ error: 'Account not found' })
 
   const deal = getDeal(account)
+  if (language) deal.language = language
+  const briefLanguage = deal.language ?? 'en'
   const { name: preparerName, website } = await getPreparer(user.id, user.email)
   const vendor = vendorFromWebsite(website)
 
   try {
     // ── Step 1: web research + 3 Whys (Sonnet + web search) ─────────────────
-    const s1Prompt = buildStep1Prompt(account as Account, vendor.name, vendor.domain, deal)
+    const s1Prompt = buildStep1Prompt(account as Account, vendor.name, vendor.domain, deal, briefLanguage)
     const s1Response = await withRateLimitRetry(() =>
       (anthropic.messages.create as (opts: unknown) => Promise<Anthropic.Message>)({
         model: SONNET,
@@ -83,7 +85,7 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
     await sleep(3000)
 
     // ── Step 2: stakeholders + outbound + discovery prep ─────────────────────
-    const s2Prompt = buildStep2Prompt(account.company_name, step1, deal, vendor.name, preparerName)
+    const s2Prompt = buildStep2Prompt(account.company_name, step1, deal, vendor.name, preparerName, briefLanguage)
     const s2Response = await withRateLimitRetry(() =>
       anthropic.messages.create({
         model: SONNET,
@@ -110,14 +112,14 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
     const briefData: BriefData = {
       account_name: account.company_name,
       vendor_name: vendor.name,
-      month_year: new Date().toLocaleString('en-US', { month: 'long', year: 'numeric' }),
+      month_year: new Date().toLocaleString(briefLanguage === 'fr' ? 'fr-FR' : 'en-US', { month: 'long', year: 'numeric' }),
       preparer_name: preparerName,
       step1,
       step2,
       deal_history: dealHistory,
     }
 
-    const html = buildHTML(briefData)
+    const html = buildHTML(briefData, briefLanguage)
 
     const version = (deal.brief?.version ?? 0) + 1
     deal.brief = { step1, step2, html, generated_at: new Date().toISOString(), version }

@@ -20,10 +20,11 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
   }
 
   if (req.method === 'PUT') {
-    const { accountId, stage, contacts } = req.body as {
+    const { accountId, stage, contacts, language } = req.body as {
       accountId?: string
       stage?: DealStage
       contacts?: DealContact[]
+      language?: 'fr' | 'en'
     }
     if (!accountId) return res.status(400).json({ error: 'accountId required' })
 
@@ -33,6 +34,7 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
     const deal = getDeal(account)
     if (stage) deal.stage = stage
     if (contacts) deal.contacts = contacts
+    if (language) deal.language = language
     await saveDeal(account, deal)
 
     return res.status(200).json({ deal })

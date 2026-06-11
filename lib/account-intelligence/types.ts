@@ -77,11 +77,14 @@ export interface StoredBrief {
   version: number
 }
 
+export type BriefLanguage = 'fr' | 'en'
+
 export interface DealData {
   stage: DealStage
   contacts: DealContact[]
   meetings: DealMeeting[]
   facts: string[]       // accumulated ground-truth facts from all meetings
+  language?: BriefLanguage
   brief?: StoredBrief
 }
 

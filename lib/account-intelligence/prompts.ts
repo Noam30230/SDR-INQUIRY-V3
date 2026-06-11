@@ -1,6 +1,17 @@
 import type { Account } from '@/types'
-import type { DealData, DealContact, Step1Result } from './types'
+import type { DealData, DealContact, Step1Result, BriefLanguage } from './types'
 import { STAGE_LABELS } from './types'
+
+function languageBlock(language: BriefLanguage): string {
+  if (language !== 'fr') return ''
+  return `
+
+LANGUAGE — CRITICAL:
+Write ALL content in professional French (France) — every title, body, signal, question, email and LinkedIn message. This is for a French sales team selling on the French market.
+- Keep the JSON keys and the "tag" field values in English exactly as specified in the schema (Signal 1, Matches Signal 1, Trigger 1, Structural Fit…).
+- Keep universally-used sales/tech jargon in English where French teams use it naturally (Champion, Economic Buyer, discovery, pipeline, cloud, SaaS…).
+- Outbound emails and LinkedIn messages: natural French as a French SDR would actually write, vouvoiement.`
+}
 
 function formatAccountData(account: Account): string {
   const stack = account.tech_stack
@@ -66,7 +77,8 @@ export function buildStep1Prompt(
   account: Account,
   vendorName: string,
   vendorDomain: string,
-  deal: DealData
+  deal: DealData,
+  language: BriefLanguage = 'en'
 ): { system: string; user: string } {
   const system = `You are an elite commercial intelligence analyst. Your job is to produce structured account intelligence for a B2B sales rep working at ${vendorName} (${vendorDomain}).
 
@@ -99,7 +111,7 @@ ENRICHMENT FORMAT RULES — these must be SHORT:
 - funding: max 20 chars, e.g. "$652M", "No public funding", "Unknown"
 - open_relevant_roles: integer only (0 if unknown)
 - recent_events: short bullet strings, max 10 words each
-
+${languageBlock(language)}
 OUTPUT: Return ONLY valid JSON matching the exact schema specified. No markdown, no explanation.`
 
   const user = `Account data (collected by our scoring system — may be overridden by meeting history below):
@@ -161,7 +173,8 @@ export function buildStep2Prompt(
   step1: Step1Result,
   deal: DealData,
   vendorName: string,
-  preparerName: string
+  preparerName: string,
+  language: BriefLanguage = 'en'
 ): { system: string; user: string } {
   const step1Summary = `
 Motion: ${step1.motion} — ${step1.motion_evidence}
@@ -182,6 +195,11 @@ Recent events: ${step1.enrichment.recent_events.join(', ') || 'None'}
 
   const system = `You are a B2B sales strategist specializing in stakeholder mapping, discovery preparation, and outbound sequencing. The rep works at ${vendorName}.
 
+SALES CYCLE CONTEXT — how this rep works:
+- Cold call → goal: book a discovery call (the first video meeting with the prospect).
+- Discovery call → goal: surface real pains and, if there are topics, book a concrete next step (demo, new business meeting, technical workshop…).
+- This brief is generated 99% of the time right after a successful cold call, to PREPARE the discovery call. Everything must serve that: walk into the disco knowing the account cold, ask sharp questions, and walk out with a booked next step.
+
 STAKEHOLDER FRAMEWORK:
 - Validated Champion: confirmed through real conversation — has direct operational pain matching ${vendorName}, engaged, advocating internally.
 - Potential Champion: has the profile and likely pain but not yet validated through conversation.
@@ -200,9 +218,9 @@ ABSOLUTE ANTI-HALLUCINATION RULES FOR PEOPLE — CRITICAL:
 - For contacts provided by the sales rep: use them exactly as given.
 
 DISCOVERY PREP RULES:
-- call_objective: ONE sentence — what the rep must walk out of the next call with.
-- questions: 6-8 discovery questions, ordered. Each must be specific to THIS account (reference their stack, their events, what they said in past calls). No generic "what keeps you up at night".
-- If past meetings raised objections, include questions that re-open and defuse them.
+- call_objective: ONE sentence — what the rep must walk out of the discovery call with. It should almost always end with a booked next step (demo, new business meeting…) anchored on the strongest pain.
+- questions: 6-8 discovery questions, ordered. Each must be specific to THIS account (reference their stack, their events, what they said in the cold call). No generic "what keeps you up at night".
+- If the cold call or past meetings raised objections, include questions that re-open and defuse them.
 - landmines: things NOT to say given what we know (e.g. don't pitch a capability they said they don't need, don't mention a competitor positively).
 
 OUTBOUND RULES:
@@ -213,8 +231,8 @@ OUTBOUND RULES:
 - No em dashes anywhere. Use commas or restructure.
 - Sign-off: "Best,\\n${preparerName}\\n${vendorName}"
 - LinkedIn sign-off: "Best,\\n${preparerName}"
-- Start every message: "Hi [first name],"
-
+- Start every message: "Hi [first name]," (in French: "Bonjour [first name]," and sign-off "Bien à vous,\\n${preparerName}")
+${languageBlock(language)}
 OUTPUT: Return ONLY valid JSON. No markdown, no explanation.`
 
   const user = `Account: ${accountName}

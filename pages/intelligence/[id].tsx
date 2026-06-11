@@ -486,15 +486,17 @@ const GEN_STEPS = [
   'Assembling the document…',
 ]
 
-function BriefPanel({ account, deal, onGenerated }: {
+function BriefPanel({ account, deal, onGenerated, onLanguageChange }: {
   account: Account
   deal: DealData
   onGenerated: (deal: DealData) => void
+  onLanguageChange: (lang: 'fr' | 'en') => void
 }) {
   const [generating, setGenerating] = useState(false)
   const [genStep, setGenStep] = useState(0)
   const [error, setError] = useState<string | null>(null)
   const brief = deal.brief
+  const language = deal.language ?? (typeof navigator !== 'undefined' && navigator.language.startsWith('fr') ? 'fr' : 'en')
 
   useEffect(() => {
     if (!generating) return
@@ -513,7 +515,7 @@ function BriefPanel({ account, deal, onGenerated }: {
     try {
       const res = await api('/api/intelligence/generate', {
         method: 'POST',
-        body: JSON.stringify({ accountId: account.id }),
+        body: JSON.stringify({ accountId: account.id, language }),
       })
       const body = await res.json()
       if (!res.ok) throw new Error(body.error || 'Generation failed')
@@ -548,11 +550,32 @@ function BriefPanel({ account, deal, onGenerated }: {
     <div style={{ ...cardStyle, display: 'flex', flexDirection: 'column', minHeight: 0, flex: 1 }}>
       <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: 12 }}>
         <span style={{ ...sectionLabel, marginBottom: 0 }}>Intelligence Brief</span>
-        {brief && (
-          <span style={{ fontSize: 10.5, color: 'var(--text-muted)' }}>
-            v{brief.version} · {new Date(brief.generated_at).toLocaleDateString('en-US', { month: 'short', day: 'numeric' })}
-          </span>
-        )}
+        <div style={{ display: 'flex', alignItems: 'center', gap: 10 }}>
+          {/* Language toggle */}
+          <div style={{ display: 'flex', gap: 2, padding: 2, borderRadius: 8, background: 'rgba(255,255,255,0.04)', border: '1px solid var(--border)' }}>
+            {(['fr', 'en'] as const).map(lang => (
+              <button
+                key={lang}
+                onClick={() => onLanguageChange(lang)}
+                disabled={generating}
+                style={{
+                  fontSize: 10, fontWeight: 700, padding: '3px 9px', borderRadius: 6, cursor: 'pointer',
+                  textTransform: 'uppercase', letterSpacing: '0.04em', border: 'none',
+                  color: language === lang ? 'white' : 'var(--text-muted)',
+                  background: language === lang ? '#7c3aed' : 'transparent',
+                  transition: 'all 0.12s',
+                }}
+              >
+                {lang}
+              </button>
+            ))}
+          </div>
+          {brief && (
+            <span style={{ fontSize: 10.5, color: 'var(--text-muted)' }}>
+              v{brief.version} · {new Date(brief.generated_at).toLocaleDateString('en-US', { month: 'short', day: 'numeric' })}
+            </span>
+          )}
+        </div>
       </div>
 
       {error && (
@@ -662,7 +685,7 @@ export default function DealRoomPage() {
     setTimeout(() => setToast(null), 3500)
   }
 
-  async function saveDealPatch(patch: { stage?: DealStage; contacts?: DealContact[] }) {
+  async function saveDealPatch(patch: { stage?: DealStage; contacts?: DealContact[]; language?: 'fr' | 'en' }) {
     if (!accountId) return
     // Optimistic update
     setDeal(d => ({ ...d, ...patch }))
@@ -793,7 +816,12 @@ export default function DealRoomPage() {
 
                 {/* Right: brief */}
                 <div style={{ display: 'flex', flexDirection: 'column', minHeight: 560 }}>
-                  <BriefPanel account={account} deal={deal} onGenerated={setDeal} />
+                  <BriefPanel
+                    account={account}
+                    deal={deal}
+                    onGenerated={setDeal}
+                    onLanguageChange={lang => saveDealPatch({ language: lang })}
+                  />
                 </div>
               </div>
             </div>

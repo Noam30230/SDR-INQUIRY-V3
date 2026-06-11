@@ -1,6 +1,6 @@
 import Anthropic from '@anthropic-ai/sdk'
 import type { Account, TechStack } from '@/types'
-import type { DealData, DealMeeting, MeetingIntel } from './types'
+import type { DealData, DealMeeting, MeetingIntel, BriefLanguage } from './types'
 import { supabaseAdmin } from '@/lib/supabase-admin'
 
 const anthropic = new Anthropic({ apiKey: process.env.ANTHROPIC_API_KEY })
@@ -22,12 +22,23 @@ export async function extractMeetingIntel(
   account: Account,
   meeting: Pick<DealMeeting, 'stage' | 'title' | 'date' | 'kind' | 'content'>,
   vendorName: string,
-  preparerName: string
+  preparerName: string,
+  language: BriefLanguage = 'en'
 ): Promise<MeetingIntel> {
   const stack = account.tech_stack
   const currentStack = TECH_CATEGORIES
     .map(cat => `${cat}: ${((stack as unknown as Record<string, string[]>)?.[cat] ?? []).join(', ') || 'none'}`)
     .join(' | ')
+
+  const isColdCall = meeting.stage === 'cold_call'
+
+  const followUpRules = isColdCall
+    ? `FOLLOW-UP EMAIL: this was a COLD CALL and the discovery call is already booked — NO follow-up email is needed. Return null for follow_up_email. Focus all your extraction on what will help the rep prepare the discovery call: pains hinted at, who they talked to, objections, context.`
+    : `FOLLOW-UP EMAIL: write a RECAP email the rep sends after this meeting. Structure: thank them for the time, recap the key points THEY raised (their words, not a pitch), confirm the agreed next step (demo, new business meeting…) with the proposed timing, and one line keeping momentum. Reference specifics actually discussed. No hype adjectives. No em dashes. Sign-off: "Best,\\n${preparerName}". Start: "Hi [first name]," using the main interlocutor's first name if known.`
+
+  const languageRules = language === 'fr'
+    ? `\nLANGUAGE: write ALL extracted content in professional French (France) — summary, facts, pains, objections, responses, next steps, risks, and the email (vouvoiement, start "Bonjour [prénom],", sign-off "Bien à vous,\\n${preparerName}"). Keep JSON keys and role values in English.`
+    : ''
 
   const system = `You are a B2B sales intelligence analyst. A sales rep at ${vendorName} just had a "${meeting.stage}" interaction with the prospect "${account.company_name}" and recorded ${meeting.kind === 'transcript' ? 'a meeting transcript' : 'call notes'}.
 
@@ -47,8 +58,8 @@ STAKEHOLDERS: extract every person named in the notes with their title if mentio
 
 CHAMPION UPDATES: if a person already known shows champion behavior (brought colleagues, asked for pricing, defended us against an objection, committed to internal action), emit a champion_update suggesting promotion, with the evidence quote.
 
-FOLLOW-UP EMAIL: write a short follow-up email the rep can send after this meeting. Reference specifics actually discussed. No hype adjectives. No em dashes. Sign-off: "Best,\\n${preparerName}". Start: "Hi [first name]," using the main interlocutor's first name if known.
-
+${followUpRules}
+${languageRules}
 Respond ONLY with valid JSON. No markdown.`
 
   const user = `Meeting: "${meeting.title}" (${meeting.date}) — stage: ${meeting.stage}
@@ -77,7 +88,7 @@ Return this exact JSON:
   ],
   "next_steps": ["agreed next steps"],
   "risks": ["deal risks spotted in this conversation"],
-  "follow_up_email": {"subject": "...", "body": "..."}
+  "follow_up_email": ${isColdCall ? 'null' : '{"subject": "...", "body": "..."}'}
 }`
 
   const response = await anthropic.messages.create({

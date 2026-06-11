@@ -84,7 +84,7 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
   // Extract intel + apply corrections (AWS → Azure etc.)
   let stackChanged = false
   try {
-    meeting.intel = await extractMeetingIntel(account, meeting, vendor.name, preparerName)
+    meeting.intel = await extractMeetingIntel(account, meeting, vendor.name, preparerName, deal.language ?? 'en')
     const applied = await applyCorrections(account, deal, meeting.intel)
     stackChanged = applied.stackChanged
   } catch (err) {
