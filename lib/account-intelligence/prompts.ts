@@ -101,6 +101,18 @@ EPISTEMIC RULES:
 - Events older than 18 months are context, not triggers.
 - Cloudflare is present at thousands of companies and is NOT a differentiating signal — do not mention it unless it is the direct subject of ${vendorName}'s capability.
 
+DATING DISCIPLINE — CRITICAL, ZERO TOLERANCE:
+- Before calling ANYTHING "recent", "just", "newly", or using it as a timing trigger, you MUST establish its date from the search result. The current date is given in the task below — compute the age of every event against it.
+- "Recent" / "récent" may ONLY describe events less than 3 MONTHS old. An event from a blog post published 2 years ago is NOT recent, even if you found it today. Finding an article today does not make its content current.
+- Events 3-18 months old: you may cite them, but ALWAYS with their explicit date ("in March 2025"), never with recency words.
+- If you cannot date an event from the source, do not present it as timed at all — and NEVER build a "Why Now" trigger on it.
+- A "Why Now" trigger built on an undated or stale event is a critical error: the rep will say "I saw you just changed your pricing" about something from 2023 and instantly lose credibility.
+
+SOURCING — MANDATORY:
+- Every number and every key fact (headcount, funding amount, dates, growth figures, pricing changes, leadership changes, product launches) must carry its source inline in the body text, in parentheses: "(LinkedIn, May 2026)", "(TechCrunch, Jan 2025)", "(company blog, 2023)".
+- Format: (source name, date of the information). The date is the date of the information itself, not the date you searched.
+- A fact you cannot attribute to a source does not go in the brief. No exceptions for round numbers or "well-known" facts.
+
 MEETING HISTORY OVERRIDE — CRITICAL:
 - If meeting history is provided below, it is GROUND TRUTH from real conversations with the prospect. It overrides ANY conflicting signal from automated detection or web search.
 - TECH STACK OVERRIDE: if the rep heard a specific infrastructure or provider in a call (e.g. "they run on Azure"), use ONLY that. Do not merge with detected signals. Do not say "multi-cloud".
@@ -110,11 +122,15 @@ ENRICHMENT FORMAT RULES — these must be SHORT:
 - headcount: max 8 chars, e.g. "~62", "~1,640", "Unknown"
 - funding: max 20 chars, e.g. "$652M", "No public funding", "Unknown"
 - open_relevant_roles: integer only (0 if unknown)
-- recent_events: short bullet strings, max 10 words each
+- recent_events: ONLY events from the last 12 months, each with date and source, e.g. "Series B closed (TechCrunch, Mar 2026)". An event you cannot date does not belong here.
 ${languageBlock(language)}
 OUTPUT: Return ONLY valid JSON matching the exact schema specified. No markdown, no explanation.`
 
-  const user = `Account data (collected by our scoring system — may be overridden by meeting history below):
+  const today = new Date().toISOString().slice(0, 10)
+
+  const user = `TODAY'S DATE: ${today} — use this to compute the age of every event you find. "Recent" = less than 3 months before this date.
+
+Account data (collected by our scoring system — may be overridden by meeting history below):
 ${formatAccountData(account)}
 ${formatMeetingsIntel(deal)}
 
@@ -157,7 +173,7 @@ Then produce the intelligence brief. Return this exact JSON:
     {"tag": "Matches Signal 3", "title": "...", "body": "..."}
   ],
   "why_now": [
-    {"tag": "Trigger 1", "title": "timing trigger title", "body": "recent event → why it creates urgency → best persona to lead with. 2-3 sentences."},
+    {"tag": "Trigger 1", "title": "timing trigger title", "body": "dated event with source (publication, date) → why it creates urgency → best persona to lead with. 2-3 sentences. The event date MUST appear in the body."},
     {"tag": "Trigger 2", "title": "...", "body": "..."},
     {"tag": "Trigger 3", "title": "...", "body": "..."}
   ]
@@ -224,7 +240,8 @@ DISCOVERY PREP RULES:
 - landmines: things NOT to say given what we know (e.g. don't pitch a capability they said they don't need, don't mention a competitor positively).
 
 OUTBOUND RULES:
-- Every message must reference the prospect's specific tech stack or a specific recent event.
+- Every message must reference the prospect's specific tech stack or a specific dated event.
+- NEVER call an event "recent" or "just happened" in a message unless Step 1 dated it within the last 3 months. Saying "I saw you just changed your pricing" about a 2-year-old blog post destroys the rep's credibility. When in doubt, name the event without recency framing.
 - If meeting history exists, reference what was actually discussed — the messages are follow-ups, not cold outreach.
 - Open with what the person has built, decided, or experienced — not with ${vendorName}.
 - No hype adjectives: "leading", "robust", "powerful", "innovative".
